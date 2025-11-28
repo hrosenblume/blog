@@ -52,3 +52,9 @@ prisma/dev.db-journal
 
 # Legacy Django app
 _legacy/
+
+# Python virtual environment
+venv/
+
+# Duplicate/backup folders
+blog-js/
