@@ -1,45 +1,30 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+.next/
+out/
 dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
+build/
 
-# Virtual environments
-venv/
-env/
-ENV/
-.venv
-
-# Django
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-staticfiles/
-media/
-
-# Static site - tracked for backup/history
-# static_site/
+# Testing
+coverage/
+.nyc_output/
 
 # Environment variables
 .env
 .env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
 # IDE
 .vscode/
@@ -52,14 +37,11 @@ media/
 .DS_Store
 Thumbs.db
 
-# Content backup (optional - uncomment if you don't want to track backups)
-# content_backup/
+# TypeScript
+*.tsbuildinfo
 
-# Node.js
-node_modules/
-.next/
-out/
-dist/
+# Vercel
+.vercel
 
 # Uploads
 public/uploads/
@@ -68,7 +50,5 @@ public/uploads/
 prisma/dev.db
 prisma/dev.db-journal
 
-# Legacy Django app (moved to _legacy/)
+# Legacy Django app
 _legacy/
-
-next-env.d.ts
