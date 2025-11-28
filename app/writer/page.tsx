@@ -2,6 +2,10 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
+import { Button } from '@/components/Button'
+import { Spinner } from '@/components/Spinner'
+import { Dropdown, DropdownItem } from '@/components/Dropdown'
+import { formatRelativeTime, formatNumber } from '@/lib/utils/format'
 
 interface Post {
   id: string
@@ -11,27 +15,6 @@ interface Post {
   wordCount: number
   updatedAt: string
   publishedAt: string | null
-}
-
-function formatRelativeTime(isoDate: string): string {
-  const date = new Date(isoDate)
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffMins = Math.floor(diffMs / 60000)
-  const diffHours = Math.floor(diffMs / 3600000)
-  const diffDays = Math.floor(diffMs / 86400000)
-  
-  if (diffMins < 1) return 'Just now'
-  if (diffMins < 60) return `${diffMins}m ago`
-  if (diffHours < 24) return `${diffHours}h ago`
-  if (diffDays === 1) return 'Yesterday'
-  if (diffDays < 7) return `${diffDays}d ago`
-  return date.toLocaleDateString()
-}
-
-function formatNumber(num: number): string {
-  if (num >= 1000) return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'k'
-  return num.toString()
 }
 
 export default function Dashboard() {
@@ -85,7 +68,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-gray-900 dark:border-white border-t-transparent rounded-full" />
+        <Spinner />
       </div>
     )
   }
@@ -165,8 +148,6 @@ function PostItem({
   onDelete: (id: string) => void
   onUnpublish: (id: string) => void
 }) {
-  const [showMenu, setShowMenu] = useState(false)
-
   return (
     <div className="flex items-center justify-between py-4 border-b border-gray-100 dark:border-gray-800 group">
       <div className="flex-1 min-w-0">
@@ -180,55 +161,39 @@ function PostItem({
         </Link>
       </div>
       
-      <div className="relative">
-        <button
-          onClick={() => setShowMenu(!showMenu)}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
+      <Dropdown
+        trigger={
+          <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
+            <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+            </svg>
+          </button>
+        }
+      >
+        <Link
+          href={`/writer/editor/${post.id}`}
+          className="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded-t-lg"
         >
-          <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-          </svg>
-        </button>
-        
-        {showMenu && (
+          Edit
+        </Link>
+        {post.status === 'published' && (
           <>
-            <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-20">
-              <Link
-                href={`/writer/editor/${post.id}`}
-                className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
-                onClick={() => setShowMenu(false)}
-              >
-                Edit
-              </Link>
-              {post.status === 'published' && (
-                <>
-                  <Link
-                    href={`/e/${post.slug}`}
-                    target="_blank"
-                    className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
-                    onClick={() => setShowMenu(false)}
-                  >
-                    View Live
-                  </Link>
-                  <button
-                    onClick={() => { onUnpublish(post.id); setShowMenu(false) }}
-                    className="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
-                  >
-                    Unpublish
-                  </button>
-                </>
-              )}
-              <button
-                onClick={() => { onDelete(post.id); setShowMenu(false) }}
-                className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                Delete
-              </button>
-            </div>
+            <Link
+              href={`/e/${post.slug}`}
+              target="_blank"
+              className="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              View Live
+            </Link>
+            <DropdownItem onClick={() => onUnpublish(post.id)}>
+              Unpublish
+            </DropdownItem>
           </>
         )}
-      </div>
+        <DropdownItem destructive onClick={() => onDelete(post.id)}>
+          Delete
+        </DropdownItem>
+      </Dropdown>
     </div>
   )
 }

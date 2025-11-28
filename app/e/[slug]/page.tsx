@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/db'
 import { renderMarkdown } from '@/lib/markdown'
+import { formatDate } from '@/lib/utils/format'
 
 export const revalidate = 60
 
@@ -57,13 +58,6 @@ export async function generateMetadata({ params }: Props) {
     title: post.title,
     description: post.markdown.substring(0, 160),
   }
-}
-
-function formatDate(date: Date): string {
-  return date.toLocaleDateString('en-US', {
-    month: 'long',
-    year: 'numeric',
-  })
 }
 
 export default async function EssayPage({ params }: Props) {

@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import { prisma } from '@/lib/db'
+import { formatShortDate } from '@/lib/utils/format'
+import { EmailLink } from '@/components/EmailLink'
 
 export const revalidate = 60
 
@@ -14,13 +16,6 @@ async function getPublishedPosts() {
       markdown: true,
       publishedAt: true,
     },
-  })
-}
-
-function formatDate(date: Date): string {
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    year: 'numeric',
   })
 }
 
@@ -91,7 +86,7 @@ export default async function Home() {
                       </p>
                       <div className="flex items-center gap-3 text-sm text-gray-400">
                         {post.publishedAt && (
-                          <time>{formatDate(post.publishedAt)}</time>
+                          <time>{formatShortDate(post.publishedAt)}</time>
                         )}
                         <span>·</span>
                         <span>{getReadTime(post.markdown)}</span>
@@ -115,15 +110,13 @@ export default async function Home() {
         {/* Footer */}
         <footer className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800">
           <nav className="flex gap-6 text-gray-600 dark:text-gray-400" aria-label="Social links">
-            <a href="https://twitter.com" className="transition-colors hover:text-gray-900 dark:hover:text-white">
+            <a href="https://x.com/hrosenblume" className="transition-colors hover:text-gray-900 dark:hover:text-white">
               Twitter
             </a>
-            <a href="https://linkedin.com" className="transition-colors hover:text-gray-900 dark:hover:text-white">
+            <a href="https://www.linkedin.com/in/hrosenblume/" className="transition-colors hover:text-gray-900 dark:hover:text-white">
               LinkedIn
             </a>
-            <a href="mailto:hello@example.com" className="transition-colors hover:text-gray-900 dark:hover:text-white">
-              Email
-            </a>
+            <EmailLink className="transition-colors hover:text-gray-900 dark:hover:text-white" />
           </nav>
         </footer>
       </div>

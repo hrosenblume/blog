@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { renderMarkdown, generateSlug, wordCount } from '@/lib/markdown'
+import { Button } from '@/components/Button'
+import { Spinner } from '@/components/Spinner'
 
 export default function Editor() {
   const router = useRouter()
@@ -99,10 +101,19 @@ export default function Editor() {
     }
   }, [postId, title, slug, markdown, router])
 
+  // Autosave drafts
+  useEffect(() => {
+    if (!postId || !title.trim() || status === 'published') return
+    const timeout = setTimeout(() => {
+      handleSave('draft')
+    }, 3000)
+    return () => clearTimeout(timeout)
+  }, [markdown, title, postId, status, handleSave])
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-gray-900 dark:border-white border-t-transparent rounded-full" />
+        <Spinner />
       </div>
     )
   }
@@ -137,22 +148,21 @@ export default function Editor() {
             </button>
 
             {status === 'draft' && (
-              <button
+              <Button
+                variant="secondary"
                 onClick={() => handleSave('draft')}
-                disabled={saving}
-                className="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 disabled:opacity-50"
+                loading={saving}
               >
-                {saving ? 'Saving...' : 'Save Draft'}
-              </button>
+                Save Draft
+              </Button>
             )}
 
-            <button
+            <Button
               onClick={() => handleSave('published')}
-              disabled={saving}
-              className="px-4 py-2 rounded-lg bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:opacity-90 disabled:opacity-50"
+              loading={saving}
             >
-              {saving ? 'Saving...' : status === 'published' ? 'Update' : 'Publish'}
-            </button>
+              {status === 'published' ? 'Update' : 'Publish'}
+            </Button>
           </div>
         </div>
       </header>
