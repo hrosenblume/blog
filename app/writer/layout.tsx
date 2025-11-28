@@ -23,6 +23,19 @@ export default function WriterLayout({
     }
   }, [status, router])
 
+  // Cmd + / to go back to homepage
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.metaKey && e.key === '/') {
+        e.preventDefault()
+        localStorage.setItem('lastWriterPath', window.location.pathname)
+        router.push('/')
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [router])
+
   if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center">

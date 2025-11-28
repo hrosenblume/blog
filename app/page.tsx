@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { prisma } from '@/lib/db'
 import { formatShortDate } from '@/lib/utils/format'
 import { EmailLink } from '@/components/EmailLink'
+import { SecretNav } from '@/components/SecretNav'
 
 export const revalidate = 60
 
@@ -42,7 +43,9 @@ export default async function Home() {
       <div className="max-w-2xl mx-auto px-6 py-16">
         {/* Header */}
         <header className="mb-20">
-          <h1 className="text-3xl font-bold mb-6 dark:text-white">Hunter Rosenblume</h1>
+          <h1 className="text-3xl font-bold mb-6 dark:text-white">
+            <SecretNav>Hunter Rosenblume</SecretNav>
+          </h1>
           <p className="max-w-xl leading-relaxed text-gray-600 dark:text-gray-400">
             I started my career as a{' '}
             <a
