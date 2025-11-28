@@ -58,17 +58,9 @@ export default function AdminLayout({
               </Link>
             </nav>
           </div>
-          <div className="flex items-center gap-4">
-            <Link 
-              href="/writer" 
-              className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-            >
-              ← Writer Dashboard
-            </Link>
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              {session.user?.email}
-            </span>
-          </div>
+          <span className="text-sm text-gray-500 dark:text-gray-400">
+            {session.user?.email}
+          </span>
         </div>
       </header>
 

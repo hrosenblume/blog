@@ -1,26 +1,54 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
+import { useTheme } from 'next-themes'
 import { renderMarkdown, generateSlug, wordCount } from '@/lib/markdown'
 import { Button } from '@/components/Button'
 import { Spinner } from '@/components/Spinner'
+import { ThemeToggle } from '@/components/ThemeToggle'
+
+// Success screen shown after publishing
+function PublishSuccess() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-black">
+      <div className="text-center">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+          <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Published!</h2>
+        <p className="text-gray-500 dark:text-gray-400">Your essay is now live</p>
+      </div>
+    </div>
+  )
+}
 
 export default function Editor() {
   const router = useRouter()
   const params = useParams()
   const postId = params.id?.[0] as string | undefined
+  const { theme, setTheme } = useTheme()
 
+  // Post content state
   const [title, setTitle] = useState('')
   const [slug, setSlug] = useState('')
   const [markdown, setMarkdown] = useState('')
   const [status, setStatus] = useState<'draft' | 'published'>('draft')
+  const [isManualSlug, setIsManualSlug] = useState(false)
+
+  // UI state
   const [loading, setLoading] = useState(!!postId)
   const [saving, setSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
-  const [isManualSlug, setIsManualSlug] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [publishSuccess, setPublishSuccess] = useState(false)
+  
+  // Track last saved content to detect changes
+  const lastSavedContent = useRef({ title: '', slug: '', markdown: '' })
 
   // Load existing post
   useEffect(() => {
@@ -35,6 +63,7 @@ export default function Editor() {
         setStatus(data.status)
         setIsManualSlug(true)
         setLoading(false)
+        lastSavedContent.current = { title: data.title, slug: data.slug, markdown: data.markdown }
       })
       .catch(() => {
         router.push('/writer')
@@ -47,6 +76,26 @@ export default function Editor() {
       setSlug(generateSlug(title))
     }
   }, [title, isManualSlug])
+
+  // Track unsaved changes
+  useEffect(() => {
+    const saved = lastSavedContent.current
+    const hasChanges = title !== saved.title || slug !== saved.slug || markdown !== saved.markdown
+    setHasUnsavedChanges(hasChanges)
+  }, [title, slug, markdown])
+
+  // Keyboard shortcut: Cmd+. (theme toggle)
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.metaKey && e.key === '.') {
+        e.preventDefault()
+        setTheme(theme === 'dark' ? 'light' : 'dark')
+      }
+    }
+    
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [theme, setTheme])
 
   const handleSlugChange = useCallback((value: string) => {
     setSlug(value)
@@ -84,15 +133,17 @@ export default function Editor() {
         if (!res.ok) {
           throw new Error(result.error)
         }
-        // Redirect to edit the newly created post
         router.push(`/writer/editor/${result.id}`)
       }
 
       setStatus(publishStatus)
       setLastSaved(new Date())
+      lastSavedContent.current = { title: title.trim(), slug: slug.trim(), markdown }
+      setHasUnsavedChanges(false)
 
       if (publishStatus === 'published') {
-        router.push('/writer')
+        setPublishSuccess(true)
+        setTimeout(() => router.push('/writer'), 1500)
       }
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to save')
@@ -101,21 +152,26 @@ export default function Editor() {
     }
   }, [postId, title, slug, markdown, router])
 
-  // Autosave drafts
+  // Autosave drafts after 3 seconds of inactivity
   useEffect(() => {
     if (!postId || !title.trim() || status === 'published') return
-    const timeout = setTimeout(() => {
-      handleSave('draft')
-    }, 3000)
+    
+    const timeout = setTimeout(() => handleSave('draft'), 3000)
     return () => clearTimeout(timeout)
   }, [markdown, title, postId, status, handleSave])
 
+  // Loading state
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Spinner />
       </div>
     )
+  }
+
+  // Success state after publishing
+  if (publishSuccess) {
+    return <PublishSuccess />
   }
 
   const words = wordCount(markdown)
@@ -136,6 +192,8 @@ export default function Editor() {
           </Link>
 
           <div className="flex items-center gap-3">
+            <ThemeToggle />
+
             <button
               onClick={() => setShowPreview(!showPreview)}
               className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
@@ -152,8 +210,9 @@ export default function Editor() {
                 variant="secondary"
                 onClick={() => handleSave('draft')}
                 loading={saving}
+                disabled={!hasUnsavedChanges}
               >
-                Save Draft
+                {hasUnsavedChanges ? 'Save Draft' : 'Saved'}
               </Button>
             )}
 
@@ -226,4 +285,3 @@ export default function Editor() {
     </div>
   )
 }
-
