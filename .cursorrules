@@ -1,0 +1,124 @@
+# Cursor Rules for Hunter's Blog
+
+## Project Overview
+Personal essay blog built with Next.js 13 (App Router), Prisma (SQLite), NextAuth.js (Google OAuth), and Tailwind CSS.
+
+## Tech Stack
+- **Framework**: Next.js 13 with App Router
+- **Database**: SQLite via Prisma
+- **Auth**: NextAuth.js with Google OAuth
+- **Styling**: Tailwind CSS with dark mode (class-based via next-themes)
+- **Markdown**: marked + sanitize-html
+
+## Code Style
+
+### TypeScript
+- Use strict mode
+- Prefer explicit types over `any`
+- Use path aliases: `@/lib/*`, `@/components/*`, `@/app/*`
+
+### React/Next.js
+- Use Server Components by default
+- Add `'use client'` only when hooks/interactivity are needed
+- Use `useCallback` and `useMemo` for performance in client components
+- Prefer async Server Components for data fetching
+
+### Components
+- Functional components only
+- Props interfaces defined inline or in same file
+- Use `cn()` utility from `@/lib/utils/cn` for conditional classes
+- Components in `/components` are shared; page-specific components stay in route folders
+
+### Styling
+- Use Tailwind CSS exclusively
+- Dark mode: Use `dark:` prefix (e.g., `dark:bg-gray-900`)
+- Button variants: primary (`bg-gray-900 dark:bg-white`) / secondary (`bg-gray-200 dark:bg-gray-800`)
+- Prose/typography: Use `.prose` class with custom styles in `globals.css`
+
+### API Routes
+- Return JSON responses
+- Always check session with `getServerSession(authOptions)`
+- Admin routes: Also check `isAdmin(session.user?.email)`
+- Use proper HTTP status codes (401, 403, 404, 400)
+
+### Database
+- Use singleton Prisma client from `@/lib/db`
+- Keep queries in Server Components or API routes
+- Always handle edge cases (not found, already exists, etc.)
+
+## File Organization
+```
+app/
+  api/           # API routes
+  admin/         # Admin-only pages
+  auth/          # Auth pages
+  e/[slug]/      # Public essay pages
+  writer/        # Protected writer dashboard
+components/      # Shared components
+lib/             # Utilities and configs
+prisma/          # Schema and migrations
+public/          # Static assets
+scripts/         # Build/dev scripts
+```
+
+## Authentication
+- Users must exist in the `User` table to sign in
+- Roles: "admin" or "writer"
+- Admin: full access to /admin + /writer
+- Writer: access to /writer only
+- Protect routes in layout.tsx files
+
+## Key Patterns
+
+### Data Fetching
+```tsx
+// Server Component (preferred)
+export default async function Page() {
+  const data = await prisma.post.findMany()
+  return <div>{/* render */}</div>
+}
+
+// Client Component
+useEffect(() => {
+  fetch('/api/posts').then(res => res.json()).then(setData)
+}, [])
+```
+
+### Protected Route
+```tsx
+'use client'
+const { data: session, status } = useSession()
+if (status === 'unauthenticated') redirect('/auth/signin')
+if (session?.user?.role !== 'admin') redirect('/writer')
+```
+
+### API Route
+```ts
+export async function GET() {
+  const session = await getServerSession(authOptions)
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  // ... handle request
+}
+```
+
+## UI Conventions
+- Clean, minimal design
+- White/black backgrounds with gray accents
+- Subtle hover states
+- Responsive (mobile-first)
+- Consistent spacing (Tailwind defaults)
+
+## Don't
+- Don't use inline styles
+- Don't add unnecessary dependencies
+- Don't put business logic in components (use lib/ or utils/)
+- Don't hardcode the owner email (use env or database)
+- Don't commit .env files or dev.db
+
+## Do
+- Keep components small and focused
+- Use semantic HTML
+- Handle loading and error states
+- Write self-documenting code
+- Prefer server-side operations for data mutations
+
