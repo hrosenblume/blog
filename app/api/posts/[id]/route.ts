@@ -2,11 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { withSession, notFound, badRequest } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { wordCount } from '@/lib/markdown'
-import path from 'path'
-
-// Import polyhedra generator (CommonJS module)
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { generatePolyhedronGif } = require('../../../../scripts/generate-polyhedra')
+import { getRandomShape } from '@/lib/polyhedra/shapes'
 
 // GET /api/posts/[id] - Get single post
 export const GET = withSession(async (request: NextRequest, { params }: { params: { id: string } }) => {
@@ -59,26 +55,10 @@ export const PATCH = withSession(async (request: NextRequest, { params }: { para
     if (data.status === 'published' && !post.publishedAt) updates.publishedAt = new Date()
   }
 
-  // Generate polyhedra GIF on first publish (if not already generated)
-  const isFirstPublish = data.status === 'published' && !post.publishedAt && !post.polyhedraGif
+  // Assign polyhedra shape on first publish
+  const isFirstPublish = data.status === 'published' && !post.publishedAt && !post.polyhedraShape
   if (isFirstPublish) {
-    try {
-      const gifFilename = `post-${post.id}.gif`
-      const outputPath = path.join('public', 'polyhedra', gifFilename)
-      
-      await generatePolyhedronGif({
-        output: outputPath,
-        size: 60,
-        frames: 24,
-        duration: 100,
-        transparent: true,
-      })
-      
-      updates.polyhedraGif = gifFilename
-    } catch (err) {
-      console.error('Failed to generate polyhedra GIF:', err)
-      // Continue without the GIF - don't block publishing
-    }
+    updates.polyhedraShape = getRandomShape()
   }
 
   const updated = await prisma.post.update({ where: { id: params.id }, data: updates })

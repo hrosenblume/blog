@@ -1,9 +1,9 @@
 import Link from 'next/link'
-import Image from 'next/image'
 import { prisma } from '@/lib/db'
 import { EmailLink } from '@/components/EmailLink'
 import { SecretNav } from '@/components/SecretNav'
 import { HomeKeyboardNav } from '@/components/HomeKeyboardNav'
+import { PolyhedraCanvas } from '@/components/PolyhedraCanvas'
 
 export const revalidate = 60
 
@@ -16,7 +16,7 @@ async function getPublishedPosts() {
       title: true,
       slug: true,
       markdown: true,
-      polyhedraGif: true,
+      polyhedraShape: true,
     },
   })
 }
@@ -74,24 +74,13 @@ export default async function Home() {
                   className="group block w-full text-left border-b border-gray-200 dark:border-gray-800 last:border-b-0 transition-all hover:bg-gray-50 dark:hover:bg-gray-900/30 -mx-4 px-4 py-5 rounded"
                 >
                   <div className="flex items-center gap-4">
-                    {/* Polyhedra GIF */}
+                    {/* Polyhedra Canvas */}
                     <div className="flex-shrink-0 w-[60px] h-[60px] rounded overflow-hidden">
-                      {post.polyhedraGif ? (
-                        <Image
-                          src={`/polyhedra/${post.polyhedraGif}`}
-                          alt={`Animated polyhedra for ${post.title}`}
-                          width={60}
-                          height={60}
-                          unoptimized
-                          loading={index < 3 ? 'eager' : 'lazy'}
-                          className="polyhedra-gif"
-                        />
-                      ) : (
-                        // Fallback placeholder for posts without GIF
-                        <div className="w-full h-full bg-gray-900 flex items-center justify-center">
-                          <span className="text-gray-600 text-xs">◇</span>
-                        </div>
-                      )}
+                      <PolyhedraCanvas 
+                        shape={post.polyhedraShape || 'cube'} 
+                        size={60}
+                        index={index}
+                      />
                     </div>
                     
                     {/* Title and subtitle */}

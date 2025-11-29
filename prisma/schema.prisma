@@ -13,7 +13,7 @@ model Post {
   slug         String     @unique
   markdown     String
   status       String     @default("draft")
-  polyhedraGif String?    // e.g., "post-abc123.gif"
+  polyhedraShape String?  // e.g., "dodecahedron"
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   publishedAt  DateTime?
