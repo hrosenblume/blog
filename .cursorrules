@@ -198,12 +198,35 @@ useKeyboard([
 - Consistent spacing (Tailwind defaults)
 - Smooth theme transitions (150ms)
 
+## Environment Variables
+
+### Pattern
+- `.env.example` — Template with empty values, **committed to git**
+- `.env.local` — Actual values, **gitignored**
+
+### Rules
+- **NEVER** put sensitive values (API keys, secrets, emails) in code — use env vars
+- **ALWAYS** keep `.env.example` updated when adding new env vars
+- Use `NEXT_PUBLIC_` prefix for client-side accessible vars
+- Document each env var with a comment in `.env.example`
+
+### Current Variables
+```env
+DATABASE_URL          # Prisma database connection
+NEXTAUTH_URL          # NextAuth base URL
+NEXTAUTH_SECRET       # NextAuth encryption secret
+GOOGLE_CLIENT_ID      # OAuth client ID
+GOOGLE_CLIENT_SECRET  # OAuth client secret
+NEXT_PUBLIC_CONTACT_EMAIL  # Public contact email (mailto links)
+```
+
 ## Don't
 - Don't use inline styles
 - Don't add unnecessary dependencies
 - Don't put business logic in components (use lib/ or utils/)
 - Don't hardcode the author name/bio (use `lib/homepage.ts`)
-- Don't commit .env files or dev.db
+- Don't commit `.env` or `.env.local` files (only `.env.example`)
+- Don't put sensitive data in code — use environment variables
 - Don't use raw Tailwind font sizes (`text-sm`, `text-lg`) — use the typography scale
 - Don't duplicate values — if something is used twice, abstract it
 - Don't define keyboard shortcuts inline — add to `lib/keyboard/shortcuts.ts`
@@ -223,6 +246,7 @@ useKeyboard([
   - `lib/keyboard/shortcuts.ts` for keyboard shortcuts
 - Use `TapLink` for links that need iOS scroll detection
 - Support `prefers-reduced-motion` for animations
+- Update `.env.example` when adding new environment variables
 
 ## Touch Handling
 - `TapLink` component handles iOS Safari tap vs scroll ambiguity
