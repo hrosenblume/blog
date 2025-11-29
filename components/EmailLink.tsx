@@ -5,3 +5,4 @@ export const EmailLink = ({ className }: { className?: string }) => (
     Email
   </button>
 )
+

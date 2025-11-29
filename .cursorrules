@@ -122,3 +122,4 @@ export async function GET() {
 - Write self-documenting code
 - Prefer server-side operations for data mutations
 
+

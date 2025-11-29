@@ -2,13 +2,29 @@
  * Generate animated rotating 3D polyhedra GIFs with cylindrical edges.
  * Port of the Python generator to Node.js using canvas.
  * 
- * Usage: node scripts/generate-polyhedra.js [options]
- *   --shape <name>    Specific shape (tetrahedron, cube, octahedron, icosahedron, dodecahedron, cuboctahedron)
- *   --size <px>       Image size in pixels (default: 300)
- *   --frames <n>      Number of animation frames (default: 36)
+ * Now includes 175+ unique polyhedra shapes:
+ * - 5 Platonic solids
+ * - 13 Archimedean solids
+ * - 13 Catalan solids
+ * - 4 Kepler-Poinsot star polyhedra
+ * - 92 Johnson solids (J1-J92)
+ * - 48+ parametric shapes (prisms, antiprisms, pyramids, bipyramids, trapezohedra)
+ * 
+ * Can be used as a module:
+ *   const { generatePolyhedronGif } = require('./scripts/generate-polyhedra');
+ *   await generatePolyhedronGif({ output: 'public/polyhedra/my-post.gif' });
+ * 
+ * Or via CLI:
+ *   node scripts/generate-polyhedra.js [options]
+ *   --shape <name>    Specific shape name (use --list to see all)
+ *   --list            List all available shapes
+ *   --category <cat>  Random from category (platonic, archimedean, catalan, keplerPoinsot, johnson, parametric)
+ *   --size <px>       Image size in pixels (default: 60)
+ *   --frames <n>      Number of animation frames (default: 24)
  *   --output <path>   Output file path (default: polyhedra/demo.gif)
  *   --transparent     Use transparent background
  *   --bg <color>      Background color hex (default: #000000)
+ *   --duration <ms>   Frame duration in ms (default: 100)
  */
 
 const { createCanvas } = require('canvas');
@@ -16,96 +32,8 @@ const GIFEncoder = require('gif-encoder-2');
 const fs = require('fs');
 const path = require('path');
 
-// Golden ratio for icosahedron/dodecahedron
-const PHI = (1 + Math.sqrt(5)) / 2;
-
-// Polyhedra vertex coordinates
-const POLYHEDRA = {
-  tetrahedron: {
-    vertices: [
-      [1, 1, 1], [1, -1, -1], [-1, 1, -1], [-1, -1, 1]
-    ],
-    edges: [
-      [0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]
-    ]
-  },
-  cube: {
-    vertices: [
-      [-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1],
-      [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1]
-    ],
-    edges: [
-      [0, 1], [1, 2], [2, 3], [3, 0],
-      [4, 5], [5, 6], [6, 7], [7, 4],
-      [0, 4], [1, 5], [2, 6], [3, 7]
-    ]
-  },
-  octahedron: {
-    vertices: [
-      [1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]
-    ],
-    edges: [
-      [0, 2], [0, 3], [0, 4], [0, 5],
-      [1, 2], [1, 3], [1, 4], [1, 5],
-      [2, 4], [2, 5], [3, 4], [3, 5]
-    ]
-  },
-  icosahedron: {
-    vertices: [
-      [0, 1, PHI], [0, -1, PHI], [0, 1, -PHI], [0, -1, -PHI],
-      [1, PHI, 0], [-1, PHI, 0], [1, -PHI, 0], [-1, -PHI, 0],
-      [PHI, 0, 1], [-PHI, 0, 1], [PHI, 0, -1], [-PHI, 0, -1]
-    ],
-    edges: [
-      [0, 1], [0, 4], [0, 5], [0, 8], [0, 9],
-      [1, 6], [1, 7], [1, 8], [1, 9],
-      [2, 3], [2, 4], [2, 5], [2, 10], [2, 11],
-      [3, 6], [3, 7], [3, 10], [3, 11],
-      [4, 5], [4, 8], [4, 10],
-      [5, 9], [5, 11],
-      [6, 7], [6, 8], [6, 10],
-      [7, 9], [7, 11],
-      [8, 10], [9, 11]
-    ]
-  },
-  dodecahedron: {
-    vertices: [
-      // Cube vertices
-      [1, 1, 1], [1, 1, -1], [1, -1, 1], [1, -1, -1],
-      [-1, 1, 1], [-1, 1, -1], [-1, -1, 1], [-1, -1, -1],
-      // Rectangle vertices (3 rectangles)
-      [0, PHI, 1/PHI], [0, PHI, -1/PHI], [0, -PHI, 1/PHI], [0, -PHI, -1/PHI],
-      [1/PHI, 0, PHI], [-1/PHI, 0, PHI], [1/PHI, 0, -PHI], [-1/PHI, 0, -PHI],
-      [PHI, 1/PHI, 0], [PHI, -1/PHI, 0], [-PHI, 1/PHI, 0], [-PHI, -1/PHI, 0]
-    ],
-    edges: [
-      [0, 8], [0, 12], [0, 16],
-      [1, 9], [1, 14], [1, 16],
-      [2, 10], [2, 12], [2, 17],
-      [3, 11], [3, 14], [3, 17],
-      [4, 8], [4, 13], [4, 18],
-      [5, 9], [5, 15], [5, 18],
-      [6, 10], [6, 13], [6, 19],
-      [7, 11], [7, 15], [7, 19],
-      [8, 9], [10, 11], [12, 13], [14, 15], [16, 17], [18, 19]
-    ]
-  },
-  cuboctahedron: {
-    vertices: [
-      [1, 1, 0], [1, -1, 0], [-1, 1, 0], [-1, -1, 0],
-      [1, 0, 1], [1, 0, -1], [-1, 0, 1], [-1, 0, -1],
-      [0, 1, 1], [0, 1, -1], [0, -1, 1], [0, -1, -1]
-    ],
-    edges: [
-      [0, 4], [0, 5], [0, 8], [0, 9],
-      [1, 4], [1, 5], [1, 10], [1, 11],
-      [2, 6], [2, 7], [2, 8], [2, 9],
-      [3, 6], [3, 7], [3, 10], [3, 11],
-      [4, 8], [4, 10], [5, 9], [5, 11],
-      [6, 8], [6, 10], [7, 9], [7, 11]
-    ]
-  }
-};
+// Import polyhedra from modular structure
+const { POLYHEDRA, SHAPE_NAMES, CATEGORIES, getRandomShape, getRandomShapeFromCategory } = require('./polyhedra');
 
 // Colors matching the reference images - pure saturated colors
 const EDGE_COLORS = [
@@ -287,32 +215,60 @@ function shuffleArray(array) {
   return arr;
 }
 
+// Default options optimized for essay cards (SEO/performance)
+const DEFAULT_OPTIONS = {
+  shape: null,      // Random if not specified
+  category: null,   // Random from all if not specified
+  size: 60,         // 60x60 for essay cards
+  frames: 24,       // Reduced from 36 for smaller file size (~33% smaller)
+  bgColor: '#000000',
+  transparent: true, // Transparent background for essay cards
+  duration: 100,    // 100ms per frame (smooth 10fps)
+  output: 'polyhedra/demo.gif'
+};
+
 async function generatePolyhedronGif(options = {}) {
   const {
-    shape = null,
-    size = 300,
-    frames = 36,
-    bgColor = '#000000',
-    transparent = false,
-    duration = 80,
-    output = 'polyhedra/demo.gif'
+    shape = DEFAULT_OPTIONS.shape,
+    category = DEFAULT_OPTIONS.category,
+    size = DEFAULT_OPTIONS.size,
+    frames = DEFAULT_OPTIONS.frames,
+    bgColor = DEFAULT_OPTIONS.bgColor,
+    transparent = DEFAULT_OPTIONS.transparent,
+    duration = DEFAULT_OPTIONS.duration,
+    output = DEFAULT_OPTIONS.output
   } = options;
   
-  // Pick random shape if not specified
-  const shapes = Object.keys(POLYHEDRA);
-  const shapeName = shape || shapes[Math.floor(Math.random() * shapes.length)];
+  // Pick shape: explicit > category > random
+  let shapeName;
+  if (shape) {
+    shapeName = shape;
+  } else if (category) {
+    shapeName = getRandomShapeFromCategory(category);
+  } else {
+    shapeName = getRandomShape();
+  }
   
   const polyhedron = POLYHEDRA[shapeName];
   if (!polyhedron) {
-    throw new Error(`Unknown shape: ${shapeName}. Available: ${shapes.join(', ')}`);
+    throw new Error(`Unknown shape: ${shapeName}. Use --list to see available shapes.`);
   }
   
   let vertices = polyhedron.vertices.map(v => [...v]);
   const edges = polyhedron.edges;
   
-  // Normalize vertices to unit sphere
-  const maxDist = Math.max(...vertices.map(v => Math.sqrt(v[0]**2 + v[1]**2 + v[2]**2)));
-  vertices = vertices.map(v => v.map(c => c / maxDist));
+  // Center vertices at origin
+  const xs = vertices.map(v => v[0]);
+  const ys = vertices.map(v => v[1]);
+  const zs = vertices.map(v => v[2]);
+  const centerX = (Math.min(...xs) + Math.max(...xs)) / 2;
+  const centerY = (Math.min(...ys) + Math.max(...ys)) / 2;
+  const centerZ = (Math.min(...zs) + Math.max(...zs)) / 2;
+  vertices = vertices.map(v => [v[0] - centerX, v[1] - centerY, v[2] - centerZ]);
+  
+  // Normalize by circumradius (max distance from center) so rotation doesn't cause clipping
+  const circumradius = Math.max(...vertices.map(v => Math.sqrt(v[0]**2 + v[1]**2 + v[2]**2)));
+  vertices = vertices.map(v => v.map(c => c / circumradius));
   
   // Assign colors to edges - cycle through colors, then shuffle
   let edgeColors = edges.map((_, i) => EDGE_COLORS[i % EDGE_COLORS.length]);
@@ -384,6 +340,8 @@ function parseArgs() {
     const arg = args[i];
     if (arg === '--shape' && args[i + 1]) {
       options.shape = args[++i];
+    } else if (arg === '--category' && args[i + 1]) {
+      options.category = args[++i];
     } else if (arg === '--size' && args[i + 1]) {
       options.size = parseInt(args[++i], 10);
     } else if (arg === '--frames' && args[i + 1]) {
@@ -396,19 +354,34 @@ function parseArgs() {
       options.transparent = true;
     } else if (arg === '--duration' && args[i + 1]) {
       options.duration = parseInt(args[++i], 10);
+    } else if (arg === '--list') {
+      console.log(`\nAvailable shapes (${SHAPE_NAMES.length} total):\n`);
+      for (const [cat, shapes] of Object.entries(CATEGORIES)) {
+        console.log(`${cat} (${shapes.length}):`);
+        console.log(`  ${shapes.join(', ')}\n`);
+      }
+      process.exit(0);
     } else if (arg === '--help') {
       console.log(`
 Usage: node scripts/generate-polyhedra.js [options]
 
 Options:
-  --shape <name>    Shape: tetrahedron, cube, octahedron, icosahedron, dodecahedron, cuboctahedron
-  --size <px>       Image size (default: 300)
-  --frames <n>      Animation frames (default: 36)
-  --output <path>   Output path (default: polyhedra/demo.gif)
-  --bg <hex>        Background color (default: #000000)
-  --transparent     Transparent background
-  --duration <ms>   Frame duration in ms (default: 80)
-  --help            Show this help
+  --shape <name>      Specific shape name (use --list to see all ${SHAPE_NAMES.length} shapes)
+  --category <cat>    Random from category: platonic, archimedean, catalan, keplerPoinsot, johnson, parametric
+  --list              List all available shapes by category
+  --size <px>         Image size (default: 60)
+  --frames <n>        Animation frames (default: 24)
+  --output <path>     Output path (default: polyhedra/demo.gif)
+  --bg <hex>          Background color (default: #000000)
+  --transparent       Transparent background
+  --duration <ms>     Frame duration in ms (default: 100)
+  --help              Show this help
+
+Examples:
+  node scripts/generate-polyhedra.js                          # Random shape
+  node scripts/generate-polyhedra.js --shape cube             # Specific shape
+  node scripts/generate-polyhedra.js --category johnson       # Random Johnson solid
+  node scripts/generate-polyhedra.js --list                   # Show all shapes
 `);
       process.exit(0);
     }
@@ -417,10 +390,14 @@ Options:
   return options;
 }
 
-// Run
-const options = parseArgs();
-generatePolyhedronGif(options).catch(err => {
-  console.error('Error:', err.message);
-  process.exit(1);
-});
+// Export for module usage
+module.exports = { generatePolyhedronGif, POLYHEDRA, SHAPE_NAMES, CATEGORIES, DEFAULT_OPTIONS };
 
+// Run CLI only when executed directly (not imported)
+if (require.main === module) {
+  const options = parseArgs();
+  generatePolyhedronGif(options).catch(err => {
+    console.error('Error:', err.message);
+    process.exit(1);
+  });
+}

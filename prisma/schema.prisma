@@ -8,15 +8,16 @@ datasource db {
 }
 
 model Post {
-  id          String     @id @default(uuid())
-  title       String
-  slug        String     @unique
-  markdown    String
-  status      String     @default("draft")
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  publishedAt DateTime?
-  revisions   Revision[]
+  id           String     @id @default(uuid())
+  title        String
+  slug         String     @unique
+  markdown     String
+  status       String     @default("draft")
+  polyhedraGif String?    // e.g., "post-abc123.gif"
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  publishedAt  DateTime?
+  revisions    Revision[]
 }
 
 model Revision {

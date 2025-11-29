@@ -80,3 +80,10 @@ body {
   @apply my-8 border-gray-200 dark:border-gray-800;
 }
 
+/* Accessibility: Pause GIF animations for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .polyhedra-gif {
+    animation-play-state: paused !important;
+  }
+}
+

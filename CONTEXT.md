@@ -294,3 +294,4 @@ This also creates the initial admin user (`your-email@example.com`).
 3. **Design System**: Extract tokens and patterns from Figma
 4. **Image Management**: Better upload/gallery experience
 
+

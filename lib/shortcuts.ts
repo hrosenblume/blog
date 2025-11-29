@@ -6,3 +6,4 @@ export const SHORTCUTS = {
   NEXT: { key: 'ArrowRight' },
 } as const
 
+

@@ -1,7 +1,6 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { prisma } from '@/lib/db'
-import { wordCount } from '@/lib/markdown'
-import { formatDate } from '@/lib/utils/format'
 import { EmailLink } from '@/components/EmailLink'
 import { SecretNav } from '@/components/SecretNav'
 import { HomeKeyboardNav } from '@/components/HomeKeyboardNav'
@@ -17,12 +16,10 @@ async function getPublishedPosts() {
       title: true,
       slug: true,
       markdown: true,
-      publishedAt: true,
+      polyhedraGif: true,
     },
   })
 }
-
-const getReadTime = (md: string) => `${Math.ceil(wordCount(md) / 200)} min read`
 
 function getSubtitle(markdown: string): string {
   // Get first paragraph as subtitle
@@ -70,30 +67,46 @@ export default async function Home() {
             <p className="text-gray-500">No essays yet.</p>
           ) : (
             <div className="space-y-0">
-              {posts.map((post) => (
+              {posts.map((post, index) => (
                 <Link
                   key={post.id}
                   href={`/e/${post.slug}`}
-                  className="group block w-full text-left border-b border-gray-200 dark:border-gray-800 last:border-b-0 transition-all hover:bg-gray-50 dark:hover:bg-gray-900/30 -mx-4 px-4 py-6 rounded"
+                  className="group block w-full text-left border-b border-gray-200 dark:border-gray-800 last:border-b-0 transition-all hover:bg-gray-50 dark:hover:bg-gray-900/30 -mx-4 px-4 py-5 rounded"
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <h3 className="font-medium mb-2 transition-colors dark:text-white group-hover:text-gray-600 dark:group-hover:text-gray-400">
+                  <div className="flex items-center gap-4">
+                    {/* Polyhedra GIF */}
+                    <div className="flex-shrink-0 w-[60px] h-[60px] rounded overflow-hidden">
+                      {post.polyhedraGif ? (
+                        <Image
+                          src={`/polyhedra/${post.polyhedraGif}`}
+                          alt={`Animated polyhedra for ${post.title}`}
+                          width={60}
+                          height={60}
+                          unoptimized
+                          loading={index < 3 ? 'eager' : 'lazy'}
+                          className="polyhedra-gif"
+                        />
+                      ) : (
+                        // Fallback placeholder for posts without GIF
+                        <div className="w-full h-full bg-gray-900 flex items-center justify-center">
+                          <span className="text-gray-600 text-xs">◇</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Title and subtitle */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium mb-1 transition-colors dark:text-white group-hover:text-gray-600 dark:group-hover:text-gray-400">
                         {post.title}
                       </h3>
-                      <p className="text-gray-500 dark:text-gray-400 text-sm mb-2">
+                      <p className="text-gray-500 dark:text-gray-400 text-sm truncate">
                         {getSubtitle(post.markdown)}
                       </p>
-                      <div className="flex items-center gap-3 text-sm text-gray-400">
-                        {post.publishedAt && (
-                          <time>{formatDate(post.publishedAt, true)}</time>
-                        )}
-                        <span>·</span>
-                        <span>{getReadTime(post.markdown)}</span>
-                      </div>
                     </div>
+                    
+                    {/* Arrow */}
                     <svg 
-                      className="w-5 h-5 text-gray-400 dark:text-gray-600 group-hover:text-gray-900 dark:group-hover:text-white group-hover:translate-x-1 transition-all mt-1 flex-shrink-0" 
+                      className="w-5 h-5 text-gray-400 dark:text-gray-600 group-hover:text-gray-900 dark:group-hover:text-white group-hover:translate-x-1 transition-all flex-shrink-0" 
                       fill="none" 
                       stroke="currentColor" 
                       viewBox="0 0 24 24"
