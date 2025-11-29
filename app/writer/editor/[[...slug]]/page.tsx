@@ -11,6 +11,8 @@ import { Spinner } from '@/components/Spinner'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { PolyhedraCanvas } from '@/components/PolyhedraCanvas'
 import { getRandomShape } from '@/lib/polyhedra/shapes'
+import { confirmPublish, confirmUnpublish } from '@/lib/utils/confirm'
+import { formatSavedTime } from '@/lib/utils/format'
 
 // Success screen shown after publishing
 function PublishSuccess() {
@@ -60,6 +62,9 @@ export default function Editor() {
   
   // Track the current URL slug for redirect detection
   const urlSlugRef = useRef(postSlug)
+  
+  // Textarea ref for auto-resize
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   // Load existing post
   useEffect(() => {
@@ -78,6 +83,7 @@ export default function Editor() {
         setNextSlug(data.nextSlug)
         setIsManualSlug(true)
         setLoading(false)
+        setLastSaved(new Date(data.updatedAt))
         lastSavedContent.current = { title: data.title, subtitle: data.subtitle || '', slug: data.slug, markdown: data.markdown, polyhedraShape: data.polyhedraShape || '' }
         urlSlugRef.current = data.slug
       })
@@ -105,6 +111,7 @@ export default function Editor() {
     { ...SHORTCUTS.TOGGLE_VIEW, handler: () => { if (status === 'published' && slug) router.push(`/e/${slug}`) } },
     { ...SHORTCUTS.PREV, handler: () => { if (prevSlug) router.push(`/writer/editor/${prevSlug}`) } },
     { ...SHORTCUTS.NEXT, handler: () => { if (nextSlug) router.push(`/writer/editor/${nextSlug}`) } },
+    { ...SHORTCUTS.ESCAPE_BACK, handler: () => router.push('/writer') },
   ])
 
   const handleSlugChange = useCallback((value: string) => {
@@ -119,6 +126,10 @@ export default function Editor() {
     }
     if (!slug.trim()) {
       alert('Slug is required')
+      return
+    }
+
+    if (publishStatus === 'published' && !confirmPublish()) {
       return
     }
 
@@ -178,6 +189,26 @@ export default function Editor() {
     return () => clearTimeout(timeout)
   }, [markdown, title, postSlug, status, handleSave])
 
+  // Auto-resize textarea to fit content
+  useEffect(() => {
+    const textarea = textareaRef.current
+    if (textarea) {
+      textarea.style.height = 'auto'
+      textarea.style.height = `${textarea.scrollHeight}px`
+    }
+  }, [markdown])
+
+  const handleUnpublish = useCallback(async () => {
+    if (!confirmUnpublish(title)) return
+    
+    await fetch(`/api/posts/by-slug/${urlSlugRef.current}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'draft' }),
+    })
+    router.push('/writer')
+  }, [title, router])
+
   // Loading state
   if (loading) {
     return (
@@ -195,7 +226,7 @@ export default function Editor() {
   const words = wordCount(markdown)
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="h-screen flex flex-col">
       <header className="border-b border-gray-200 dark:border-gray-800 px-6 py-4">
         <div className="flex items-center justify-between">
           <Link
@@ -238,7 +269,7 @@ export default function Editor() {
               loading={saving}
               disabled={status === 'published' && !hasUnsavedChanges}
             >
-              {status === 'published' ? (hasUnsavedChanges ? 'Update' : 'Saved') : 'Publish'}
+              {status === 'published' && !hasUnsavedChanges ? 'Published' : 'Publish'}
             </Button>
           </div>
         </div>
@@ -273,66 +304,88 @@ export default function Editor() {
               />
 
               <textarea
+                ref={textareaRef}
                 value={markdown}
                 onChange={e => setMarkdown(e.target.value)}
                 placeholder="Write your story in Markdown..."
-                className="w-full min-h-[500px] bg-transparent border-none outline-none resize-none placeholder-gray-400 leading-relaxed"
+                className="w-full min-h-[500px] bg-transparent border-none outline-none resize-none placeholder-gray-400 leading-relaxed overflow-hidden"
               />
             </>
           )}
 
-          <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800 space-y-6">
+          <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800 space-y-4">
             {/* URL */}
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-gray-500">URL:</span>
-              <span className="text-gray-400">/e/</span>
-              <input
-                type="text"
-                value={slug}
-                onChange={e => handleSlugChange(e.target.value)}
-                disabled={status === 'published'}
-                placeholder="post-slug"
-                className={`flex-1 bg-transparent border-none outline-none placeholder-gray-400 ${
-                  status === 'published'
-                    ? 'text-gray-400 dark:text-gray-600 cursor-not-allowed'
-                    : 'text-gray-600 dark:text-gray-400'
-                }`}
-              />
-              {status === 'published' && (
-                <span className="text-xs text-gray-400 ml-2">Locked</span>
-              )}
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500 w-14">URL</span>
+                <span className="text-gray-400">/e/</span>
+                {status === 'published' ? (
+                  <span className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400">
+                    {slug}
+                    <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </span>
+                ) : (
+                  <input
+                    type="text"
+                    value={slug}
+                    onChange={e => handleSlugChange(e.target.value)}
+                    placeholder="post-slug"
+                    className="flex-1 bg-transparent border-none outline-none placeholder-gray-400 text-gray-600 dark:text-gray-400"
+                  />
+                )}
+              </div>
             </div>
 
             {/* Shape */}
-            <div className="flex items-center gap-4 text-sm">
-              <span className="text-gray-500">Shape:</span>
-              <div className="flex items-center gap-3">
-                <PolyhedraCanvas shape={polyhedraShape} size={40} />
-                <span className="text-gray-600 dark:text-gray-400 font-mono text-xs w-48 truncate">
-                  {polyhedraShape}
-                </span>
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500 w-14">Shape</span>
+                <div className="flex items-center gap-2">
+                  <PolyhedraCanvas shape={polyhedraShape} size={36} />
+                  <span className="text-gray-600 dark:text-gray-400 font-mono text-xs">
+                    {polyhedraShape}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPolyhedraShape(getRandomShape())}
+                className="px-2.5 py-1 text-xs rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              >
+                Regenerate
+              </button>
+            </div>
+
+            {/* Status */}
+            {status === 'published' && (
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-500 w-14">Status</span>
+                  <span className="text-green-600 dark:text-green-400">Published</span>
+                </div>
                 <button
                   type="button"
-                  onClick={() => setPolyhedraShape(getRandomShape())}
-                  className="px-2 py-1 text-xs rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  onClick={handleUnpublish}
+                  className="px-2.5 py-1 text-xs rounded bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors"
                 >
-                  Regenerate
+                  Unpublish
                 </button>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </main>
 
       <footer className="border-t border-gray-200 dark:border-gray-800 px-6 py-3">
-        <div className="max-w-2xl mx-auto flex items-center justify-between text-sm text-gray-500">
+        <div className="flex items-center justify-between text-sm text-gray-500">
           <span>{words} words</span>
           {lastSaved && (
-            <span>Saved {lastSaved.toLocaleTimeString()}</span>
+            <span>Saved {formatSavedTime(lastSaved)}</span>
           )}
         </div>
       </footer>
     </div>
   )
 }
-

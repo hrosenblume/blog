@@ -18,7 +18,24 @@ export function formatRelativeTime(isoDate: string): string {
 export const formatDate = (date: Date, short = false) =>
   date.toLocaleDateString('en-US', { month: short ? 'short' : 'long', year: 'numeric' })
 
-export const formatNumber = (num: number) =>
-  num >= 1000 ? (num / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : num.toString()
+export function formatNumber(num: number): string {
+  if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + 'M'
+  if (num >= 1_000) return (num / 1_000).toFixed(1) + 'K'
+  return num.toString()
+}
 
-
+export function formatSavedTime(date: Date): string {
+  const now = new Date()
+  const isToday = date.toDateString() === now.toDateString()
+  
+  if (isToday) {
+    return date.toLocaleTimeString()
+  }
+  
+  return date.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+}

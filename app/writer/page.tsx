@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { Spinner } from '@/components/Spinner'
 import { Dropdown, DropdownItem } from '@/components/Dropdown'
 import { formatRelativeTime, formatNumber } from '@/lib/utils/format'
+import { confirmPublish, confirmUnpublish } from '@/lib/utils/confirm'
 import { useKeyboard } from '@/lib/keyboard'
 import { SHORTCUTS } from '@/lib/shortcuts'
 
@@ -71,12 +72,26 @@ export default function Dashboard() {
   }
 
   async function handleUnpublish(id: string) {
+    const post = posts.find(p => p.id === id)
+    if (!post || !confirmUnpublish(post.title)) return
+    
     await fetch(`/api/posts/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: 'draft' }),
     })
     setPosts(posts.map(p => p.id === id ? { ...p, status: 'draft' as const } : p))
+  }
+
+  async function handlePublish(id: string) {
+    if (!confirmPublish()) return
+    
+    await fetch(`/api/posts/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'published' }),
+    })
+    setPosts(posts.map(p => p.id === id ? { ...p, status: 'published' as const } : p))
   }
 
   if (loading) {
@@ -129,7 +144,7 @@ export default function Dashboard() {
         {drafts.length > 0 ? (
           <div className="space-y-0">
             {drafts.map(post => (
-              <PostItem key={post.id} post={post} onDelete={handleDelete} onUnpublish={handleUnpublish} />
+              <PostItem key={post.id} post={post} onDelete={handleDelete} onUnpublish={handleUnpublish} onPublish={handlePublish} />
             ))}
           </div>
         ) : (
@@ -142,7 +157,7 @@ export default function Dashboard() {
         {published.length > 0 ? (
           <div className="space-y-0">
             {published.map(post => (
-              <PostItem key={post.id} post={post} onDelete={handleDelete} onUnpublish={handleUnpublish} />
+              <PostItem key={post.id} post={post} onDelete={handleDelete} onUnpublish={handleUnpublish} onPublish={handlePublish} />
             ))}
           </div>
         ) : (
@@ -156,11 +171,13 @@ export default function Dashboard() {
 function PostItem({ 
   post, 
   onDelete, 
-  onUnpublish 
+  onUnpublish,
+  onPublish,
 }: { 
   post: Post
   onDelete: (id: string) => void
   onUnpublish: (id: string) => void
+  onPublish: (id: string) => void
 }) {
   return (
     <div className="flex items-center justify-between py-4 border-b border-gray-100 dark:border-gray-800 group">
@@ -190,6 +207,11 @@ function PostItem({
         >
           Edit
         </Link>
+        {post.status === 'draft' && (
+          <DropdownItem onClick={() => onPublish(post.id)}>
+            Publish
+          </DropdownItem>
+        )}
         {post.status === 'published' && (
           <>
             <Link
