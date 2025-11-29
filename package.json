@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "concurrently \"next dev --hostname 0.0.0.0\" \"browser-sync start --proxy localhost:3000 --port 3001 --files 'app/**/*,lib/**/*,components/**/*' --no-open --no-ui --no-inject-changes\"",
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
@@ -30,7 +30,9 @@
     "@types/sanitize-html": "^2.16.0",
     "autoprefixer": "^10.4.0",
     "better-sqlite3": "^12.4.6",
+    "browser-sync": "^3.0.4",
     "canvas": "^3.2.0",
+    "concurrently": "^9.2.1",
     "gif-encoder-2": "^1.0.5",
     "postcss": "^8.4.0",
     "prisma": "^4.16.2",

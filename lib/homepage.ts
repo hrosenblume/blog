@@ -26,7 +26,7 @@ export const HOMEPAGE = {
       /*{ text: 'A decade into building, I'm writing about it.' },*/
       /*{ text: 'Ten years into building, I\'m writing about it too.' },*/
       /*{ text: 'Ten years into building, I\'m sharing my Notes app.' },*/
-      { text: "Ten years into building, I'm sharing my notes." },
+      { text: "Ten years into building, I share my private notes." },
     ],
     // Paragraph 3
     [

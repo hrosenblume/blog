@@ -254,3 +254,9 @@ NEXT_PUBLIC_CONTACT_EMAIL  # Public contact email (mailto links)
 - `TapLink` component handles iOS Safari tap vs scroll ambiguity
 - Use it for nav links where scroll might be confused with tap
 - Works with both internal routes and external URLs
+
+## Git Workflow
+- When user types "g", commit all changes and push to `origin main`
+- **Do NOT auto-commit** after making changes — wait for explicit "g"
+- Before committing: read ALL modified files from `git status`
+- Commit messages should be comprehensive and descriptive
