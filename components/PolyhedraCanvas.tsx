@@ -24,8 +24,8 @@ const FALLBACK_COUNT = 6
 
 // Rotation speeds (radians per millisecond)
 const BASE_SPEED = (2 * Math.PI) / 4000    // Full rotation in 4 seconds
-const HOVER_SPEED = (2 * Math.PI) / 750    // Full rotation in 0.75 seconds (~5x base)
-const ACCELERATION = 0.008                  // How fast speed changes (higher = snappier)
+const HOVER_SPEED = (2 * Math.PI) / 375    // Full rotation in 0.375 seconds (~10x base)
+const ACCELERATION = 0.004                  // How fast speed changes (higher = snappier)
 
 export function PolyhedraCanvas({ shape, size = 60, className = '', index = 0, hovered = false }: PolyhedraCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
