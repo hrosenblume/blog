@@ -1,5 +1,7 @@
 # Project Context
 
+> ⚠️ **This file is committed to git.** Do not add sensitive data (API keys, emails, secrets). Use environment variables instead.
+
 ## Overview
 
 **Hunter Rosenblume's personal essay blog** — a clean, minimal writing platform built with Next.js 13 (App Router), Prisma (SQLite), NextAuth.js (Google OAuth), and Tailwind CSS. Features animated 3D polyhedra, keyboard-first navigation, and a DRY configuration system.
