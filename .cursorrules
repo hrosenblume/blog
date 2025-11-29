@@ -1,7 +1,7 @@
 # Cursor Rules for Hunter's Blog
 
 ## Project Overview
-Personal essay blog built with Next.js 13 (App Router), Prisma (SQLite), NextAuth.js (Google OAuth), and Tailwind CSS.
+Personal essay blog built with Next.js 13 (App Router), Prisma (SQLite), NextAuth.js (Google OAuth), and Tailwind CSS. Features animated 3D polyhedra, keyboard-first navigation, and DRY configuration patterns.
 
 ## Tech Stack
 - **Framework**: Next.js 13 with App Router
@@ -9,6 +9,7 @@ Personal essay blog built with Next.js 13 (App Router), Prisma (SQLite), NextAut
 - **Auth**: NextAuth.js with Google OAuth
 - **Styling**: Tailwind CSS with dark mode (class-based via next-themes)
 - **Markdown**: marked + sanitize-html
+- **3D Graphics**: Canvas API (client-side polyhedra rendering)
 
 ## Code Style
 
@@ -27,13 +28,60 @@ Personal essay blog built with Next.js 13 (App Router), Prisma (SQLite), NextAut
 - Functional components only
 - Props interfaces defined inline or in same file
 - Use `cn()` utility from `@/lib/utils/cn` for conditional classes
-- Components in `/components` are shared; page-specific components stay in route folders
+- Components in `/components` are shared; page-specific components stay in route `_components/` folders
 
 ### Styling
 - Use Tailwind CSS exclusively
 - Dark mode: Use `dark:` prefix (e.g., `dark:bg-gray-900`)
 - Button variants: primary (`bg-gray-900 dark:bg-white`) / secondary (`bg-gray-200 dark:bg-gray-800`)
 - Prose/typography: Use `.prose` class with custom styles in `globals.css`
+
+## DRY Patterns (Critical)
+
+### 1. Typography Scale
+All font sizes are CSS variables in `app/globals.css` exposed as Tailwind utilities:
+
+| Variable | Size | Tailwind Class | Usage |
+|----------|------|----------------|-------|
+| `--font-title` | 24px | `text-title` | Page titles (h1) |
+| `--font-h1` | 22px | `text-h1` | Section headers |
+| `--font-section` | 18px | `text-section` | Essay titles in lists |
+| `--font-body` | 16px | `text-body` | Body text, subtitles |
+
+**Rules:**
+- **NEVER** use raw Tailwind font sizes (`text-sm`, `text-lg`, etc.) — use the custom scale
+- To change a font size globally, edit the CSS variable in `globals.css`
+- Prose headings (h1-h3 inside `.prose`) also use these variables
+
+### 2. Homepage Content
+All homepage content lives in `lib/homepage.ts`:
+- Author name, bio paragraphs, notes section config, footer links
+- Used by: `app/page.tsx`, `components/HomepageFooter.tsx`, `app/e/[slug]/page.tsx`
+- **NEVER** hardcode author name or bio text in components
+
+### 3. Shared Styles
+Reusable Tailwind class strings live in `lib/styles.ts`:
+```typescript
+export const tableHeaderClass = 'px-6 py-3 text-left text-xs ...'
+export const cellClass = 'px-6 py-4 whitespace-nowrap text-sm ...'
+```
+- Used across admin tables
+- Add new shared styles here, not inline
+
+### 4. Keyboard Shortcuts
+Defined in `lib/keyboard/shortcuts.ts`:
+```typescript
+export const SHORTCUTS = {
+  THEME_TOGGLE: { key: '.', meta: true, allowInInput: true },
+  TOGGLE_VIEW: { key: '/', meta: true },
+  NEW_ARTICLE: { key: 'n' },
+  PREV: { key: 'ArrowLeft' },
+  NEXT: { key: 'ArrowRight' },
+  ESCAPE_BACK: { key: 'Escape', allowInInput: true },
+}
+```
+- Use `useKeyboard()` hook from `@/lib/keyboard`
+- Add new shortcuts to `shortcuts.ts`, not inline
 
 ### API Routes
 - Return JSON responses
@@ -49,16 +97,24 @@ Personal essay blog built with Next.js 13 (App Router), Prisma (SQLite), NextAut
 ## File Organization
 ```
 app/
-  api/           # API routes
-  admin/         # Admin-only pages
-  auth/          # Auth pages
-  e/[slug]/      # Public essay pages
-  writer/        # Protected writer dashboard
-components/      # Shared components
-lib/             # Utilities and configs
-prisma/          # Schema and migrations
-public/          # Static assets
-scripts/         # Build/dev scripts
+  _components/     # App-level client components
+  api/             # API routes
+  admin/           # Admin-only pages
+  auth/            # Auth pages
+  e/[slug]/        # Public essay pages
+    _components/   # Essay-specific components
+  writer/          # Protected writer dashboard
+components/        # Shared components
+  admin/           # Admin-specific components
+lib/               # Utilities and configs
+  keyboard/        # Keyboard navigation system
+  polyhedra/       # 3D rendering system
+  utils/           # Utility functions
+prisma/            # Schema and migrations
+public/            # Static assets
+  polyhedra/       # Fallback GIFs
+scripts/           # Build/dev scripts
+  polyhedra/       # Shape generation
 ```
 
 ## Authentication
@@ -101,19 +157,50 @@ export async function GET() {
 }
 ```
 
+### Keyboard Navigation
+```tsx
+import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
+
+useKeyboard([
+  { ...SHORTCUTS.TOGGLE_VIEW, handler: () => router.push('/writer') },
+  { ...SHORTCUTS.PREV, handler: () => { if (prevSlug) router.push(`/e/${prevSlug}`) } },
+])
+```
+
+## Polyhedra System
+
+### Components
+- `PolyhedraCanvas` — Client-side Canvas rendering with hover acceleration
+- Shape data from `lib/polyhedra/shapes.json` (generated)
+
+### Build Scripts
+- `scripts/polyhedra/build-shapes.js` — Generate shapes.json from data/
+- `scripts/assign-shapes.js` — Assign random shapes to posts
+
+### Features
+- 50+ unique shapes
+- Deterministic edge colors based on shape name
+- Hover: accelerates from 4s → 0.375s rotation
+- `prefers-reduced-motion` support
+- IntersectionObserver for visibility-based animation
+
 ## UI Conventions
 - Clean, minimal design
 - White/black backgrounds with gray accents
-- Subtle hover states
+- Subtle hover states (`hover:bg-gray-50 dark:hover:bg-gray-900/30`)
 - Responsive (mobile-first)
 - Consistent spacing (Tailwind defaults)
+- Smooth theme transitions (150ms)
 
 ## Don't
 - Don't use inline styles
 - Don't add unnecessary dependencies
 - Don't put business logic in components (use lib/ or utils/)
-- Don't hardcode the owner email (use env or database)
+- Don't hardcode the author name/bio (use `lib/homepage.ts`)
 - Don't commit .env files or dev.db
+- Don't use raw Tailwind font sizes (`text-sm`, `text-lg`) — use the typography scale
+- Don't duplicate values — if something is used twice, abstract it
+- Don't define keyboard shortcuts inline — add to `lib/keyboard/shortcuts.ts`
 
 ## Do
 - Keep components small and focused
@@ -121,6 +208,17 @@ export async function GET() {
 - Handle loading and error states
 - Write self-documenting code
 - Prefer server-side operations for data mutations
+- Follow DRY: use CSS variables, shared utilities, and centralized configs
+- Check existing abstractions before creating new ones:
+  - `globals.css` for typography and theme
+  - `tailwind.config.js` for custom utilities
+  - `lib/homepage.ts` for homepage content
+  - `lib/styles.ts` for shared class strings
+  - `lib/keyboard/shortcuts.ts` for keyboard shortcuts
+- Use `TapLink` for links that need iOS scroll detection
+- Support `prefers-reduced-motion` for animations
 
-
-
+## Touch Handling
+- `TapLink` component handles iOS Safari tap vs scroll ambiguity
+- Use it for nav links where scroll might be confused with tap
+- Works with both internal routes and external URLs

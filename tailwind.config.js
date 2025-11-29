@@ -12,7 +12,9 @@ module.exports = {
       },
       fontSize: {
         title: 'var(--font-title)',
+        h1: 'var(--font-h1)',
         section: 'var(--font-section)',
+        body: 'var(--font-body)',
       },
     },
   },

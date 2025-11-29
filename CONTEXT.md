@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is **Hunter Rosenblume's personal essay blog** — a clean, minimal writing platform built with **Next.js 13 (App Router)**, **Prisma** (SQLite), **NextAuth.js** (Google OAuth), and **Tailwind CSS**. The blog features a public homepage displaying published essays, a protected writer dashboard for authoring/editing posts in Markdown, and an admin panel for user and content management.
+**Hunter Rosenblume's personal essay blog** — a clean, minimal writing platform built with Next.js 13 (App Router), Prisma (SQLite), NextAuth.js (Google OAuth), and Tailwind CSS. Features animated 3D polyhedra, keyboard-first navigation, and a DRY configuration system.
 
 **Live URLs:**
 - Public site: `/`
@@ -20,8 +20,9 @@ This is **Hunter Rosenblume's personal essay blog** — a clean, minimal writing
 | **Database** | SQLite via Prisma |
 | **Auth** | NextAuth.js with Google OAuth |
 | **Styling** | Tailwind CSS |
-| **Theme** | next-themes (dark mode) |
+| **Theme** | next-themes (dark mode, class-based) |
 | **Markdown** | marked + sanitize-html |
+| **3D Graphics** | Canvas API (client-side polyhedra rendering) |
 | **Build** | standalone output mode |
 
 ---
@@ -30,54 +31,78 @@ This is **Hunter Rosenblume's personal essay blog** — a clean, minimal writing
 
 ```
 blog/
-├── app/                      # Next.js App Router
-│   ├── api/                  # API routes
-│   │   ├── admin/users/      # Admin user management API
+├── app/                        # Next.js App Router
+│   ├── _components/            # App-level client components
+│   │   └── HomeKeyboardNav.tsx
+│   ├── api/                    # API routes
+│   │   ├── admin/              # Admin-only APIs
+│   │   │   ├── revisions/      # Revision management + restore
+│   │   │   └── users/          # User CRUD
 │   │   ├── auth/[...nextauth]/ # NextAuth handler
-│   │   ├── posts/            # Posts CRUD API
-│   │   │   └── [id]/         # Single post operations
-│   │   └── upload/           # Image upload API
-│   ├── admin/                # Admin dashboard (admin-only)
-│   │   ├── layout.tsx        # Admin layout with nav
-│   │   ├── page.tsx          # Admin dashboard home
-│   │   ├── posts/            # Posts management
-│   │   ├── revisions/        # Revisions viewer
-│   │   └── users/            # User management
-│   ├── auth/                 # Auth pages
-│   │   ├── signin/           # Google sign-in page
-│   │   └── error/            # Auth error page
-│   ├── e/[slug]/             # Public essay pages (SSG)
-│   ├── writer/               # Writer dashboard (protected)
-│   │   ├── layout.tsx        # Writer layout with header
-│   │   ├── page.tsx          # Dashboard with post list
-│   │   └── editor/[[...id]]/ # Markdown editor
-│   ├── globals.css           # Global styles + prose styles
-│   ├── layout.tsx            # Root layout
-│   ├── not-found.tsx         # 404 page
-│   ├── page.tsx              # Public homepage
-│   └── providers.tsx         # SessionProvider + ThemeProvider
-├── components/               # Shared UI components
-│   ├── Button.tsx            # Button with variants + loading
-│   ├── Dropdown.tsx          # Dropdown menu component
-│   ├── EmailLink.tsx         # Anti-spam email link
-│   ├── SecretNav.tsx         # Hidden nav (5-tap or Cmd+/)
-│   └── Spinner.tsx           # Loading spinner
-├── lib/                      # Utility libraries
-│   ├── auth.ts               # NextAuth config + isAdmin helper
-│   ├── db.ts                 # Prisma client singleton
-│   ├── markdown.ts           # Markdown rendering + utils
+│   │   ├── posts/              # Posts CRUD + by-slug lookup
+│   │   └── upload/             # Image upload
+│   ├── admin/                  # Admin dashboard (admin-only)
+│   │   ├── posts/              # Posts management
+│   │   ├── revisions/          # Revisions viewer + detail
+│   │   └── users/              # User management
+│   ├── auth/                   # Auth pages
+│   ├── e/[slug]/               # Public essay pages
+│   │   └── _components/        # Essay-specific components
+│   ├── writer/                 # Writer dashboard (protected)
+│   │   └── editor/[[...slug]]/ # Markdown editor
+│   ├── globals.css             # Global styles + typography variables
+│   ├── layout.tsx              # Root layout
+│   ├── not-found.tsx           # 404 page
+│   ├── page.tsx                # Public homepage
+│   └── providers.tsx           # SessionProvider + ThemeProvider
+├── components/                 # Shared UI components
+│   ├── admin/                  # Admin-specific components
+│   ├── Button.tsx              # Button with variants + loading
+│   ├── CenteredPage.tsx        # Loading/centered layout wrapper
+│   ├── DeleteButton.tsx        # Confirm-delete button
+│   ├── Dropdown.tsx            # Dropdown menu
+│   ├── EmailLink.tsx           # Anti-spam email link
+│   ├── EssayLink.tsx           # Homepage essay row with polyhedra
+│   ├── EssayNav.tsx            # Prev/Next essay navigation
+│   ├── HomepageFooter.tsx      # Footer with social links
+│   ├── PolyhedraCanvas.tsx     # 3D polyhedra renderer
+│   ├── SecretNav.tsx           # 5-tap + Cmd+/ navigation
+│   ├── Spinner.tsx             # Loading spinner
+│   ├── StatusBadge.tsx         # Status pill component
+│   ├── TapLink.tsx             # iOS scroll-aware link
+│   └── ThemeToggle.tsx         # Dark mode toggle
+├── lib/                        # Utilities and configs
+│   ├── auth.ts                 # NextAuth config + isAdmin helper
+│   ├── db.ts                   # Prisma client singleton
+│   ├── homepage.ts             # ✏️ Homepage content config (DRY)
+│   ├── keyboard/               # Keyboard navigation system
+│   │   ├── index.ts            # Exports
+│   │   ├── shortcuts.ts        # Shortcut definitions
+│   │   └── useKeyboard.ts      # useKeyboard hook
+│   ├── markdown.ts             # Markdown rendering + utils
+│   ├── polyhedra/              # 3D polyhedra system
+│   │   ├── renderer.ts         # Canvas rendering logic
+│   │   ├── shapes.json         # Generated shape data
+│   │   └── shapes.ts           # Shape getters
+│   ├── styles.ts               # Shared Tailwind class strings (DRY)
 │   └── utils/
-│       ├── cn.ts             # clsx + tailwind-merge
-│       └── format.ts         # Date/number formatting
+│       ├── cn.ts               # clsx + tailwind-merge
+│       ├── confirm.ts          # Confirmation dialogs
+│       └── format.ts           # Date/number formatting
 ├── prisma/
-│   ├── schema.prisma         # Database schema
-│   ├── seed.ts               # Seed script
-│   └── dev.db                # SQLite database (gitignored)
+│   ├── schema.prisma           # Database schema
+│   ├── seed.ts                 # Seed script
+│   └── dev.db                  # SQLite database (gitignored)
 ├── public/
-│   ├── polyhedra/            # Generated polyhedra GIFs
-│   └── uploads/              # User uploaded images (gitignored)
+│   ├── polyhedra/              # Fallback GIFs for no-JS
+│   └── uploads/                # User uploaded images (gitignored)
 └── scripts/
-    └── generate-polyhedra.js # 3D polyhedra GIF generator
+    ├── assign-shapes.js        # Assign polyhedra to posts
+    └── polyhedra/              # Polyhedra build system
+        ├── build-shapes.js     # Generate shapes.json
+        ├── data/               # Shape definitions (Platonic, etc.)
+        ├── index.js            # GIF generation script
+        └── off-parser.js       # OFF file parser
 ```
 
 ---
@@ -86,23 +111,28 @@ blog/
 
 ```prisma
 model Post {
-  id          String     @id @default(uuid())
-  title       String
-  slug        String     @unique
-  markdown    String
-  status      String     @default("draft")  // "draft" or "published"
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  publishedAt DateTime?
-  revisions   Revision[]
+  id             String     @id @default(uuid())
+  title          String
+  subtitle       String?
+  slug           String     @unique
+  markdown       String
+  status         String     @default("draft")  // "draft" or "published"
+  polyhedraShape String?                       // Assigned 3D shape name
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  publishedAt    DateTime?
+  revisions      Revision[]
 }
 
 model Revision {
-  id        String   @id @default(uuid())
-  postId    String
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  markdown  String
-  createdAt DateTime @default(now())
+  id             String   @id @default(uuid())
+  postId         String
+  title          String?
+  subtitle       String?
+  markdown       String
+  polyhedraShape String?
+  createdAt      DateTime @default(now())
+  post           Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 }
 
 model User {
@@ -113,6 +143,118 @@ model User {
   createdAt DateTime @default(now())
 }
 ```
+
+---
+
+## Key Systems
+
+### 1. Typography System (DRY)
+
+All font sizes are defined as CSS variables in `app/globals.css` and exposed as Tailwind utilities via `tailwind.config.js`:
+
+| CSS Variable | Size | Tailwind Class | Usage |
+|-------------|------|----------------|-------|
+| `--font-title` | 24px | `text-title` | Page titles, author name |
+| `--font-h1` | 22px | `text-h1` | Section headers (Notes) |
+| `--font-section` | 18px | `text-section` | Essay titles in lists |
+| `--font-body` | 16px | `text-body` | Body text, subtitles |
+
+**Rules:**
+- Never use raw Tailwind sizes (`text-sm`, `text-lg`) — use the custom scale
+- To change a size globally, edit the CSS variable in `globals.css`
+- Prose headings (h1-h3) also use these variables
+
+### 2. Homepage Configuration (DRY)
+
+All homepage content lives in `lib/homepage.ts`:
+
+```typescript
+export const HOMEPAGE = {
+  name: 'Hunter Rosenblume',
+  bio: [/* paragraphs with text + links */],
+  notes: {
+    title: 'Notes',
+    maxItems: null,  // null = show all
+    emptyMessage: 'No notes yet.',
+  },
+  footerLinks: [
+    { label: 'Twitter', href: '...' },
+    { label: 'Email', type: 'email' },
+  ],
+}
+```
+
+- Used by: `app/page.tsx`, `components/HomepageFooter.tsx`, `app/e/[slug]/page.tsx`
+- Edit this file to change name, bio, or footer links globally
+
+### 3. Polyhedra System
+
+Animated 3D wireframe polyhedra rendered client-side using Canvas:
+
+**Build Pipeline:**
+1. `scripts/polyhedra/data/` — Shape definitions (Platonic, Archimedean, etc.)
+2. `scripts/polyhedra/build-shapes.js` — Generates `lib/polyhedra/shapes.json`
+3. `lib/polyhedra/renderer.ts` — Canvas rendering (rotation, projection, edge colors)
+4. `components/PolyhedraCanvas.tsx` — React wrapper with hover acceleration
+
+**Features:**
+- 50+ unique shapes from geometry families
+- Deterministic edge colors based on shape name
+- Smooth speed transitions on hover (4s → 0.375s rotation)
+- `prefers-reduced-motion` support
+- IntersectionObserver for visibility-based animation
+- `<noscript>` fallback GIFs
+
+**Shape Assignment:**
+- `scripts/assign-shapes.js` — Assigns random shapes to posts
+- Stored in `Post.polyhedraShape` field
+
+### 4. Keyboard Navigation
+
+Centralized keyboard shortcuts in `lib/keyboard/`:
+
+| Shortcut | Action | Context |
+|----------|--------|---------|
+| `Cmd + .` | Toggle theme | Global (works in inputs) |
+| `Cmd + /` | Toggle view | essay↔editor, home↔writer |
+| `←` / `→` | Prev/Next essay | Essay pages |
+| `n` | New article | Writer dashboard |
+| `Escape` | Back to dashboard | Editor |
+
+**Usage:**
+```tsx
+import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
+
+useKeyboard([
+  { ...SHORTCUTS.TOGGLE_VIEW, handler: () => router.push('/writer') },
+])
+```
+
+### 5. Touch Handling (iOS Safari)
+
+`TapLink` component solves iOS touch ambiguity:
+- Detects tap vs scroll by measuring finger movement (< 10px = tap)
+- Works with both internal routes and external URLs
+- Used in: `EssayNav`, `HomepageFooter`, bio links
+
+### 6. Secret Navigation
+
+`SecretNav` wraps the author name on the homepage:
+- **5 quick taps** → Navigate to `/writer`
+- **Cmd + /** → Navigate to `/writer`
+- Remembers last writer path in localStorage
+
+### 7. Shared Styles (DRY)
+
+`lib/styles.ts` exports reusable Tailwind class strings:
+
+```typescript
+export const tableHeaderClass = 'px-6 py-3 text-left text-xs ...'
+export const cellClass = 'px-6 py-4 whitespace-nowrap text-sm ...'
+export const linkClass = 'text-blue-600 hover:text-blue-800 ...'
+```
+
+Used across admin tables for consistent styling.
 
 ---
 
@@ -132,7 +274,7 @@ model User {
 
 ### Protected Routes
 - `/writer/*`: Requires authenticated session
-- `/admin/*`: Requires session + admin role (redirects to `/writer` otherwise)
+- `/admin/*`: Requires session + admin role
 
 ---
 
@@ -142,74 +284,77 @@ model User {
 |----------|--------|-------------|------|
 | `/api/posts` | GET | List all posts | Required |
 | `/api/posts` | POST | Create new post | Required |
-| `/api/posts/[id]` | GET | Get single post | Required |
-| `/api/posts/[id]` | PATCH | Update post | Required |
-| `/api/posts/[id]` | DELETE | Delete post | Required |
+| `/api/posts/[id]` | GET/PATCH/DELETE | Single post CRUD | Required |
+| `/api/posts/by-slug/[slug]` | GET | Get post by slug | Required |
 | `/api/upload` | POST | Upload image | Required |
-| `/api/admin/users` | GET | List users | Admin |
-| `/api/admin/users` | POST | Create user | Admin |
+| `/api/admin/users` | GET/POST | List/create users | Admin |
 | `/api/admin/users/[id]` | PATCH/DELETE | Manage user | Admin |
+| `/api/admin/revisions/[id]` | GET/DELETE | View/delete revision | Admin |
+| `/api/admin/revisions/[id]/restore` | POST | Restore revision | Admin |
 
 ---
 
 ## Key Features
 
 ### Public Homepage (`app/page.tsx`)
-- Displays published essays with title, subtitle, date, read time
+- Displays published essays with polyhedra, title, subtitle
 - Uses `revalidate = 60` for ISR
-- Links to `/e/[slug]` for each essay
-- Social links in footer (Twitter, LinkedIn, Email)
-
-### Secret Navigation (`components/SecretNav.tsx`)
-- **5 taps** on "Hunter Rosenblume" → `/writer`
-- **Cmd + /** keyboard shortcut → `/writer`
-- Remembers last writer path in localStorage
+- Configurable via `lib/homepage.ts`
 
 ### Writer Dashboard (`app/writer/page.tsx`)
 - Stats: total posts, published, drafts, word count
 - Search/filter posts
-- Quick actions: edit, view live, unpublish, delete
-- "New Article" button
+- Quick actions: edit, publish, unpublish, delete
+- Keyboard shortcut: `n` for new essay
 
-### Markdown Editor (`app/writer/editor/[[...id]]/page.tsx`)
-- Title input with auto-generated slug
+### Markdown Editor (`app/writer/editor/[[...slug]]/page.tsx`)
+- Title + subtitle inputs with auto-generated slug
 - Markdown textarea with live preview toggle
 - Auto-save drafts (3-second debounce)
 - Word count in status bar
-- Save Draft / Publish buttons
 - Revision history (automatic on each save)
+- Polyhedra shape selection
 
 ### Essay Pages (`app/e/[slug]/page.tsx`)
 - SSG with `generateStaticParams`
 - Rendered markdown with prose styling
 - Previous/Next essay navigation
-- Author byline and publish date
+- Author byline (from `lib/homepage.ts`) and publish date
+- Keyboard nav: `←`/`→` for prev/next, `Cmd+/` to edit
 
 ### Admin Panel (`app/admin/`)
-- Dashboard with stats (users, posts, revisions)
+- Dashboard with stats
 - User management: add, edit, delete, change roles
-- Posts management: view, edit, delete
-- Revisions viewer
+- Posts management
+- Revisions viewer with restore functionality
+- Paginated tables
 
 ---
 
 ## Design System
 
 ### Colors
-- **Light mode**: White background, black text, gray accents
-- **Dark mode**: Black background, white text, gray accents
-- Class-based dark mode via `next-themes`
+- **Light mode**: White background (`--bg-page: white`), black text
+- **Dark mode**: Black background (`--bg-page: black`), white text
+- Gray accents for secondary text and borders
+- Smooth CSS transitions between themes (150ms)
 
 ### Typography
-- Font: Inter (Google Fonts)
-- Prose styles defined in `globals.css`
+- Font: System UI stack (no external fonts)
+- Custom typography scale via CSS variables
+- Prose styles in `globals.css`
 
 ### Components
 - Minimal, clean design
-- Consistent hover states
-- Responsive layouts
-- Primary buttons: `bg-gray-900 dark:bg-white text-white dark:text-gray-900`
+- Consistent hover states (`hover:bg-gray-50 dark:hover:bg-gray-900/30`)
+- Primary buttons: `bg-gray-900 dark:bg-white`
 - Secondary buttons: `bg-gray-200 dark:bg-gray-800`
+
+### Accessibility
+- `prefers-reduced-motion` support for polyhedra
+- `touch-action: manipulation` to disable tap delay
+- Semantic HTML and ARIA labels
+- Keyboard navigation throughout
 
 ---
 
@@ -235,18 +380,8 @@ GOOGLE_CLIENT_SECRET="<your-google-client-secret>"
 | `npm run db:push` | Push Prisma schema to database |
 | `npm run db:studio` | Open Prisma Studio GUI |
 | `npm run db:seed` | Seed the database |
-
----
-
-## Polyhedra GIF Generator
-
-Script at `scripts/generate-polyhedra.js` creates animated 3D rotating polyhedra GIFs:
-
-```bash
-node scripts/generate-polyhedra.js --shape icosahedron --size 300 --output public/polyhedra/demo.gif
-```
-
-Shapes: tetrahedron, cube, octahedron, icosahedron, dodecahedron, cuboctahedron
+| `node scripts/polyhedra/build-shapes.js` | Regenerate shapes.json |
+| `node scripts/assign-shapes.js` | Assign shapes to posts |
 
 ---
 
@@ -261,6 +396,13 @@ Shapes: tetrahedron, cube, octahedron, icosahedron, dodecahedron, cuboctahedron
 - `revalidate` for ISR on public pages
 - `dynamic = 'force-dynamic'` for admin pages
 
+### DRY Principles
+1. **Typography**: CSS variables + Tailwind utilities
+2. **Homepage content**: `lib/homepage.ts`
+3. **Shared styles**: `lib/styles.ts`
+4. **Keyboard shortcuts**: `lib/keyboard/shortcuts.ts`
+5. **Polyhedra shapes**: Generated from single source of truth
+
 ### Error Handling
 - 404: Custom `not-found.tsx`
 - Auth errors: Redirect to `/auth/error`
@@ -271,14 +413,4 @@ Shapes: tetrahedron, cube, octahedron, icosahedron, dodecahedron, cuboctahedron
 - Functional components with hooks
 - Server Components by default
 - `'use client'` only when needed
-
----
-
-## Future Plans
-
-1. **AI Prompting in Writer**: Access to past essays to "write like me"
-2. **Auto-saving & Version History UI**: Better revision browsing
-3. **Design System**: Extract tokens and patterns from Figma
-4. **Image Management**: Better upload/gallery experience
-
-
+- Use `cn()` for conditional classes

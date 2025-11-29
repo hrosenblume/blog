@@ -5,7 +5,7 @@ import { renderMarkdown } from '@/lib/markdown'
 import { formatDate } from '@/lib/utils/format'
 import { KeyboardNav } from './_components/KeyboardNav'
 import { EssayNav } from '@/components/EssayNav'
-import { AUTHOR } from '@/lib/author'
+import { HOMEPAGE } from '@/lib/homepage'
 
 export const revalidate = 60
 
@@ -92,7 +92,7 @@ export default async function EssayPage({ params }: Props) {
                 href="/" 
                 className="underline hover:text-gray-900 dark:hover:text-white transition-colors"
               >
-                {AUTHOR.name}
+                {HOMEPAGE.name}
               </Link>
             </div>
             {post.publishedAt && (

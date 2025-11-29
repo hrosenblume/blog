@@ -4,7 +4,7 @@ import { HomeKeyboardNav } from '@/app/_components/HomeKeyboardNav'
 import { EssayLink } from '@/components/EssayLink'
 import { HomepageFooter } from '@/components/HomepageFooter'
 import { TapLink } from '@/components/TapLink'
-import { AUTHOR } from '@/lib/author'
+import { HOMEPAGE } from '@/lib/homepage'
 
 export const revalidate = 60
 
@@ -23,7 +23,10 @@ async function getPublishedPosts() {
 }
 
 export default async function Home() {
-  const posts = await getPublishedPosts()
+  const allPosts = await getPublishedPosts()
+  const posts = HOMEPAGE.notes.maxItems 
+    ? allPosts.slice(0, HOMEPAGE.notes.maxItems) 
+    : allPosts
 
   const linkClass = 'underline hover:text-gray-900 dark:hover:text-white transition-colors'
 
@@ -33,26 +36,30 @@ export default async function Home() {
       
       <header className="mb-16">
         <h1 className="text-title font-bold mb-6 dark:text-white">
-          <SecretNav>{AUTHOR.name}</SecretNav>
+          <SecretNav>{HOMEPAGE.name}</SecretNav>
         </h1>
-        <p className="max-w-xl leading-relaxed text-gray-600 dark:text-gray-400">
-          {AUTHOR.bio.map((segment, i) =>
-            segment.href ? (
-              <TapLink key={i} href={segment.href} className={linkClass}>
-                {segment.text}
-              </TapLink>
-            ) : (
-              <span key={i}>{segment.text}</span>
-            )
-          )}
-        </p>
+        <div className="max-w-xl space-y-4">
+          {HOMEPAGE.bio.map((paragraph, pIndex) => (
+            <p key={pIndex} className="leading-relaxed text-body text-gray-600 dark:text-gray-400">
+              {paragraph.map((segment, sIndex) =>
+                segment.href ? (
+                  <TapLink key={sIndex} href={segment.href} className={linkClass}>
+                    {segment.text}
+                  </TapLink>
+                ) : (
+                  <span key={sIndex}>{segment.text}</span>
+                )
+              )}
+            </p>
+          ))}
+        </div>
       </header>
 
       <section>
-        <h2 className="text-section font-semibold mb-8 dark:text-white">Essays</h2>
+        <h2 className="text-h1 font-semibold mb-8 dark:text-white">{HOMEPAGE.notes.title}</h2>
         
         {posts.length === 0 ? (
-          <p className="text-gray-500">No essays yet.</p>
+          <p className="text-gray-500">{HOMEPAGE.notes.emptyMessage}</p>
         ) : (
           <div className="-mx-6">
             {posts.map((post, index) => (

@@ -6,12 +6,13 @@
   --bg-page: white;
   --text-primary: #111827;
   
-  /* Typography scale - adjust here to resize all headings */
+  /* Typography scale - adjust here to resize all text */
   --font-title: 1.5rem;     /* 24px - page titles */
   --font-h1: 1.375rem;      /* 22px - article h1 */
   --font-h2: 1.125rem;      /* 18px - h2 */
   --font-h3: 1rem;          /* 16px - h3 */
   --font-section: 1.125rem; /* 18px - section headers */
+  --font-body: 1rem;        /* 16px - bio, subtitles */
 }
 
 .dark {

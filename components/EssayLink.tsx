@@ -39,7 +39,7 @@ export function EssayLink({ slug, title, subtitle, polyhedraShape, index }: Essa
             {title}
           </h3>
           {subtitle && (
-            <p className="text-gray-500 dark:text-gray-400 text-sm truncate">
+            <p className="text-body text-gray-500 dark:text-gray-400 truncate">
               {subtitle}
             </p>
           )}
