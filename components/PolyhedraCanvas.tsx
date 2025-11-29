@@ -22,10 +22,16 @@ interface PolyhedraCanvasProps {
 // 6 fallback GIFs for when JavaScript is disabled
 const FALLBACK_COUNT = 6
 
+// Rotation speeds (radians per millisecond)
+const BASE_SPEED = (2 * Math.PI) / 4000    // Full rotation in 4 seconds
+const HOVER_SPEED = (2 * Math.PI) / 750    // Full rotation in 0.75 seconds (~5x base)
+const ACCELERATION = 0.008                  // How fast speed changes (higher = snappier)
+
 export function PolyhedraCanvas({ shape, size = 60, className = '', index = 0, hovered = false }: PolyhedraCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationRef = useRef<number>(0)
-  const angleRef = useRef<number>(0)  // Current rotation angle (persists across hover changes)
+  const angleRef = useRef<number>(0)        // Current rotation angle
+  const speedRef = useRef<number>(BASE_SPEED)  // Current speed (smoothly interpolated)
   const lastTimeRef = useRef<number | null>(null)
   const [isVisible, setIsVisible] = useState(false)
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
@@ -99,10 +105,6 @@ export function PolyhedraCanvas({ shape, size = 60, className = '', index = 0, h
       return
     }
 
-    // Rotation speeds (radians per millisecond)
-    const baseSpeed = (2 * Math.PI) / 4000   // Full rotation in 4 seconds
-    const hoverSpeed = (2 * Math.PI) / 1500  // Full rotation in 1.5 seconds
-
     const animate = (timestamp: number) => {
       // Calculate delta time
       if (lastTimeRef.current === null) {
@@ -111,9 +113,12 @@ export function PolyhedraCanvas({ shape, size = 60, className = '', index = 0, h
       const deltaTime = timestamp - lastTimeRef.current
       lastTimeRef.current = timestamp
 
-      // Update angle based on current speed (smooth transition)
-      const speed = hovered ? hoverSpeed : baseSpeed
-      angleRef.current += speed * deltaTime
+      // Smoothly accelerate/decelerate towards target speed
+      const targetSpeed = hovered ? HOVER_SPEED : BASE_SPEED
+      speedRef.current += (targetSpeed - speedRef.current) * ACCELERATION * deltaTime
+      
+      // Update angle based on current interpolated speed
+      angleRef.current += speedRef.current * deltaTime
       
       // Keep angle in [0, 2π] range
       angleRef.current = angleRef.current % (2 * Math.PI)
