@@ -25,6 +25,8 @@ const FALLBACK_COUNT = 6
 export function PolyhedraCanvas({ shape, size = 60, className = '', index = 0, hovered = false }: PolyhedraCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationRef = useRef<number>(0)
+  const angleRef = useRef<number>(0)  // Current rotation angle (persists across hover changes)
+  const lastTimeRef = useRef<number | null>(null)
   const [isVisible, setIsVisible] = useState(false)
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
   
@@ -97,19 +99,27 @@ export function PolyhedraCanvas({ shape, size = 60, className = '', index = 0, h
       return
     }
 
-    let startTime: number | null = null
-    let lastAngleY = 0
-    const baseDuration = 4000 // 4 seconds per rotation (normal)
-    const hoverDuration = 1500 // 1.5 seconds per rotation (fast)
+    // Rotation speeds (radians per millisecond)
+    const baseSpeed = (2 * Math.PI) / 4000   // Full rotation in 4 seconds
+    const hoverSpeed = (2 * Math.PI) / 1500  // Full rotation in 1.5 seconds
 
     const animate = (timestamp: number) => {
-      if (!startTime) startTime = timestamp
-      const elapsed = timestamp - startTime
-      const duration = hovered ? hoverDuration : baseDuration
-      const angleY = ((elapsed % duration) / duration) * Math.PI * 2
+      // Calculate delta time
+      if (lastTimeRef.current === null) {
+        lastTimeRef.current = timestamp
+      }
+      const deltaTime = timestamp - lastTimeRef.current
+      lastTimeRef.current = timestamp
+
+      // Update angle based on current speed (smooth transition)
+      const speed = hovered ? hoverSpeed : baseSpeed
+      angleRef.current += speed * deltaTime
+      
+      // Keep angle in [0, 2π] range
+      angleRef.current = angleRef.current % (2 * Math.PI)
 
       ctx.clearRect(0, 0, size, size)
-      renderFrame(ctx, vertices, edges, edgeColors, size, angleX, angleY, angleZ)
+      renderFrame(ctx, vertices, edges, edgeColors, size, angleX, angleRef.current, angleZ)
 
       animationRef.current = requestAnimationFrame(animate)
     }
