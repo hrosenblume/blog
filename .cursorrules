@@ -56,7 +56,7 @@ All font sizes are CSS variables in `app/globals.css` exposed as Tailwind utilit
 ### 2. Homepage Content
 All homepage content lives in `lib/homepage.ts`:
 - `name`: Author name (used in headers, bylines)
-- `email`: Contact email (used by EmailLink component)
+- `email`: From `NEXT_PUBLIC_CONTACT_EMAIL` env var (used by EmailLink component)
 - `bio`: Array of paragraphs, each paragraph is array of `TextSegment` (text + optional href for inline links)
 - `notes`: Section config (title, maxItems, emptyMessage)
 - `footerLinks`: Social links array

@@ -174,7 +174,7 @@ export type FooterLink = { label: string; href?: string; type?: 'email' }
 
 export const HOMEPAGE = {
   name: 'Hunter Rosenblume',
-  email: 'your-email@example.com',
+  email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || '',  // From .env
   
   // Bio: Array of paragraphs, each paragraph is array of segments
   // Segments can have optional href for inline links
@@ -401,11 +401,19 @@ Used across admin tables for consistent styling.
 ## Environment Variables
 
 ```env
+# Database
 DATABASE_URL="file:./dev.db"
+
+# NextAuth
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="<random-secret>"
+
+# Google OAuth
 GOOGLE_CLIENT_ID="<your-google-client-id>"
 GOOGLE_CLIENT_SECRET="<your-google-client-secret>"
+
+# Contact email (public - visible in browser for mailto links)
+NEXT_PUBLIC_CONTACT_EMAIL="your-email@example.com"
 ```
 
 ---

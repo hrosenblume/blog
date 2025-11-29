@@ -8,7 +8,7 @@ export type FooterLink = { label: string; href?: string; type?: 'email' }
 export const HOMEPAGE = {
   // Author info
   name: 'Hunter Rosenblume',
-  email: 'your-email@example.com',
+  email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || '',
   bio: [
     // Paragraph 1
     [
