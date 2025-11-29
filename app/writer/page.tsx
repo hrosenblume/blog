@@ -9,6 +9,7 @@ import { Dropdown, DropdownItem } from '@/components/Dropdown'
 import { formatRelativeTime, formatNumber } from '@/lib/utils/format'
 import { confirmPublish, confirmUnpublish } from '@/lib/utils/confirm'
 import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
+import { HOMEPAGE } from '@/lib/homepage'
 
 interface Post {
   id: string
@@ -106,7 +107,7 @@ export default function Dashboard() {
     <div className="max-w-5xl mx-auto px-6 py-16">
       <header className="flex items-center justify-between mb-16">
         <div>
-          <h1 className="text-title font-bold mb-2">Hunter Rosenblume</h1>
+          <h1 className="text-title font-bold mb-2">{HOMEPAGE.name}</h1>
           <p className="text-gray-600 dark:text-gray-400">Welcome to your workspace</p>
         </div>
         <Link

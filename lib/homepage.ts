@@ -2,12 +2,13 @@
 // ✏️  EDIT YOUR HOMEPAGE CONTENT HERE
 // ============================================
 
-type TextSegment = { text: string; href?: string }
-type FooterLink = { label: string; href?: string; type?: 'email' }
+export type TextSegment = { text: string; href?: string }
+export type FooterLink = { label: string; href?: string; type?: 'email' }
 
 export const HOMEPAGE = {
   // Author info
   name: 'Hunter Rosenblume',
+  email: 'your-email@example.com',
   bio: [
     // Paragraph 1
     [

@@ -169,23 +169,63 @@ All font sizes are defined as CSS variables in `app/globals.css` and exposed as 
 All homepage content lives in `lib/homepage.ts`:
 
 ```typescript
+export type TextSegment = { text: string; href?: string }
+export type FooterLink = { label: string; href?: string; type?: 'email' }
+
 export const HOMEPAGE = {
   name: 'Hunter Rosenblume',
-  bio: [/* paragraphs with text + links */],
+  email: 'your-email@example.com',
+  
+  // Bio: Array of paragraphs, each paragraph is array of segments
+  // Segments can have optional href for inline links
+  bio: [
+    [
+      { text: 'I started as a ' },
+      { text: 'Thiel Fellow', href: 'https://thielfellowship.org' },
+      { text: ', then founded ' },
+      { text: 'Ordo', href: 'https://ordo.com' },
+      { text: '.' },
+    ],
+    [{ text: "Ten years into building, I'm sharing my notes." }],
+  ] as TextSegment[][],
+  
   notes: {
     title: 'Notes',
-    maxItems: null,  // null = show all
+    maxItems: null,  // null = show all, number to limit
     emptyMessage: 'No notes yet.',
   },
+  
   footerLinks: [
-    { label: 'Twitter', href: '...' },
-    { label: 'Email', type: 'email' },
-  ],
+    { label: 'Twitter', href: 'https://x.com/...' },
+    { label: 'LinkedIn', href: 'https://linkedin.com/in/...' },
+    { label: 'Email', type: 'email' },  // Uses HOMEPAGE.email
+  ] as FooterLink[],
 }
 ```
 
-- Used by: `app/page.tsx`, `components/HomepageFooter.tsx`, `app/e/[slug]/page.tsx`
-- Edit this file to change name, bio, or footer links globally
+**Used by:**
+- `app/page.tsx` — Name, bio paragraphs, notes section
+- `app/e/[slug]/page.tsx` — Author byline
+- `app/writer/page.tsx` — Dashboard header
+- `components/HomepageFooter.tsx` — Footer social links
+- `components/EmailLink.tsx` — Email address
+
+**Bio Rendering Pattern:**
+```tsx
+{HOMEPAGE.bio.map((paragraph, pIndex) => (
+  <p key={pIndex}>
+    {paragraph.map((segment, sIndex) =>
+      segment.href ? (
+        <TapLink key={sIndex} href={segment.href}>{segment.text}</TapLink>
+      ) : (
+        <span key={sIndex}>{segment.text}</span>
+      )
+    )}
+  </p>
+))}
+```
+
+Edit `lib/homepage.ts` to change name, bio, email, or footer links globally.
 
 ### 3. Polyhedra System
 
@@ -340,7 +380,7 @@ Used across admin tables for consistent styling.
 - Smooth CSS transitions between themes (150ms)
 
 ### Typography
-- Font: System UI stack (no external fonts)
+- Font: Inter (via `next/font/google`)
 - Custom typography scale via CSS variables
 - Prose styles in `globals.css`
 

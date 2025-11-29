@@ -55,9 +55,15 @@ All font sizes are CSS variables in `app/globals.css` exposed as Tailwind utilit
 
 ### 2. Homepage Content
 All homepage content lives in `lib/homepage.ts`:
-- Author name, bio paragraphs, notes section config, footer links
-- Used by: `app/page.tsx`, `components/HomepageFooter.tsx`, `app/e/[slug]/page.tsx`
-- **NEVER** hardcode author name or bio text in components
+- `name`: Author name (used in headers, bylines)
+- `email`: Contact email (used by EmailLink component)
+- `bio`: Array of paragraphs, each paragraph is array of `TextSegment` (text + optional href for inline links)
+- `notes`: Section config (title, maxItems, emptyMessage)
+- `footerLinks`: Social links array
+
+**Used by:** `app/page.tsx`, `app/e/[slug]/page.tsx`, `app/writer/page.tsx`, `components/HomepageFooter.tsx`, `components/EmailLink.tsx`
+
+**NEVER** hardcode author name, email, or bio text in components
 
 ### 3. Shared Styles
 Reusable Tailwind class strings live in `lib/styles.ts`:
