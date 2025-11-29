@@ -308,7 +308,7 @@ export default function Editor() {
               <span className="text-gray-500">Shape:</span>
               <div className="flex items-center gap-3">
                 <PolyhedraCanvas shape={polyhedraShape} size={40} />
-                <span className="text-gray-600 dark:text-gray-400 font-mono text-xs">
+                <span className="text-gray-600 dark:text-gray-400 font-mono text-xs w-48 truncate">
                   {polyhedraShape}
                 </span>
                 <button
