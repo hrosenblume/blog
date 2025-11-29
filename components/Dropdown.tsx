@@ -54,8 +54,7 @@ export function Dropdown({ trigger, children, align = 'right', className }: Drop
   )
 }
 
-interface DropdownItemProps extends React.HTMLAttributes<HTMLButtonElement> {
-  children: React.ReactNode
+interface DropdownItemProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   destructive?: boolean
 }
 

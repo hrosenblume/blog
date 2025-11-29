@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { prisma } from '@/lib/db'
-import { formatShortDate } from '@/lib/utils/format'
+import { wordCount } from '@/lib/markdown'
+import { formatDate } from '@/lib/utils/format'
 import { EmailLink } from '@/components/EmailLink'
 import { SecretNav } from '@/components/SecretNav'
 
@@ -20,11 +21,7 @@ async function getPublishedPosts() {
   })
 }
 
-function getReadTime(markdown: string): string {
-  const words = markdown.trim().split(/\s+/).length
-  const mins = Math.ceil(words / 200)
-  return `${mins} min read`
-}
+const getReadTime = (md: string) => `${Math.ceil(wordCount(md) / 200)} min read`
 
 function getSubtitle(markdown: string): string {
   // Get first paragraph as subtitle
@@ -41,7 +38,6 @@ export default async function Home() {
   return (
     <div className="min-h-screen bg-white dark:bg-black">
       <div className="max-w-2xl mx-auto px-6 py-16">
-        {/* Header */}
         <header className="mb-20">
           <h1 className="text-3xl font-bold mb-6 dark:text-white">
             <SecretNav>Hunter Rosenblume</SecretNav>
@@ -65,7 +61,6 @@ export default async function Home() {
           </p>
         </header>
 
-        {/* Essays */}
         <section>
           <h2 className="text-xl font-semibold mb-8 dark:text-white">Essays</h2>
           
@@ -89,7 +84,7 @@ export default async function Home() {
                       </p>
                       <div className="flex items-center gap-3 text-sm text-gray-400">
                         {post.publishedAt && (
-                          <time>{formatShortDate(post.publishedAt)}</time>
+                          <time>{formatDate(post.publishedAt, true)}</time>
                         )}
                         <span>·</span>
                         <span>{getReadTime(post.markdown)}</span>
@@ -110,7 +105,6 @@ export default async function Home() {
           )}
         </section>
 
-        {/* Footer */}
         <footer className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800">
           <nav className="flex gap-6 text-gray-600 dark:text-gray-400" aria-label="Social links">
             <a href="https://x.com/hrosenblume" className="transition-colors hover:text-gray-900 dark:hover:text-white">

@@ -3,11 +3,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import { useTheme } from 'next-themes'
 import { renderMarkdown, generateSlug, wordCount } from '@/lib/markdown'
 import { Button } from '@/components/Button'
 import { Spinner } from '@/components/Spinner'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import { useThemeShortcut } from '@/lib/hooks'
 
 // Success screen shown after publishing
 function PublishSuccess() {
@@ -30,7 +30,6 @@ export default function Editor() {
   const router = useRouter()
   const params = useParams()
   const postId = params.id?.[0] as string | undefined
-  const { theme, setTheme } = useTheme()
 
   // Post content state
   const [title, setTitle] = useState('')
@@ -84,18 +83,8 @@ export default function Editor() {
     setHasUnsavedChanges(hasChanges)
   }, [title, slug, markdown])
 
-  // Keyboard shortcut: Cmd+. (theme toggle)
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.metaKey && e.key === '.') {
-        e.preventDefault()
-        setTheme(theme === 'dark' ? 'light' : 'dark')
-      }
-    }
-    
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [theme, setTheme])
+  // Cmd+. theme toggle
+  useThemeShortcut()
 
   const handleSlugChange = useCallback((value: string) => {
     setSlug(value)
@@ -178,7 +167,6 @@ export default function Editor() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header */}
       <header className="border-b border-gray-200 dark:border-gray-800 px-6 py-4">
         <div className="flex items-center justify-between">
           <Link
@@ -226,7 +214,6 @@ export default function Editor() {
         </div>
       </header>
 
-      {/* Editor/Preview */}
       <main className="flex-1 overflow-auto">
         <div className="max-w-2xl mx-auto px-6 py-12">
           {showPreview ? (
@@ -256,7 +243,6 @@ export default function Editor() {
             </>
           )}
 
-          {/* Slug */}
           <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800">
             <div className="flex items-center gap-2 text-sm">
               <span className="text-gray-500">URL:</span>
@@ -273,7 +259,6 @@ export default function Editor() {
         </div>
       </main>
 
-      {/* Status bar */}
       <footer className="border-t border-gray-200 dark:border-gray-800 px-6 py-3">
         <div className="max-w-2xl mx-auto flex items-center justify-between text-sm text-gray-500">
           <span>{words} words</span>

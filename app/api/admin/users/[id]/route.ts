@@ -1,104 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions, isAdmin } from '@/lib/auth'
+import { withAdmin, requireAdmin, notFound, badRequest, normalizeEmail } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  const session = await getServerSession(authOptions)
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  // Only admins can view user details
-  if (!(await isAdmin(session.user?.email))) {
-    return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { id: params.id },
-  })
-
-  if (!user) {
-    return NextResponse.json({ error: 'User not found' }, { status: 404 })
-  }
+export const GET = withAdmin(async (request: NextRequest, { params }: { params: { id: string } }) => {
+  const user = await prisma.user.findUnique({ where: { id: params.id } })
+  if (!user) return notFound()
 
   return NextResponse.json(user)
-}
+})
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  const session = await getServerSession(authOptions)
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  // Only admins can edit users
-  if (!(await isAdmin(session.user?.email))) {
-    return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
-  }
-
+export const PUT = withAdmin(async (request: NextRequest, { params }: { params: { id: string } }) => {
   const data = await request.json()
+  if (!data.email?.includes('@')) return badRequest('Valid email is required')
 
-  // Validate email
-  if (!data.email || !data.email.includes('@')) {
-    return NextResponse.json({ error: 'Valid email is required' }, { status: 400 })
-  }
-
-  // Check if email already exists for another user
-  const existing = await prisma.user.findFirst({
-    where: {
-      email: data.email.toLowerCase().trim(),
-      NOT: { id: params.id },
-    },
-  })
-
-  if (existing) {
-    return NextResponse.json({ error: 'Another user with this email already exists' }, { status: 400 })
-  }
+  const email = normalizeEmail(data.email)
+  const existing = await prisma.user.findFirst({ where: { email, NOT: { id: params.id } } })
+  if (existing) return badRequest('Another user with this email already exists')
 
   const user = await prisma.user.update({
     where: { id: params.id },
-    data: {
-      email: data.email.toLowerCase().trim(),
-      name: data.name || null,
-      role: data.role || 'writer',
-    },
+    data: { email, name: data.name ?? null, role: data.role ?? 'writer' },
   })
 
   return NextResponse.json(user)
-}
+})
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  const session = await getServerSession(authOptions)
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+export const DELETE = withAdmin(async (request: NextRequest, { params }: { params: { id: string } }) => {
+  const session = await requireAdmin()
+  const currentEmail = session?.user?.email ? normalizeEmail(session.user.email) : ''
+  const currentUser = await prisma.user.findFirst({ where: { email: currentEmail } })
+  if (currentUser?.id === params.id) return badRequest('Cannot delete yourself')
 
-  // Only admins can delete users
-  if (!(await isAdmin(session.user?.email))) {
-    return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
-  }
-
-  // Prevent deleting yourself
-  const currentUser = await prisma.user.findFirst({
-    where: { email: session.user?.email?.toLowerCase().trim() || '' },
-  })
-
-  if (currentUser?.id === params.id) {
-    return NextResponse.json({ error: 'Cannot delete yourself' }, { status: 400 })
-  }
-
-  await prisma.user.delete({
-    where: { id: params.id },
-  })
-
+  await prisma.user.delete({ where: { id: params.id } })
   return NextResponse.json({ success: true })
-}
+})

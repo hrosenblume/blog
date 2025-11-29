@@ -1,5 +1,6 @@
-import { NextAuthOptions } from 'next-auth'
+import { NextAuthOptions, getServerSession } from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
+import { NextResponse } from 'next/server'
 import { prisma } from './db'
 
 // Extend the session type to include role
@@ -14,6 +15,9 @@ declare module 'next-auth' {
   }
 }
 
+// Email normalization helper
+export const normalizeEmail = (email: string) => email.toLowerCase().trim()
+
 export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
@@ -23,24 +27,14 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async signIn({ user }) {
-      // Check if user exists in the database
-      const email = user.email?.toLowerCase().trim()
-      if (!email) {
-        return false
-      }
-
-      const dbUser = await prisma.user.findUnique({
-        where: { email },
-      })
-
-      // Allow sign in if user exists in database
+      if (!user.email) return false
+      const dbUser = await prisma.user.findUnique({ where: { email: normalizeEmail(user.email) } })
       return !!dbUser
     },
     async session({ session }) {
-      // Add role to session
       if (session.user?.email) {
         const dbUser = await prisma.user.findUnique({
-          where: { email: session.user.email.toLowerCase().trim() },
+          where: { email: normalizeEmail(session.user.email) },
           select: { role: true },
         })
         session.user.role = dbUser?.role || 'writer'
@@ -57,11 +51,43 @@ export const authOptions: NextAuthOptions = {
 // Helper to check if user is admin
 export async function isAdmin(email: string | null | undefined): Promise<boolean> {
   if (!email) return false
-  
   const user = await prisma.user.findUnique({
-    where: { email: email.toLowerCase().trim() },
+    where: { email: normalizeEmail(email) },
     select: { role: true },
   })
-  
   return user?.role === 'admin'
+}
+
+// API Response helpers
+export const unauthorized = () => NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+export const forbidden = () => NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+export const notFound = () => NextResponse.json({ error: 'Not found' }, { status: 404 })
+export const badRequest = (error: string) => NextResponse.json({ error }, { status: 400 })
+
+// Session helpers for API routes
+export const requireSession = () => getServerSession(authOptions)
+
+export async function requireAdmin() {
+  const session = await requireSession()
+  if (!session) return null
+  return (await isAdmin(session.user?.email)) ? session : null
+}
+
+// Higher-order auth wrappers for API routes
+type ApiHandler<T = Response> = (...args: unknown[]) => Promise<T>
+
+export function withSession<T extends ApiHandler>(handler: T): T {
+  return (async (...args: Parameters<T>) => {
+    const session = await requireSession()
+    if (!session) return unauthorized()
+    return handler(...args)
+  }) as T
+}
+
+export function withAdmin<T extends ApiHandler>(handler: T): T {
+  return (async (...args: Parameters<T>) => {
+    const session = await requireAdmin()
+    if (!session) return unauthorized()
+    return handler(...args)
+  }) as T
 }

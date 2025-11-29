@@ -30,7 +30,6 @@ export default function AdminLayout({
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Admin Header */}
       <header className="bg-white dark:bg-gray-800 shadow">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-6">
@@ -38,24 +37,11 @@ export default function AdminLayout({
               Admin
             </Link>
             <nav className="flex gap-4">
-              <Link 
-                href="/admin/users" 
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-              >
-                Users
-              </Link>
-              <Link 
-                href="/admin/posts" 
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-              >
-                Posts
-              </Link>
-              <Link 
-                href="/admin/revisions" 
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-              >
-                Revisions
-              </Link>
+              {[['Users', '/admin/users'], ['Posts', '/admin/posts'], ['Revisions', '/admin/revisions']].map(([name, href]) => (
+                <Link key={href} href={href} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
+                  {name}
+                </Link>
+              ))}
             </nav>
           </div>
           <span className="text-sm text-gray-500 dark:text-gray-400">
@@ -64,7 +50,6 @@ export default function AdminLayout({
         </div>
       </header>
 
-      {/* Admin Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">
         {children}
       </main>

@@ -1,18 +1,15 @@
 'use client'
 
 import { useTheme } from 'next-themes'
+import { cn } from '@/lib/utils/cn'
 
-interface ThemeToggleProps {
-  className?: string
-}
-
-export function ThemeToggle({ className = '' }: ThemeToggleProps) {
+export function ThemeToggle({ className }: { className?: string }) {
   const { theme, setTheme } = useTheme()
 
   return (
     <button
       onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-      className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 ${className}`}
+      className={cn('p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400', className)}
       aria-label="Toggle dark mode"
     >
       {theme === 'dark' ? (
@@ -27,4 +24,3 @@ export function ThemeToggle({ className = '' }: ThemeToggleProps) {
     </button>
   )
 }
-

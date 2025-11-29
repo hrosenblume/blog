@@ -4,10 +4,10 @@ import { useSession, signOut } from 'next-auth/react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect } from 'react'
 import Link from 'next/link'
-import { useTheme } from 'next-themes'
 import { Spinner } from '@/components/Spinner'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { Dropdown, DropdownItem } from '@/components/Dropdown'
+import { useThemeShortcut } from '@/lib/hooks'
 
 export default function WriterLayout({
   children,
@@ -17,7 +17,6 @@ export default function WriterLayout({
   const { data: session, status } = useSession()
   const router = useRouter()
   const pathname = usePathname()
-  const { theme, setTheme } = useTheme()
   
   const isEditor = pathname?.startsWith('/writer/editor')
 
@@ -28,24 +27,21 @@ export default function WriterLayout({
     }
   }, [status, router])
 
-  // Keyboard shortcuts: Cmd+/ (homepage), Cmd+. (theme toggle)
+  // Keyboard shortcuts: Cmd+/ (homepage)
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (!e.metaKey) return
-      
-      if (e.key === '/') {
+      if (e.metaKey && e.key === '/') {
         e.preventDefault()
         localStorage.setItem('lastWriterPath', window.location.pathname)
         router.push('/')
-      } else if (e.key === '.') {
-        e.preventDefault()
-        setTheme(theme === 'dark' ? 'light' : 'dark')
       }
     }
-    
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [router, theme, setTheme])
+  }, [router])
+
+  // Cmd+. theme toggle
+  useThemeShortcut()
 
   if (status === 'loading') {
     return (

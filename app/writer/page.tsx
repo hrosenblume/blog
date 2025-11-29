@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
-import { Button } from '@/components/Button'
 import { Spinner } from '@/components/Spinner'
 import { Dropdown, DropdownItem } from '@/components/Dropdown'
 import { formatRelativeTime, formatNumber } from '@/lib/utils/format'
@@ -11,7 +10,7 @@ interface Post {
   id: string
   title: string
   slug: string
-  status: 'draft' | 'published'
+  status: 'draft' | 'published' | 'deleted'
   wordCount: number
   updatedAt: string
   publishedAt: string | null
