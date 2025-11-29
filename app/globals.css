@@ -6,11 +6,7 @@ body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-/* Disable double-tap zoom delay on interactive elements */
-a, button {
-  touch-action: manipulation;
+  padding-bottom: 2rem;
 }
 
 /* Smooth transitions for dark mode */
@@ -18,6 +14,11 @@ a, button {
   transition-property: background-color, border-color;
   transition-duration: 150ms;
   transition-timing-function: ease-out;
+}
+
+/* Disable double-tap zoom delay on interactive elements */
+a, button {
+  touch-action: manipulation;
 }
 
 /* Prose styles for essays */

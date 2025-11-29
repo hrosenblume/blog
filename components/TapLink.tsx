@@ -26,7 +26,7 @@ export function TapLink({ href, children, ...props }: TapLinkProps) {
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     const moved = Math.abs(e.changedTouches[0].clientY - touchStartY.current)
-    if (moved < 20) {
+    if (moved < 10) {
       e.preventDefault() // Prevent native link from also firing
       if (isExternal) {
         window.location.href = href
