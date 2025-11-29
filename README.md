@@ -44,7 +44,7 @@ WRITER_EMAIL="your-email@gmail.com"
 | `npm start` | Start production server |
 | `npm run db:push` | Push schema to database |
 | `npm run db:studio` | Open Prisma Studio |
-| `npm run db:seed` | Import posts from legacy Django DB |
+| `npm run db:seed` | Seed the database |
 
 ## Project Structure
 
@@ -65,10 +65,9 @@ blog/
 │   └── utils/        # Utility functions
 ├── prisma/
 │   ├── schema.prisma # Database schema
-│   └── seed.ts       # Migration script
+│   └── seed.ts       # Seed script
 ├── public/
 │   └── uploads/      # Uploaded images
-└── _legacy/          # Old Django version (archived)
 ```
 
 ## Tech Stack

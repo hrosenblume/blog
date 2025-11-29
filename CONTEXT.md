@@ -71,14 +71,13 @@ blog/
 │       └── format.ts         # Date/number formatting
 ├── prisma/
 │   ├── schema.prisma         # Database schema
-│   ├── seed.ts               # Django migration script
+│   ├── seed.ts               # Seed script
 │   └── dev.db                # SQLite database (gitignored)
 ├── public/
 │   ├── polyhedra/            # Generated polyhedra GIFs
 │   └── uploads/              # User uploaded images (gitignored)
-├── scripts/
-│   └── generate-polyhedra.js # 3D polyhedra GIF generator
-└── _legacy/                  # Old Django version (archived, gitignored)
+└── scripts/
+    └── generate-polyhedra.js # 3D polyhedra GIF generator
 ```
 
 ---
@@ -235,7 +234,7 @@ GOOGLE_CLIENT_SECRET="<your-google-client-secret>"
 | `npm start` | Start production server |
 | `npm run db:push` | Push Prisma schema to database |
 | `npm run db:studio` | Open Prisma Studio GUI |
-| `npm run db:seed` | Import posts from legacy Django DB |
+| `npm run db:seed` | Seed the database |
 
 ---
 
@@ -248,18 +247,6 @@ node scripts/generate-polyhedra.js --shape icosahedron --size 300 --output publi
 ```
 
 Shapes: tetrahedron, cube, octahedron, icosahedron, dodecahedron, cuboctahedron
-
----
-
-## Legacy Migration
-
-The `_legacy/` folder contains the original Django implementation. The Prisma seed script (`prisma/seed.ts`) imports posts and revisions from the Django SQLite database:
-
-```bash
-npm run db:seed
-```
-
-This also creates the initial admin user (`your-email@example.com`).
 
 ---
 
@@ -287,7 +274,7 @@ This also creates the initial admin user (`your-email@example.com`).
 
 ---
 
-## Future Plans (from legacy docs)
+## Future Plans
 
 1. **AI Prompting in Writer**: Access to past essays to "write like me"
 2. **Auto-saving & Version History UI**: Better revision browsing
