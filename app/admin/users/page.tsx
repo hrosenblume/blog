@@ -13,7 +13,7 @@ export default async function UsersPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Users</h1>
+        <h1 className="text-section font-bold text-gray-900 dark:text-white">Users</h1>
         <Link href="/admin/users/new" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
           Add User
         </Link>

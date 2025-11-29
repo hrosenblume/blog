@@ -17,14 +17,14 @@ import { formatSavedTime } from '@/lib/utils/format'
 // Success screen shown after publishing
 function PublishSuccess() {
   return (
-    <CenteredPage className="bg-white dark:bg-black">
+    <CenteredPage>
       <div className="text-center">
         <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
           <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Published!</h2>
+        <h2 className="text-section font-bold text-gray-900 dark:text-white mb-2">Published!</h2>
         <p className="text-gray-500 dark:text-gray-400">Your essay is now live</p>
       </div>
     </CenteredPage>
@@ -282,7 +282,7 @@ export default function Editor() {
         <div className="max-w-2xl mx-auto px-6 py-12">
           {showPreview ? (
             <article>
-              <h1 className="text-4xl font-bold mb-8">{title || 'Untitled'}</h1>
+              <h1 className="text-title font-bold mb-8">{title || 'Untitled'}</h1>
               <div 
                 className="prose dark:prose-invert"
                 dangerouslySetInnerHTML={{ __html: renderMarkdown(markdown) }}
@@ -295,7 +295,7 @@ export default function Editor() {
                 value={title}
                 onChange={e => setTitle(e.target.value)}
                 placeholder="Title"
-                className="w-full text-4xl font-bold bg-transparent border-none outline-none placeholder-gray-300 dark:placeholder-gray-700 mb-2"
+                className="w-full text-title font-bold bg-transparent border-none outline-none placeholder-gray-300 dark:placeholder-gray-700 mb-2"
               />
 
               <input

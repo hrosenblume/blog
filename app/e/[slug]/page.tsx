@@ -5,6 +5,7 @@ import { renderMarkdown } from '@/lib/markdown'
 import { formatDate } from '@/lib/utils/format'
 import { KeyboardNav } from './_components/KeyboardNav'
 import { EssayNav } from '@/components/EssayNav'
+import { AUTHOR } from '@/lib/author'
 
 export const revalidate = 60
 
@@ -73,7 +74,7 @@ export default async function EssayPage({ params }: Props) {
   const htmlContent = renderMarkdown(post.markdown)
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black">
+    <div className="min-h-screen">
       <KeyboardNav prevSlug={prev?.slug ?? null} nextSlug={next?.slug ?? null} slug={post.slug} />
       <div className="max-w-2xl mx-auto px-6 py-16">
         <Link 
@@ -83,7 +84,7 @@ export default async function EssayPage({ params }: Props) {
           ← Home
         </Link>
         <article className="space-y-6">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{post.title}</h1>
+          <h1 className="text-title font-bold text-gray-900 dark:text-white">{post.title}</h1>
           
           <header className="space-y-1 text-sm text-gray-600 dark:text-gray-400 mb-8">
             <div>
@@ -91,7 +92,7 @@ export default async function EssayPage({ params }: Props) {
                 href="/" 
                 className="underline hover:text-gray-900 dark:hover:text-white transition-colors"
               >
-                Hunter Rosenblume
+                {AUTHOR.name}
               </Link>
             </div>
             {post.publishedAt && (

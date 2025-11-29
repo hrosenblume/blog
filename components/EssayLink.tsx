@@ -35,7 +35,7 @@ export function EssayLink({ slug, title, subtitle, polyhedraShape, index }: Essa
         
         {/* Title and subtitle */}
         <div className="flex-1 min-w-0">
-          <h3 className="text-lg font-medium mb-1 transition-colors dark:text-white group-hover:text-gray-600 dark:group-hover:text-gray-400">
+          <h3 className="text-section font-medium mb-1 transition-colors dark:text-white group-hover:text-gray-600 dark:group-hover:text-gray-400">
             {title}
           </h3>
           {subtitle && (

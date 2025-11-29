@@ -18,7 +18,7 @@ export default async function AdminDashboard() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">
+      <h1 className="text-section font-bold text-gray-900 dark:text-white mb-8">
         Admin Dashboard
       </h1>
 
@@ -34,7 +34,7 @@ export default async function AdminDashboard() {
                 <span className="text-white text-xl font-bold">{stat.count}</span>
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                <h2 className="text-section font-semibold text-gray-900 dark:text-white">
                   {stat.name}
                 </h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400">

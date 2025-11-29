@@ -2,11 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --bg-page: white;
+  --text-primary: #111827;
+  
+  /* Typography scale - adjust here to resize all headings */
+  --font-title: 1.5rem;     /* 24px - page titles */
+  --font-h1: 1.375rem;      /* 22px - article h1 */
+  --font-h2: 1.125rem;      /* 18px - h2 */
+  --font-h3: 1rem;          /* 16px - h3 */
+  --font-section: 1.125rem; /* 18px - section headers */
+}
+
+.dark {
+  --bg-page: black;
+  --text-primary: white;
+}
+
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   padding-bottom: 2rem;
+  background-color: var(--bg-page);
+  color: var(--text-primary);
 }
 
 /* Smooth transitions for dark mode */
@@ -27,15 +46,18 @@ a, button {
 }
 
 .prose h1 {
-  @apply text-3xl font-bold mb-6;
+  font-size: var(--font-h1);
+  @apply font-bold mb-6;
 }
 
 .prose h2 {
-  @apply text-2xl font-bold mt-8 mb-4;
+  font-size: var(--font-h2);
+  @apply font-bold mt-8 mb-4;
 }
 
 .prose h3 {
-  @apply text-xl font-bold mt-6 mb-3;
+  font-size: var(--font-h3);
+  @apply font-bold mt-6 mb-3;
 }
 
 .prose p {

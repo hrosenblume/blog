@@ -4,6 +4,7 @@ import { HomeKeyboardNav } from '@/app/_components/HomeKeyboardNav'
 import { EssayLink } from '@/components/EssayLink'
 import { HomepageFooter } from '@/components/HomepageFooter'
 import { TapLink } from '@/components/TapLink'
+import { AUTHOR } from '@/lib/author'
 
 export const revalidate = 60
 
@@ -24,35 +25,31 @@ async function getPublishedPosts() {
 export default async function Home() {
   const posts = await getPublishedPosts()
 
+  const linkClass = 'underline hover:text-gray-900 dark:hover:text-white transition-colors'
+
   return (
     <main className="max-w-2xl mx-auto px-6 py-16">
       <HomeKeyboardNav />
       
       <header className="mb-16">
-        <h1 className="text-3xl font-bold mb-6 dark:text-white">
-          <SecretNav>Hunter Rosenblume</SecretNav>
+        <h1 className="text-title font-bold mb-6 dark:text-white">
+          <SecretNav>{AUTHOR.name}</SecretNav>
         </h1>
         <p className="max-w-xl leading-relaxed text-gray-600 dark:text-gray-400">
-          I started my career as a{' '}
-          <TapLink
-            href="https://thielfellowship.org"
-            className="underline hover:text-gray-900 dark:hover:text-white transition-colors"
-          >
-            Thiel Fellow
-          </TapLink>{' '}
-          and software engineer. More recently, I am the co-founder and CEO of{' '}
-          <TapLink
-            href="https://ordo.com"
-            className="underline hover:text-gray-900 dark:hover:text-white transition-colors"
-          >
-            Ordo
-          </TapLink>
-          , a school lunch company. This year we&apos;re serving over 3 million meals in 15 states. I write about startups.
+          {AUTHOR.bio.map((segment, i) =>
+            segment.href ? (
+              <TapLink key={i} href={segment.href} className={linkClass}>
+                {segment.text}
+              </TapLink>
+            ) : (
+              <span key={i}>{segment.text}</span>
+            )
+          )}
         </p>
       </header>
 
       <section>
-        <h2 className="text-xl font-semibold mb-8 dark:text-white">Essays</h2>
+        <h2 className="text-section font-semibold mb-8 dark:text-white">Essays</h2>
         
         {posts.length === 0 ? (
           <p className="text-gray-500">No essays yet.</p>

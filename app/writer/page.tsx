@@ -106,7 +106,7 @@ export default function Dashboard() {
     <div className="max-w-5xl mx-auto px-6 py-16">
       <header className="flex items-center justify-between mb-16">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Hunter Rosenblume</h1>
+          <h1 className="text-title font-bold mb-2">Hunter Rosenblume</h1>
           <p className="text-gray-600 dark:text-gray-400">Welcome to your workspace</p>
         </div>
         <Link
@@ -140,7 +140,7 @@ export default function Dashboard() {
       </div>
 
       <section className="mb-16">
-        <h2 className="text-xl font-semibold mb-6">Drafts</h2>
+        <h2 className="text-section font-semibold mb-6">Drafts</h2>
         {drafts.length > 0 ? (
           <div className="space-y-0">
             {drafts.map(post => (
@@ -153,7 +153,7 @@ export default function Dashboard() {
       </section>
 
       <section>
-        <h2 className="text-xl font-semibold mb-6">Published</h2>
+        <h2 className="text-section font-semibold mb-6">Published</h2>
         {published.length > 0 ? (
           <div className="space-y-0">
             {published.map(post => (

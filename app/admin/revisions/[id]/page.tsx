@@ -92,7 +92,7 @@ export default function RevisionDetailPage() {
           <Link href="/admin/revisions" className="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 mb-2 inline-block">
             ← Back to revisions
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-section font-bold text-gray-900 dark:text-white">
             Revision for "{revision.post.title}"
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">

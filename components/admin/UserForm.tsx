@@ -63,7 +63,7 @@ export function UserFormPage({ userId }: { userId?: string }) {
           ← Back to Users
         </Link>
       </div>
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">
+      <h1 className="text-section font-bold text-gray-900 dark:text-white mb-8">
         {isEdit ? 'Edit User' : 'Add New User'}
       </h1>
       <div className="max-w-lg">
