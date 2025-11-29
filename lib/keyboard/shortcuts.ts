@@ -7,5 +7,3 @@ export const SHORTCUTS = {
   ESCAPE_BACK: { key: 'Escape', allowInInput: true },  // editor→writer
 } as const
 
-
-

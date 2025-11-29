@@ -3,6 +3,7 @@
 import { useSession } from 'next-auth/react'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { CenteredPage } from '@/components/CenteredPage'
 
 export default function AdminLayout({
   children,
@@ -13,9 +14,9 @@ export default function AdminLayout({
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <CenteredPage>
         <p className="text-gray-500">Loading...</p>
-      </div>
+      </CenteredPage>
     )
   }
 

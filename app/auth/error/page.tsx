@@ -2,13 +2,14 @@
 
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
+import { CenteredPage } from '@/components/CenteredPage'
 
 export default function AuthError() {
   const searchParams = useSearchParams()
   const error = searchParams.get('error')
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+    <CenteredPage className="bg-gray-50 dark:bg-gray-900">
       <div className="max-w-md w-full space-y-8 p-8 text-center">
         <h1 className="text-3xl font-bold text-red-600">Access Denied</h1>
         <p className="text-gray-600 dark:text-gray-400">
@@ -23,7 +24,7 @@ export default function AuthError() {
           Go Home
         </Link>
       </div>
-    </div>
+    </CenteredPage>
   )
 }
 

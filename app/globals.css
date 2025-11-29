@@ -8,6 +8,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Disable double-tap zoom delay on interactive elements */
+a, button {
+  touch-action: manipulation;
+}
+
 /* Smooth transitions for dark mode */
 * {
   transition-property: background-color, border-color;

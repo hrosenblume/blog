@@ -77,14 +77,35 @@ export const PATCH = withSession(async (request: NextRequest, { params }: { para
 
   if (data.markdown !== undefined) {
     updates.markdown = data.markdown
-    if (data.markdown !== post.markdown) {
-      await prisma.revision.create({ data: { postId: post.id, markdown: data.markdown } })
-    }
   }
 
   if (data.status !== undefined) {
     updates.status = data.status
     if (data.status === 'published' && !post.publishedAt) updates.publishedAt = new Date()
+  }
+
+  // Check if any revision-tracked fields changed
+  const newTitle = (updates.title as string) ?? post.title
+  const newSubtitle = (updates.subtitle as string | null) ?? post.subtitle
+  const newMarkdown = (updates.markdown as string) ?? post.markdown
+  const newPolyhedraShape = (updates.polyhedraShape as string | null) ?? post.polyhedraShape
+
+  const hasContentChanges = 
+    newTitle !== post.title ||
+    newSubtitle !== post.subtitle ||
+    newMarkdown !== post.markdown ||
+    newPolyhedraShape !== post.polyhedraShape
+
+  if (hasContentChanges) {
+    await prisma.revision.create({
+      data: {
+        postId: post.id,
+        title: newTitle,
+        subtitle: newSubtitle,
+        markdown: newMarkdown,
+        polyhedraShape: newPolyhedraShape,
+      }
+    })
   }
 
   const updated = await prisma.post.update({ where: { id: post.id }, data: updates })

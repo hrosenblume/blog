@@ -4,11 +4,11 @@ import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Spinner } from '@/components/Spinner'
+import { CenteredPage } from '@/components/CenteredPage'
 import { Dropdown, DropdownItem } from '@/components/Dropdown'
 import { formatRelativeTime, formatNumber } from '@/lib/utils/format'
 import { confirmPublish, confirmUnpublish } from '@/lib/utils/confirm'
-import { useKeyboard } from '@/lib/keyboard'
-import { SHORTCUTS } from '@/lib/shortcuts'
+import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
 
 interface Post {
   id: string
@@ -96,9 +96,9 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <CenteredPage>
         <Spinner />
-      </div>
+      </CenteredPage>
     )
   }
 

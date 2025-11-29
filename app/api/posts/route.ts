@@ -44,7 +44,14 @@ export const POST = withSession(async (request: NextRequest) => {
       polyhedraShape: polyhedraShape || null,
       status: status ?? 'draft',
       publishedAt: status === 'published' ? new Date() : null,
-      revisions: { create: { markdown: markdown ?? '' } },
+      revisions: { 
+        create: { 
+          title: title.trim(),
+          subtitle: subtitle?.trim() || null,
+          markdown: markdown ?? '',
+          polyhedraShape: polyhedraShape || null,
+        } 
+      },
     },
   })
 

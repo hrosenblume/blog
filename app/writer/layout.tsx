@@ -5,10 +5,10 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useEffect } from 'react'
 import Link from 'next/link'
 import { Spinner } from '@/components/Spinner'
+import { CenteredPage } from '@/components/CenteredPage'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { Dropdown, DropdownItem } from '@/components/Dropdown'
-import { useKeyboard } from '@/lib/keyboard'
-import { SHORTCUTS } from '@/lib/shortcuts'
+import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
 
 export default function WriterLayout({
   children,
@@ -42,9 +42,9 @@ export default function WriterLayout({
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <CenteredPage>
         <Spinner />
-      </div>
+      </CenteredPage>
     )
   }
 

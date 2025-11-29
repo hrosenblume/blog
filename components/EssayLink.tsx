@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
+import { TapLink } from '@/components/TapLink'
 import { PolyhedraCanvas } from '@/components/PolyhedraCanvas'
 
 interface EssayLinkProps {
@@ -16,9 +16,9 @@ export function EssayLink({ slug, title, subtitle, polyhedraShape, index }: Essa
   const [hovered, setHovered] = useState(false)
 
   return (
-    <Link
+    <TapLink
       href={`/e/${slug}`}
-      className="group block w-full text-left border-b border-gray-200 dark:border-gray-800 last:border-b-0 transition-all hover:bg-gray-50 dark:hover:bg-gray-900/30 -mx-4 px-4 py-5 rounded"
+      className="group block w-full text-left border-b border-gray-200 dark:border-gray-800 transition-colors hover:bg-gray-50 dark:hover:bg-gray-900/30 px-6 py-5"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -55,7 +55,6 @@ export function EssayLink({ slug, title, subtitle, polyhedraShape, index }: Essa
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
       </div>
-    </Link>
+    </TapLink>
   )
 }
-

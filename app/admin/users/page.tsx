@@ -2,6 +2,7 @@ import { prisma } from '@/lib/db'
 import Link from 'next/link'
 import { DeleteButton } from '@/components/DeleteButton'
 import { StatusBadge } from '@/components/StatusBadge'
+import { TableEmptyRow } from '@/components/admin/TableEmptyRow'
 import { tableHeaderClass, tableHeaderRightClass, cellClass, cellPrimaryClass, actionCellClass, linkClass } from '@/lib/styles'
 
 export const dynamic = 'force-dynamic'
@@ -31,9 +32,7 @@ export default async function UsersPage() {
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
             {users.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">No users yet. Add one to get started.</td>
-              </tr>
+              <TableEmptyRow colSpan={5}>No users yet. Add one to get started.</TableEmptyRow>
             ) : (
               users.map((user) => (
                 <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">

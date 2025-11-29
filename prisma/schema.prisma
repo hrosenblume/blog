@@ -22,11 +22,14 @@ model Post {
 }
 
 model Revision {
-  id        String   @id @default(uuid())
-  postId    String
-  markdown  String
-  createdAt DateTime @default(now())
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  id             String   @id @default(uuid())
+  postId         String
+  title          String?
+  subtitle       String?
+  markdown       String
+  polyhedraShape String?
+  createdAt      DateTime @default(now())
+  post           Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 }
 
 model User {

@@ -1,8 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useKeyboard } from '@/lib/keyboard'
-import { SHORTCUTS } from '@/lib/shortcuts'
+import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
 
 export function HomeKeyboardNav() {
   const router = useRouter()
@@ -13,6 +12,4 @@ export function HomeKeyboardNav() {
 
   return null
 }
-
-
 

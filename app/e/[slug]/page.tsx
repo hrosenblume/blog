@@ -3,7 +3,8 @@ import Link from 'next/link'
 import { prisma } from '@/lib/db'
 import { renderMarkdown } from '@/lib/markdown'
 import { formatDate } from '@/lib/utils/format'
-import { KeyboardNav } from './KeyboardNav'
+import { KeyboardNav } from './_components/KeyboardNav'
+import { EssayNav } from '@/components/EssayNav'
 
 export const revalidate = 60
 
@@ -113,28 +114,7 @@ export default async function EssayPage({ params }: Props) {
           />
         </article>
 
-        <footer className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800 flex justify-between text-sm">
-          {prev ? (
-            <Link 
-              href={`/e/${prev.slug}`}
-              className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-            >
-              ← Previous essay
-            </Link>
-          ) : (
-            <span />
-          )}
-          {next ? (
-            <Link 
-              href={`/e/${next.slug}`}
-              className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-            >
-              Next essay →
-            </Link>
-          ) : (
-            <span />
-          )}
-        </footer>
+        <EssayNav key={post.slug} prev={prev} next={next} />
       </div>
     </div>
   )

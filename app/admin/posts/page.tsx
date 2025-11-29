@@ -2,24 +2,50 @@ import { prisma } from '@/lib/db'
 import Link from 'next/link'
 import { DeleteButton } from '@/components/DeleteButton'
 import { StatusBadge } from '@/components/StatusBadge'
+import { TableEmptyRow } from '@/components/admin/TableEmptyRow'
+import { Pagination } from '@/components/admin/Pagination'
 import { tableHeaderClass, tableHeaderRightClass, cellClass, cellPrimaryClass, actionCellClass, linkClass } from '@/lib/styles'
 
 export const dynamic = 'force-dynamic'
 
-export default async function PostsPage() {
-  const posts = await prisma.post.findMany({
-    orderBy: { updatedAt: 'desc' },
-    include: { _count: { select: { revisions: true } } }
-  })
+const ITEMS_PER_PAGE = 25
+
+interface PageProps {
+  searchParams: Promise<{ page?: string }>
+}
+
+export default async function PostsPage({ searchParams }: PageProps) {
+  const params = await searchParams
+  const currentPage = Math.max(1, parseInt(params.page || '1', 10))
+  const skip = (currentPage - 1) * ITEMS_PER_PAGE
+
+  const [posts, totalCount] = await Promise.all([
+    prisma.post.findMany({
+      orderBy: { updatedAt: 'desc' },
+      include: { _count: { select: { revisions: true } } },
+      skip,
+      take: ITEMS_PER_PAGE,
+    }),
+    prisma.post.count(),
+  ])
+
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)
 
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Posts</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Posts</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            {totalCount} total post{totalCount !== 1 ? 's' : ''}
+          </p>
+        </div>
         <Link href="/writer/editor" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
           New Post
         </Link>
       </div>
+
+      <Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/admin/posts" position="top" />
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -35,9 +61,7 @@ export default async function PostsPage() {
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
             {posts.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">No posts yet.</td>
-              </tr>
+              <TableEmptyRow colSpan={6}>No posts yet.</TableEmptyRow>
             ) : (
               posts.map((post) => (
                 <tr key={post.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
@@ -59,6 +83,8 @@ export default async function PostsPage() {
           </tbody>
         </table>
       </div>
+
+      <Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/admin/posts" position="bottom" />
     </div>
   )
 }

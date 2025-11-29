@@ -1,9 +1,11 @@
 'use client'
 
-export const EmailLink = ({ className }: { className?: string }) => (
-  <button onClick={() => (window.location.href = 'mailto:your-email@example.com')} className={className}>
-    Email
-  </button>
-)
+import { TapLink } from '@/components/TapLink'
 
-
+export function EmailLink({ className }: { className?: string }) {
+  return (
+    <TapLink href="mailto:your-email@example.com" className={className}>
+      Email
+    </TapLink>
+  )
+}

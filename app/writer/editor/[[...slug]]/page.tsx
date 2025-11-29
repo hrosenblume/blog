@@ -4,10 +4,10 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { renderMarkdown, generateSlug, wordCount } from '@/lib/markdown'
-import { useKeyboard } from '@/lib/keyboard'
-import { SHORTCUTS } from '@/lib/shortcuts'
+import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
 import { Button } from '@/components/Button'
 import { Spinner } from '@/components/Spinner'
+import { CenteredPage } from '@/components/CenteredPage'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { PolyhedraCanvas } from '@/components/PolyhedraCanvas'
 import { getRandomShape } from '@/lib/polyhedra/shapes'
@@ -17,7 +17,7 @@ import { formatSavedTime } from '@/lib/utils/format'
 // Success screen shown after publishing
 function PublishSuccess() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-black">
+    <CenteredPage className="bg-white dark:bg-black">
       <div className="text-center">
         <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
           <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -27,7 +27,7 @@ function PublishSuccess() {
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Published!</h2>
         <p className="text-gray-500 dark:text-gray-400">Your essay is now live</p>
       </div>
-    </div>
+    </CenteredPage>
   )
 }
 
@@ -172,7 +172,10 @@ export default function Editor() {
 
       if (publishStatus === 'published') {
         setPublishSuccess(true)
-        setTimeout(() => router.push('/writer'), 1500)
+        // Hard navigate to the live essay to bypass Router Cache
+        setTimeout(() => {
+          window.location.href = `/e/${slug.trim()}`
+        }, 1000)
       }
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to save')
@@ -212,9 +215,9 @@ export default function Editor() {
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <CenteredPage>
         <Spinner />
-      </div>
+      </CenteredPage>
     )
   }
 
