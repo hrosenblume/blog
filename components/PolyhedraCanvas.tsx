@@ -16,12 +16,13 @@ interface PolyhedraCanvasProps {
   size?: number
   className?: string
   index?: number  // Used to cycle through fallback GIFs (0-5)
+  hovered?: boolean  // Speed up rotation on hover
 }
 
 // 6 fallback GIFs for when JavaScript is disabled
 const FALLBACK_COUNT = 6
 
-export function PolyhedraCanvas({ shape, size = 60, className = '', index = 0 }: PolyhedraCanvasProps) {
+export function PolyhedraCanvas({ shape, size = 60, className = '', index = 0, hovered = false }: PolyhedraCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationRef = useRef<number>(0)
   const [isVisible, setIsVisible] = useState(false)
@@ -97,11 +98,14 @@ export function PolyhedraCanvas({ shape, size = 60, className = '', index = 0 }:
     }
 
     let startTime: number | null = null
-    const duration = 4000 // 4 seconds per rotation
+    let lastAngleY = 0
+    const baseDuration = 4000 // 4 seconds per rotation (normal)
+    const hoverDuration = 1500 // 1.5 seconds per rotation (fast)
 
     const animate = (timestamp: number) => {
       if (!startTime) startTime = timestamp
       const elapsed = timestamp - startTime
+      const duration = hovered ? hoverDuration : baseDuration
       const angleY = ((elapsed % duration) / duration) * Math.PI * 2
 
       ctx.clearRect(0, 0, size, size)
@@ -117,7 +121,7 @@ export function PolyhedraCanvas({ shape, size = 60, className = '', index = 0 }:
         cancelAnimationFrame(animationRef.current)
       }
     }
-  }, [shape, size, isVisible, prefersReducedMotion])
+  }, [shape, size, isVisible, prefersReducedMotion, hovered])
 
   return (
     <div className={`relative ${className}`} style={{ width: size, height: size }}>
