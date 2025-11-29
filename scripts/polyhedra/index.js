@@ -1,60 +1,35 @@
 /**
- * Polyhedra Index - Combines all polyhedra from all sources.
+ * Polyhedra Index - Loads pre-built shapes from shapes.json
  * 
- * Total shapes: ~175
+ * Shapes are now built by running: node scripts/polyhedra/build-shapes.js
+ * 
+ * Available shapes: ~75
  * - 5 Platonic solids
- * - 13 Archimedean solids
- * - 13 Catalan solids
+ * - 12 Archimedean solids
+ * - 6 Catalan solids
  * - 4 Kepler-Poinsot star polyhedra
- * - 92 Johnson solids
- * - 48 Parametric shapes (prisms, antiprisms, pyramids, bipyramids, trapezohedra)
+ * - ~20 Johnson solids
+ * - ~28 Parametric shapes (prisms, antiprisms, pyramids, bipyramids)
  */
 
-const platonic = require('./platonic');
-const archimedean = require('./archimedean');
-const catalan = require('./catalan');
-const keplerPoinsot = require('./kepler-poinsot');
-const johnson = require('./johnson');
-const { generateAllParametric } = require('./generators');
+const fs = require('fs');
+const path = require('path');
 
-// Combine all polyhedra into a single object
-const ALL_POLYHEDRA = {
-  ...platonic,
-  ...archimedean,
-  ...catalan,
-  ...keplerPoinsot,
-  ...johnson,
-  ...generateAllParametric()
-};
-
-// Validate shape quality - filter out visually sparse shapes
-function isValidShape(shape) {
-  if (!shape || !shape.vertices || !shape.edges) return false;
-  // Require minimum visual substance
-  if (shape.vertices.length < 8) return false;  // At least cube-level complexity
-  if (shape.edges.length < 12) return false;
-  return true;
-}
-
-// Filter to only valid shapes
-const POLYHEDRA = {};
-for (const [name, shape] of Object.entries(ALL_POLYHEDRA)) {
-  if (isValidShape(shape)) {
-    POLYHEDRA[name] = shape;
-  }
-}
+// Load pre-built shapes from JSON
+const shapesPath = path.join(__dirname, '../../lib/polyhedra/shapes.json');
+const POLYHEDRA = JSON.parse(fs.readFileSync(shapesPath, 'utf-8'));
 
 // Export shape names as an array for easy random selection
 const SHAPE_NAMES = Object.keys(POLYHEDRA);
 
-// Category information for potential filtering
+// Category information based on naming conventions
 const CATEGORIES = {
-  platonic: Object.keys(platonic),
-  archimedean: Object.keys(archimedean),
-  catalan: Object.keys(catalan),
-  keplerPoinsot: Object.keys(keplerPoinsot),
-  johnson: Object.keys(johnson),
-  parametric: Object.keys(generateAllParametric())
+  platonic: SHAPE_NAMES.filter(n => ['tetrahedron', 'cube', 'octahedron', 'dodecahedron', 'icosahedron'].includes(n)),
+  archimedean: SHAPE_NAMES.filter(n => n.includes('truncated') || n.includes('cuboctahedron') || n.includes('icosidodecahedron') || n.includes('rhombicuboctahedron') || n.includes('rhombicosidodecahedron') || n.includes('snub')),
+  catalan: SHAPE_NAMES.filter(n => n.includes('triakis') || n.includes('tetrakis') || n.includes('pentakis') || n.includes('rhombic') || n.includes('deltoidal') || n.includes('disdyakis')),
+  keplerPoinsot: SHAPE_NAMES.filter(n => n.includes('stellated') || n.includes('great_icosahedron') || n.includes('great_dodecahedron')),
+  johnson: SHAPE_NAMES.filter(n => n.startsWith('j') && /^j\d+/.test(n)),
+  parametric: SHAPE_NAMES.filter(n => n.includes('prism') || n.includes('antiprism') || n.includes('pyramid') || n.includes('bipyramid') || n.includes('trapezohedron'))
 };
 
 /**
@@ -67,7 +42,7 @@ function getRandomShape() {
 
 /**
  * Get a random shape from a specific category
- * @param {string} category - Category name (platonic, archimedean, catalan, keplerPoinsot, johnson, parametric)
+ * @param {string} category - Category name
  * @returns {string} Random shape name from that category
  */
 function getRandomShapeFromCategory(category) {
@@ -99,4 +74,3 @@ module.exports = {
   getRandomShapeFromCategory,
   getShape
 };
-

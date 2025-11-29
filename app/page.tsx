@@ -14,20 +14,11 @@ async function getPublishedPosts() {
     select: {
       id: true,
       title: true,
+      subtitle: true,
       slug: true,
-      markdown: true,
       polyhedraShape: true,
     },
   })
-}
-
-function getSubtitle(markdown: string): string {
-  // Get first paragraph as subtitle
-  const firstPara = markdown.split('\n\n')[0]?.replace(/^#+\s*/, '').trim()
-  if (firstPara && firstPara.length > 100) {
-    return firstPara.substring(0, 100) + '...'
-  }
-  return firstPara || ''
 }
 
 export default async function Home() {
@@ -85,12 +76,14 @@ export default async function Home() {
                     
                     {/* Title and subtitle */}
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium mb-1 transition-colors dark:text-white group-hover:text-gray-600 dark:group-hover:text-gray-400">
+                      <h3 className="text-lg font-medium mb-1 transition-colors dark:text-white group-hover:text-gray-600 dark:group-hover:text-gray-400">
                         {post.title}
                       </h3>
-                      <p className="text-gray-500 dark:text-gray-400 text-sm truncate">
-                        {getSubtitle(post.markdown)}
-                      </p>
+                      {post.subtitle && (
+                        <p className="text-gray-500 dark:text-gray-400 text-sm truncate">
+                          {post.subtitle}
+                        </p>
+                      )}
                     </div>
                     
                     {/* Arrow */}

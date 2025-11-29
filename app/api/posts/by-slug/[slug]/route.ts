@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { withSession, notFound, badRequest } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { wordCount } from '@/lib/markdown'
@@ -31,8 +32,10 @@ export const GET = withSession(async (request: NextRequest, { params }: { params
   return NextResponse.json({
     id: post.id,
     title: post.title,
+    subtitle: post.subtitle,
     slug: post.slug,
     markdown: post.markdown,
+    polyhedraShape: post.polyhedraShape,
     status: post.status,
     wordCount: wordCount(post.markdown),
     updatedAt: post.updatedAt.toISOString(),
@@ -64,6 +67,14 @@ export const PATCH = withSession(async (request: NextRequest, { params }: { para
     updates.slug = data.slug.trim()
   }
 
+  if (data.subtitle !== undefined) {
+    updates.subtitle = data.subtitle || null
+  }
+
+  if (data.polyhedraShape !== undefined) {
+    updates.polyhedraShape = data.polyhedraShape
+  }
+
   if (data.markdown !== undefined) {
     updates.markdown = data.markdown
     if (data.markdown !== post.markdown) {
@@ -77,6 +88,11 @@ export const PATCH = withSession(async (request: NextRequest, { params }: { para
   }
 
   const updated = await prisma.post.update({ where: { id: post.id }, data: updates })
+  
+  // Invalidate homepage and essay page caches
+  revalidatePath('/')
+  revalidatePath(`/e/${updated.slug}`)
+  
   return NextResponse.json({ id: updated.id, slug: updated.slug, status: updated.status })
 })
 
@@ -86,6 +102,10 @@ export const DELETE = withSession(async (request: NextRequest, { params }: { par
   if (!post) return notFound()
 
   await prisma.post.update({ where: { id: post.id }, data: { status: 'deleted' } })
+  
+  // Invalidate homepage cache
+  revalidatePath('/')
+  
   return NextResponse.json({ success: true })
 })
 

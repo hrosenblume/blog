@@ -94,7 +94,7 @@ export function rgbToHex(rgb: RGB): string {
 }
 
 /**
- * Draw a 3D cylindrical edge with shading
+ * Draw a solid colored edge
  */
 export function draw3DEdge(
   ctx: CanvasRenderingContext2D,
@@ -103,52 +103,17 @@ export function draw3DEdge(
   colorHex: string,
   thickness: number
 ): void {
-  const rgb = hexToRgb(colorHex)
-  const dark = darkenColor(rgb, 0.4)
-  const highlight = lightenColor(rgb, 0.2)
-  
-  // Calculate perpendicular direction for the edge thickness
-  const dx = p2[0] - p1[0]
-  const dy = p2[1] - p1[1]
-  const length = Math.sqrt(dx * dx + dy * dy)
-  
-  if (length < 1) return
-  
-  // Perpendicular unit vector
-  const px = -dy / length
-  const py = dx / length
-  
-  // Draw multiple layers to create 3D tube effect
-  const layers: { offset: number; color: RGB; half?: boolean }[] = [
-    { offset: 1.0, color: dark },
-    { offset: 0.75, color: rgb },
-    { offset: 0.5, color: highlight, half: true }
-  ]
-  
-  for (const layer of layers) {
-    const offset = thickness * layer.offset
-    
-    ctx.beginPath()
-    if (layer.half) {
-      // Slight highlight on one side only
-      ctx.moveTo(p1[0] + px * offset * 0.5, p1[1] + py * offset * 0.5)
-      ctx.lineTo(p2[0] + px * offset * 0.5, p2[1] + py * offset * 0.5)
-      ctx.lineTo(p2[0] + px * offset, p2[1] + py * offset)
-      ctx.lineTo(p1[0] + px * offset, p1[1] + py * offset)
-    } else {
-      ctx.moveTo(p1[0] + px * offset, p1[1] + py * offset)
-      ctx.lineTo(p2[0] + px * offset, p2[1] + py * offset)
-      ctx.lineTo(p2[0] - px * offset, p2[1] - py * offset)
-      ctx.lineTo(p1[0] - px * offset, p1[1] - py * offset)
-    }
-    ctx.closePath()
-    ctx.fillStyle = rgbToHex(layer.color)
-    ctx.fill()
-  }
+  ctx.beginPath()
+  ctx.moveTo(p1[0], p1[1])
+  ctx.lineTo(p2[0], p2[1])
+  ctx.strokeStyle = colorHex
+  ctx.lineWidth = thickness * 2
+  ctx.lineCap = 'round'
+  ctx.stroke()
 }
 
 /**
- * Draw a vertex sphere with highlight
+ * Draw a vertex as a small dot
  */
 export function drawVertexSphere(
   ctx: CanvasRenderingContext2D,
@@ -157,18 +122,10 @@ export function drawVertexSphere(
 ): void {
   const [x, y] = center
   
-  // Main dark sphere
+  // Simple small dot - dark gray, not pure black
   ctx.beginPath()
   ctx.arc(x, y, radius, 0, Math.PI * 2)
-  ctx.fillStyle = '#1a1a1a'
-  ctx.fill()
-  
-  // Subtle highlight
-  const highlightR = radius * 0.4
-  const highlightOffset = radius * 0.3
-  ctx.beginPath()
-  ctx.arc(x - highlightOffset, y - highlightOffset, highlightR, 0, Math.PI * 2)
-  ctx.fillStyle = '#3a3a3a'
+  ctx.fillStyle = '#2a2a2a'
   ctx.fill()
 }
 
@@ -190,48 +147,39 @@ export function renderFrame(
   
   // Calculate edge thickness based on size
   const thickness = Math.max(2, Math.floor(size / 40))
-  const vertexRadius = Math.max(3, Math.floor(size / 25))
+  const vertexRadius = Math.max(2, Math.floor(size / 35))
   
   // Sort edges by average z-depth for proper rendering (back to front)
+  // Use edge index as secondary key to prevent flickering when z-depths are similar
   const edgeDepths = edges.map((edge, i) => {
     const avgZ = (rotated[edge[0]][2] + rotated[edge[1]][2]) / 2
     return { z: avgZ, index: i, v1: edge[0], v2: edge[1] }
   })
-  edgeDepths.sort((a, b) => a.z - b.z)
+  edgeDepths.sort((a, b) => {
+    const zDiff = a.z - b.z
+    // If z-depths are very close, use edge index for stable ordering
+    if (Math.abs(zDiff) < 0.001) return a.index - b.index
+    return zDiff
+  })
   
   // Sort vertices by z-depth
   const vertexDepths = rotated.map((v, i) => ({ z: v[2], index: i, vertex: v }))
   vertexDepths.sort((a, b) => a.z - b.z)
   
-  // Collect all drawing operations with their z-depths
-  type DrawOp = 
-    | { z: number; type: 'edge'; p1: Point2D; p2: Point2D; color: string; thickness: number }
-    | { z: number; type: 'vertex'; p: Point2D; radius: number }
+  // Draw all edges first (back to front), then all vertices (back to front)
+  // This ensures vertex spheres always cover edge endpoints cleanly
   
-  const drawOps: DrawOp[] = []
-  
-  // Add edge drawing operations
+  // Draw edges back to front
   for (const edge of edgeDepths) {
     const p1 = projectPoint(rotated[edge.v1], size)
     const p2 = projectPoint(rotated[edge.v2], size)
-    drawOps.push({ z: edge.z, type: 'edge', p1, p2, color: edgeColors[edge.index], thickness })
+    draw3DEdge(ctx, p1, p2, edgeColors[edge.index], thickness)
   }
   
-  // Add vertex drawing operations
+  // Draw vertices back to front (on top of all edges)
   for (const vertex of vertexDepths) {
     const p = projectPoint(vertex.vertex, size)
-    drawOps.push({ z: vertex.z, type: 'vertex', p, radius: vertexRadius })
-  }
-  
-  // Sort all operations by z-depth and draw back to front
-  drawOps.sort((a, b) => a.z - b.z)
-  
-  for (const op of drawOps) {
-    if (op.type === 'edge') {
-      draw3DEdge(ctx, op.p1, op.p2, op.color, op.thickness)
-    } else if (op.type === 'vertex') {
-      drawVertexSphere(ctx, op.p, op.radius)
-    }
+    drawVertexSphere(ctx, p, vertexRadius)
   }
 }
 

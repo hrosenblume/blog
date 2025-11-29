@@ -8,31 +8,31 @@ datasource db {
 }
 
 model Post {
-  id           String     @id @default(uuid())
-  title        String
-  slug         String     @unique
-  markdown     String
-  status       String     @default("draft")
-  polyhedraShape String?  // e.g., "dodecahedron"
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  publishedAt  DateTime?
-  revisions    Revision[]
+  id             String     @id @default(uuid())
+  title          String
+  slug           String     @unique
+  markdown       String
+  status         String     @default("draft")
+  polyhedraShape String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  publishedAt    DateTime?
+  subtitle       String?
+  revisions      Revision[]
 }
 
 model Revision {
   id        String   @id @default(uuid())
   postId    String
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   markdown  String
   createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 }
 
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
   name      String?
-  role      String   @default("writer")  // "admin" or "writer"
+  role      String   @default("writer")
   createdAt DateTime @default(now())
 }
-

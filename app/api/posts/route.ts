@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { withSession, badRequest } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { wordCount } from '@/lib/markdown'
@@ -26,7 +27,7 @@ export const GET = withSession(async () => {
 
 // POST /api/posts - Create new post
 export const POST = withSession(async (request: NextRequest) => {
-  const { title, slug, markdown, status } = await request.json()
+  const { title, subtitle, slug, markdown, polyhedraShape, status } = await request.json()
 
   if (!title?.trim()) return badRequest('Title is required')
   if (!slug?.trim()) return badRequest('Slug is required')
@@ -37,13 +38,18 @@ export const POST = withSession(async (request: NextRequest) => {
   const post = await prisma.post.create({
     data: {
       title: title.trim(),
+      subtitle: subtitle?.trim() || null,
       slug: slug.trim(),
       markdown: markdown ?? '',
+      polyhedraShape: polyhedraShape || null,
       status: status ?? 'draft',
       publishedAt: status === 'published' ? new Date() : null,
       revisions: { create: { markdown: markdown ?? '' } },
     },
   })
+
+  // Invalidate homepage cache
+  revalidatePath('/')
 
   return NextResponse.json({ id: post.id, slug: post.slug, status: post.status })
 })

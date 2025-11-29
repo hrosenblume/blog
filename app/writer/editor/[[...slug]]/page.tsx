@@ -9,6 +9,8 @@ import { SHORTCUTS } from '@/lib/shortcuts'
 import { Button } from '@/components/Button'
 import { Spinner } from '@/components/Spinner'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import { PolyhedraCanvas } from '@/components/PolyhedraCanvas'
+import { getRandomShape } from '@/lib/polyhedra/shapes'
 
 // Success screen shown after publishing
 function PublishSuccess() {
@@ -34,8 +36,10 @@ export default function Editor() {
 
   // Post content state
   const [title, setTitle] = useState('')
+  const [subtitle, setSubtitle] = useState('')
   const [slug, setSlug] = useState('')
   const [markdown, setMarkdown] = useState('')
+  const [polyhedraShape, setPolyhedraShape] = useState(() => getRandomShape())
   const [status, setStatus] = useState<'draft' | 'published'>('draft')
   const [isManualSlug, setIsManualSlug] = useState(false)
 
@@ -52,7 +56,7 @@ export default function Editor() {
   const [nextSlug, setNextSlug] = useState<string | null>(null)
   
   // Track last saved content to detect changes
-  const lastSavedContent = useRef({ title: '', slug: '', markdown: '' })
+  const lastSavedContent = useRef({ title: '', subtitle: '', slug: '', markdown: '', polyhedraShape: '' })
   
   // Track the current URL slug for redirect detection
   const urlSlugRef = useRef(postSlug)
@@ -65,14 +69,16 @@ export default function Editor() {
       .then(res => res.json())
       .then(data => {
         setTitle(data.title)
+        setSubtitle(data.subtitle || '')
         setSlug(data.slug)
         setMarkdown(data.markdown)
+        setPolyhedraShape(data.polyhedraShape || 'cube')
         setStatus(data.status)
         setPrevSlug(data.prevSlug)
         setNextSlug(data.nextSlug)
         setIsManualSlug(true)
         setLoading(false)
-        lastSavedContent.current = { title: data.title, slug: data.slug, markdown: data.markdown }
+        lastSavedContent.current = { title: data.title, subtitle: data.subtitle || '', slug: data.slug, markdown: data.markdown, polyhedraShape: data.polyhedraShape || '' }
         urlSlugRef.current = data.slug
       })
       .catch(() => {
@@ -90,9 +96,9 @@ export default function Editor() {
   // Track unsaved changes
   useEffect(() => {
     const saved = lastSavedContent.current
-    const hasChanges = title !== saved.title || slug !== saved.slug || markdown !== saved.markdown
+    const hasChanges = title !== saved.title || subtitle !== saved.subtitle || slug !== saved.slug || markdown !== saved.markdown || polyhedraShape !== saved.polyhedraShape
     setHasUnsavedChanges(hasChanges)
-  }, [title, slug, markdown])
+  }, [title, subtitle, slug, markdown, polyhedraShape])
 
   // Keyboard shortcuts
   useKeyboard([
@@ -119,7 +125,7 @@ export default function Editor() {
     setSaving(true)
 
     try {
-      const data = { title: title.trim(), slug: slug.trim(), markdown, status: publishStatus }
+      const data = { title: title.trim(), subtitle: subtitle.trim() || null, slug: slug.trim(), markdown, polyhedraShape, status: publishStatus }
       
       if (postSlug) {
         const res = await fetch(`/api/posts/by-slug/${urlSlugRef.current}`, {
@@ -150,7 +156,7 @@ export default function Editor() {
 
       setStatus(publishStatus)
       setLastSaved(new Date())
-      lastSavedContent.current = { title: title.trim(), slug: slug.trim(), markdown }
+      lastSavedContent.current = { title: title.trim(), subtitle: subtitle.trim(), slug: slug.trim(), markdown, polyhedraShape }
       setHasUnsavedChanges(false)
 
       if (publishStatus === 'published') {
@@ -162,7 +168,7 @@ export default function Editor() {
     } finally {
       setSaving(false)
     }
-  }, [postSlug, title, slug, markdown, router])
+  }, [postSlug, title, subtitle, slug, markdown, polyhedraShape, router])
 
   // Autosave drafts after 3 seconds of inactivity
   useEffect(() => {
@@ -230,8 +236,9 @@ export default function Editor() {
             <Button
               onClick={() => handleSave('published')}
               loading={saving}
+              disabled={status === 'published' && !hasUnsavedChanges}
             >
-              {status === 'published' ? 'Update' : 'Publish'}
+              {status === 'published' ? (hasUnsavedChanges ? 'Update' : 'Saved') : 'Publish'}
             </Button>
           </div>
         </div>
@@ -254,7 +261,15 @@ export default function Editor() {
                 value={title}
                 onChange={e => setTitle(e.target.value)}
                 placeholder="Title"
-                className="w-full text-4xl font-bold bg-transparent border-none outline-none placeholder-gray-300 dark:placeholder-gray-700 mb-8"
+                className="w-full text-4xl font-bold bg-transparent border-none outline-none placeholder-gray-300 dark:placeholder-gray-700 mb-2"
+              />
+
+              <input
+                type="text"
+                value={subtitle}
+                onChange={e => setSubtitle(e.target.value)}
+                placeholder="Subtitle (shown on homepage)"
+                className="w-full text-lg bg-transparent border-none outline-none placeholder-gray-300 dark:placeholder-gray-700 text-gray-500 dark:text-gray-400 mb-8"
               />
 
               <textarea
@@ -266,7 +281,8 @@ export default function Editor() {
             </>
           )}
 
-          <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800">
+          <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800 space-y-6">
+            {/* URL */}
             <div className="flex items-center gap-2 text-sm">
               <span className="text-gray-500">URL:</span>
               <span className="text-gray-400">/e/</span>
@@ -285,6 +301,24 @@ export default function Editor() {
               {status === 'published' && (
                 <span className="text-xs text-gray-400 ml-2">Locked</span>
               )}
+            </div>
+
+            {/* Shape */}
+            <div className="flex items-center gap-4 text-sm">
+              <span className="text-gray-500">Shape:</span>
+              <div className="flex items-center gap-3">
+                <PolyhedraCanvas shape={polyhedraShape} size={40} />
+                <span className="text-gray-600 dark:text-gray-400 font-mono text-xs">
+                  {polyhedraShape}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setPolyhedraShape(getRandomShape())}
+                  className="px-2 py-1 text-xs rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Regenerate
+                </button>
+              </div>
             </div>
           </div>
         </div>
