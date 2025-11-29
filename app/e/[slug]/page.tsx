@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { prisma } from '@/lib/db'
 import { renderMarkdown } from '@/lib/markdown'
 import { formatDate } from '@/lib/utils/format'
+import { KeyboardNav } from './KeyboardNav'
 
 export const revalidate = 60
 
@@ -72,7 +73,14 @@ export default async function EssayPage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-white dark:bg-black">
+      <KeyboardNav prevSlug={prev?.slug ?? null} nextSlug={next?.slug ?? null} slug={post.slug} />
       <div className="max-w-2xl mx-auto px-6 py-16">
+        <Link 
+          href="/"
+          className="inline-block text-sm text-gray-500 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors mb-8"
+        >
+          ← Home
+        </Link>
         <article className="space-y-6">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{post.title}</h1>
           

@@ -1,10 +1,13 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Spinner } from '@/components/Spinner'
 import { Dropdown, DropdownItem } from '@/components/Dropdown'
 import { formatRelativeTime, formatNumber } from '@/lib/utils/format'
+import { useKeyboard } from '@/lib/keyboard'
+import { SHORTCUTS } from '@/lib/shortcuts'
 
 interface Post {
   id: string
@@ -17,9 +20,15 @@ interface Post {
 }
 
 export default function Dashboard() {
+  const router = useRouter()
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+
+  // N to create new essay
+  useKeyboard([
+    { ...SHORTCUTS.NEW_ARTICLE, handler: () => router.push('/writer/editor') },
+  ])
 
   useEffect(() => {
     fetch('/api/posts')
@@ -37,7 +46,13 @@ export default function Dashboard() {
   )
 
   const drafts = filteredPosts.filter(p => p.status === 'draft')
-  const published = filteredPosts.filter(p => p.status === 'published')
+  const published = filteredPosts
+    .filter(p => p.status === 'published')
+    .sort((a, b) => {
+      const aDate = a.publishedAt ? new Date(a.publishedAt).getTime() : 0
+      const bDate = b.publishedAt ? new Date(b.publishedAt).getTime() : 0
+      return bDate - aDate
+    })
 
   const stats = useMemo(() => {
     const totalWords = posts.reduce((sum, p) => sum + p.wordCount, 0)
@@ -76,8 +91,8 @@ export default function Dashboard() {
     <div className="max-w-5xl mx-auto px-6 py-16">
       <header className="flex items-center justify-between mb-16">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Writer</h1>
-          <p className="text-gray-600 dark:text-gray-400">Your writing workspace</p>
+          <h1 className="text-3xl font-bold mb-2">Hunter Rosenblume</h1>
+          <p className="text-gray-600 dark:text-gray-400">Welcome to your workspace</p>
         </div>
         <Link
           href="/writer/editor"
@@ -86,7 +101,7 @@ export default function Dashboard() {
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          New Article
+          New Essay
         </Link>
       </header>
 
@@ -150,7 +165,7 @@ function PostItem({
   return (
     <div className="flex items-center justify-between py-4 border-b border-gray-100 dark:border-gray-800 group">
       <div className="flex-1 min-w-0">
-        <Link href={`/writer/editor/${post.id}`} className="block">
+        <Link href={`/writer/editor/${post.slug}`} className="block">
           <h3 className="font-medium truncate group-hover:text-gray-600 dark:group-hover:text-gray-300">
             {post.title || 'Untitled'}
           </h3>
@@ -170,7 +185,7 @@ function PostItem({
         }
       >
         <Link
-          href={`/writer/editor/${post.id}`}
+          href={`/writer/editor/${post.slug}`}
           className="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded-t-lg"
         >
           Edit
@@ -196,4 +211,3 @@ function PostItem({
     </div>
   )
 }
-

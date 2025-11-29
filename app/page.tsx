@@ -4,6 +4,7 @@ import { wordCount } from '@/lib/markdown'
 import { formatDate } from '@/lib/utils/format'
 import { EmailLink } from '@/components/EmailLink'
 import { SecretNav } from '@/components/SecretNav'
+import { HomeKeyboardNav } from '@/components/HomeKeyboardNav'
 
 export const revalidate = 60
 
@@ -37,6 +38,7 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-black">
+      <HomeKeyboardNav />
       <div className="max-w-2xl mx-auto px-6 py-16">
         <header className="mb-20">
           <h1 className="text-3xl font-bold mb-6 dark:text-white">

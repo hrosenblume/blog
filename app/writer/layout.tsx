@@ -7,7 +7,8 @@ import Link from 'next/link'
 import { Spinner } from '@/components/Spinner'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { Dropdown, DropdownItem } from '@/components/Dropdown'
-import { useThemeShortcut } from '@/lib/hooks'
+import { useKeyboard } from '@/lib/keyboard'
+import { SHORTCUTS } from '@/lib/shortcuts'
 
 export default function WriterLayout({
   children,
@@ -27,21 +28,17 @@ export default function WriterLayout({
     }
   }, [status, router])
 
-  // Keyboard shortcuts: Cmd+/ (homepage)
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.metaKey && e.key === '/') {
-        e.preventDefault()
-        localStorage.setItem('lastWriterPath', window.location.pathname)
-        router.push('/')
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [router])
-
-  // Cmd+. theme toggle
-  useThemeShortcut()
+  // Cmd+/ to toggle to homepage (only on /writer dashboard, not in editor)
+  useKeyboard([
+    { 
+      ...SHORTCUTS.TOGGLE_VIEW, 
+      handler: () => { 
+        if (pathname === '/writer') {
+          router.push('/') 
+        }
+      } 
+    },
+  ])
 
   if (status === 'loading') {
     return (
@@ -60,8 +57,9 @@ export default function WriterLayout({
       {!isEditor && (
         <header className="fixed top-0 left-0 right-0 z-50 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-black">
           <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
-            <Link href="/writer" className="font-medium">
+            <Link href="/writer" className="font-medium flex items-center gap-1.5">
               Writer
+              <span className="text-xs px-1.5 py-0.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded">AI</span>
             </Link>
             
             <div className="flex items-center gap-2">

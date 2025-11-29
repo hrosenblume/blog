@@ -4,10 +4,11 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { renderMarkdown, generateSlug, wordCount } from '@/lib/markdown'
+import { useKeyboard } from '@/lib/keyboard'
+import { SHORTCUTS } from '@/lib/shortcuts'
 import { Button } from '@/components/Button'
 import { Spinner } from '@/components/Spinner'
 import { ThemeToggle } from '@/components/ThemeToggle'
-import { useThemeShortcut } from '@/lib/hooks'
 
 // Success screen shown after publishing
 function PublishSuccess() {
@@ -29,7 +30,7 @@ function PublishSuccess() {
 export default function Editor() {
   const router = useRouter()
   const params = useParams()
-  const postId = params.id?.[0] as string | undefined
+  const postSlug = params.slug?.[0] as string | undefined
 
   // Post content state
   const [title, setTitle] = useState('')
@@ -39,35 +40,45 @@ export default function Editor() {
   const [isManualSlug, setIsManualSlug] = useState(false)
 
   // UI state
-  const [loading, setLoading] = useState(!!postId)
+  const [loading, setLoading] = useState(!!postSlug)
   const [saving, setSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [showPreview, setShowPreview] = useState(false)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [publishSuccess, setPublishSuccess] = useState(false)
   
+  // Adjacent posts for navigation
+  const [prevSlug, setPrevSlug] = useState<string | null>(null)
+  const [nextSlug, setNextSlug] = useState<string | null>(null)
+  
   // Track last saved content to detect changes
   const lastSavedContent = useRef({ title: '', slug: '', markdown: '' })
+  
+  // Track the current URL slug for redirect detection
+  const urlSlugRef = useRef(postSlug)
 
   // Load existing post
   useEffect(() => {
-    if (!postId) return
+    if (!postSlug) return
     
-    fetch(`/api/posts/${postId}`)
+    fetch(`/api/posts/by-slug/${postSlug}`)
       .then(res => res.json())
       .then(data => {
         setTitle(data.title)
         setSlug(data.slug)
         setMarkdown(data.markdown)
         setStatus(data.status)
+        setPrevSlug(data.prevSlug)
+        setNextSlug(data.nextSlug)
         setIsManualSlug(true)
         setLoading(false)
         lastSavedContent.current = { title: data.title, slug: data.slug, markdown: data.markdown }
+        urlSlugRef.current = data.slug
       })
       .catch(() => {
         router.push('/writer')
       })
-  }, [postId, router])
+  }, [postSlug, router])
 
   // Auto-generate slug from title
   useEffect(() => {
@@ -83,8 +94,12 @@ export default function Editor() {
     setHasUnsavedChanges(hasChanges)
   }, [title, slug, markdown])
 
-  // Cmd+. theme toggle
-  useThemeShortcut()
+  // Keyboard shortcuts
+  useKeyboard([
+    { ...SHORTCUTS.TOGGLE_VIEW, handler: () => { if (status === 'published' && slug) router.push(`/e/${slug}`) } },
+    { ...SHORTCUTS.PREV, handler: () => { if (prevSlug) router.push(`/writer/editor/${prevSlug}`) } },
+    { ...SHORTCUTS.NEXT, handler: () => { if (nextSlug) router.push(`/writer/editor/${nextSlug}`) } },
+  ])
 
   const handleSlugChange = useCallback((value: string) => {
     setSlug(value)
@@ -106,12 +121,19 @@ export default function Editor() {
     try {
       const data = { title: title.trim(), slug: slug.trim(), markdown, status: publishStatus }
       
-      if (postId) {
-        await fetch(`/api/posts/${postId}`, {
+      if (postSlug) {
+        const res = await fetch(`/api/posts/by-slug/${urlSlugRef.current}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data),
         })
+        const result = await res.json()
+        
+        // If slug changed, redirect to new URL
+        if (result.slug !== urlSlugRef.current) {
+          urlSlugRef.current = result.slug
+          router.replace(`/writer/editor/${result.slug}`)
+        }
       } else {
         const res = await fetch('/api/posts', {
           method: 'POST',
@@ -122,7 +144,8 @@ export default function Editor() {
         if (!res.ok) {
           throw new Error(result.error)
         }
-        router.push(`/writer/editor/${result.id}`)
+        urlSlugRef.current = result.slug
+        router.push(`/writer/editor/${result.slug}`)
       }
 
       setStatus(publishStatus)
@@ -139,15 +162,15 @@ export default function Editor() {
     } finally {
       setSaving(false)
     }
-  }, [postId, title, slug, markdown, router])
+  }, [postSlug, title, slug, markdown, router])
 
   // Autosave drafts after 3 seconds of inactivity
   useEffect(() => {
-    if (!postId || !title.trim() || status === 'published') return
+    if (!postSlug || !title.trim() || status === 'published') return
     
     const timeout = setTimeout(() => handleSave('draft'), 3000)
     return () => clearTimeout(timeout)
-  }, [markdown, title, postId, status, handleSave])
+  }, [markdown, title, postSlug, status, handleSave])
 
   // Loading state
   if (loading) {
@@ -251,9 +274,17 @@ export default function Editor() {
                 type="text"
                 value={slug}
                 onChange={e => handleSlugChange(e.target.value)}
+                disabled={status === 'published'}
                 placeholder="post-slug"
-                className="flex-1 bg-transparent border-none outline-none text-gray-600 dark:text-gray-400 placeholder-gray-400"
+                className={`flex-1 bg-transparent border-none outline-none placeholder-gray-400 ${
+                  status === 'published'
+                    ? 'text-gray-400 dark:text-gray-600 cursor-not-allowed'
+                    : 'text-gray-600 dark:text-gray-400'
+                }`}
               />
+              {status === 'published' && (
+                <span className="text-xs text-gray-400 ml-2">Locked</span>
+              )}
             </div>
           </div>
         </div>
@@ -270,3 +301,4 @@ export default function Editor() {
     </div>
   )
 }
+

@@ -47,7 +47,7 @@ export default async function PostsPage() {
                   <td className={cellClass}>{post._count.revisions}</td>
                   <td className={cellClass}>{new Date(post.updatedAt).toLocaleDateString()}</td>
                   <td className={actionCellClass}>
-                    <Link href={`/writer/editor/${post.id}`} className={`${linkClass} mr-4`}>Edit</Link>
+                    <Link href={`/writer/editor/${post.slug}`} className={`${linkClass} mr-4`}>Edit</Link>
                     {post.status === 'published' && (
                       <Link href={`/e/${post.slug}`} className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 mr-4" target="_blank">View</Link>
                     )}
