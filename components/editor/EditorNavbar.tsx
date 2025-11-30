@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { Button } from '@/components/ui/button'
 import { ChevronLeftIcon } from '@/components/Icons'
-import { Spinner } from '@/components/Spinner'
+import { PolyhedraCanvas } from '@/components/PolyhedraCanvas'
 
 interface EditorNavbarProps {
   status: 'draft' | 'published'
@@ -49,7 +49,7 @@ export function EditorNavbar({
               onClick={() => onSave('draft')}
               disabled={saving || !hasUnsavedChanges}
             >
-              {saving && <Spinner className="w-4 h-4" />}
+              {saving && <PolyhedraCanvas shape="cube" size={16} clicked={true} />}
               {hasUnsavedChanges ? 'Save Draft' : 'Saved'}
             </Button>
           )}
@@ -58,7 +58,7 @@ export function EditorNavbar({
             onClick={() => onSave('published')}
             disabled={saving || (status === 'published' && !hasUnsavedChanges)}
           >
-            {saving && <Spinner className="w-4 h-4" />}
+            {saving && <PolyhedraCanvas shape="cube" size={16} clicked={true} />}
             {status === 'published' && !hasUnsavedChanges ? 'Published' : 'Publish'}
           </Button>
         </div>

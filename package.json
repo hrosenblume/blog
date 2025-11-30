@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "dev:tunnel": "bash -c 'for port in 3000 3001 3002 3003 3004; do lsof -ti:$port | xargs kill -9 2>/dev/null; done; set -a; source .env.local; set +a; AUTH_URL=https://$NGROK_DOMAIN next dev & npx ngrok http 3000 --domain=$NGROK_DOMAIN --oauth=google --oauth-allow-email=$NGROK_OAUTH_EMAIL --oauth-allow-email=$WRITER_EMAIL'",
-    "dev:tunnel:open": "bash -c 'for port in 3000 3001 3002 3003 3004; do lsof -ti:$port | xargs kill -9 2>/dev/null; done; set -a; source .env.local; set +a; AUTH_URL=https://$NGROK_DOMAIN next dev & npx ngrok http 3000 --domain=$NGROK_DOMAIN'",
+    "dev": "rm -rf .next && next dev",
+    "dev:tunnel": "bash -c 'rm -rf .next; for port in 3000 3001 3002 3003 3004; do lsof -ti:$port | xargs kill -9 2>/dev/null; done; set -a; source .env.local; set +a; AUTH_URL=https://$NGROK_DOMAIN next dev & npx ngrok http 3000 --domain=$NGROK_DOMAIN --oauth=google --oauth-allow-email=$NGROK_OAUTH_EMAIL --oauth-allow-email=$WRITER_EMAIL'",
+    "dev:tunnel:open": "bash -c 'rm -rf .next; for port in 3000 3001 3002 3003 3004; do lsof -ti:$port | xargs kill -9 2>/dev/null; done; set -a; source .env.local; set +a; AUTH_URL=https://$NGROK_DOMAIN next dev & npx ngrok http 3000 --domain=$NGROK_DOMAIN'",
     "dev:mobile": "npm run dev:tunnel",
     "build": "prisma generate && next build",
     "start": "next start",

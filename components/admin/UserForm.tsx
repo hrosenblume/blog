@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Spinner } from '@/components/Spinner'
+import { PolyhedraCanvas } from '@/components/PolyhedraCanvas'
 import { BackLink } from '@/components/BackLink'
 
 interface User { id: string; email: string; name: string | null; role: string }
@@ -122,7 +122,7 @@ export function UserFormPage({ userId }: { userId?: string }) {
 
           <div className="flex gap-4">
             <Button type="submit" disabled={saving}>
-              {saving && <Spinner className="w-4 h-4" />}
+              {saving && <PolyhedraCanvas shape="cube" size={16} clicked={true} />}
               {saving ? (isEdit ? 'Saving...' : 'Creating...') : (isEdit ? 'Save Changes' : 'Create User')}
             </Button>
             <Button variant="ghost" asChild>

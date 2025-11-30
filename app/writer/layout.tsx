@@ -4,7 +4,7 @@ import { useSession, signOut } from 'next-auth/react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect } from 'react'
 import Link from 'next/link'
-import { Spinner } from '@/components/Spinner'
+import { PolyhedraCanvas } from '@/components/PolyhedraCanvas'
 import { CenteredPage } from '@/components/CenteredPage'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import {
@@ -50,7 +50,7 @@ export default function WriterLayout({
   if (status === 'loading') {
     return (
       <CenteredPage>
-        <Spinner />
+        <PolyhedraCanvas shape="cube" size={60} clicked={true} />
       </CenteredPage>
     )
   }

@@ -3,8 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Spinner } from '@/components/Spinner'
-import { CenteredPage } from '@/components/CenteredPage'
+import { PageLoader } from '@/components/PageLoader'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,14 +54,21 @@ export default function Dashboard() {
     [posts, searchQuery]
   )
 
-  const drafts = filteredPosts.filter(p => p.status === 'draft')
-  const published = filteredPosts
-    .filter(p => p.status === 'published')
-    .sort((a, b) => {
-      const aDate = a.publishedAt ? new Date(a.publishedAt).getTime() : 0
-      const bDate = b.publishedAt ? new Date(b.publishedAt).getTime() : 0
-      return bDate - aDate
-    })
+  const drafts = useMemo(() => 
+    filteredPosts.filter(p => p.status === 'draft'),
+    [filteredPosts]
+  )
+
+  const published = useMemo(() => 
+    filteredPosts
+      .filter(p => p.status === 'published')
+      .sort((a, b) => {
+        const aDate = a.publishedAt ? new Date(a.publishedAt).getTime() : 0
+        const bDate = b.publishedAt ? new Date(b.publishedAt).getTime() : 0
+        return bDate - aDate
+      }),
+    [filteredPosts]
+  )
 
   const stats = useMemo(() => {
     const totalWords = posts.reduce((sum, p) => sum + p.wordCount, 0)
@@ -73,6 +79,11 @@ export default function Dashboard() {
       { label: 'Words', value: formatNumber(totalWords) },
     ]
   }, [posts])
+
+  // Loading state - MUST be after all hooks
+  if (loading) {
+    return <PageLoader />
+  }
 
   async function handleDelete(id: string) {
     if (!confirm('Delete this post?')) return
@@ -101,14 +112,6 @@ export default function Dashboard() {
       body: JSON.stringify({ status: 'published' }),
     })
     setPosts(posts.map(p => p.id === id ? { ...p, status: 'published' as const } : p))
-  }
-
-  if (loading) {
-    return (
-      <CenteredPage>
-        <Spinner />
-      </CenteredPage>
-    )
   }
 
   return (

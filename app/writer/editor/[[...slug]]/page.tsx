@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation'
 import { useRouter } from 'next/navigation'
 import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
 import { usePostEditor } from '@/lib/editor/usePostEditor'
-import { Spinner } from '@/components/Spinner'
+import { PageLoader } from '@/components/PageLoader'
 import { CenteredPage } from '@/components/CenteredPage'
 import { TiptapEditor, EditorToolbar } from '@/components/TiptapEditor'
 import { EditorNavbar } from '@/components/editor/EditorNavbar'
@@ -72,11 +72,7 @@ export default function Editor() {
 
   // Loading state
   if (ui.loading) {
-    return (
-      <CenteredPage>
-        <Spinner />
-      </CenteredPage>
-    )
+    return <PageLoader />
   }
 
   // Success state after publishing
