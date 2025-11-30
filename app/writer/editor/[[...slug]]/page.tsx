@@ -3,13 +3,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import { renderMarkdown, generateSlug, wordCount } from '@/lib/markdown'
+import type { Editor as EditorInstance } from '@tiptap/react'
+import { generateSlug, wordCount } from '@/lib/markdown'
 import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
 import { Button } from '@/components/Button'
 import { Spinner } from '@/components/Spinner'
 import { CenteredPage } from '@/components/CenteredPage'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { PolyhedraCanvas } from '@/components/PolyhedraCanvas'
+import { TiptapEditor, MenuBar } from '@/components/TiptapEditor'
 import { getRandomShape } from '@/lib/polyhedra/shapes'
 import { confirmPublish, confirmUnpublish } from '@/lib/utils/confirm'
 import { formatSavedTime } from '@/lib/utils/format'
@@ -49,7 +51,7 @@ export default function Editor() {
   const [loading, setLoading] = useState(!!postSlug)
   const [saving, setSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
-  const [showPreview, setShowPreview] = useState(false)
+  const [showMarkdown, setShowMarkdown] = useState(false) // Toggle between WYSIWYG and raw markdown
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [publishSuccess, setPublishSuccess] = useState(false)
   
@@ -63,8 +65,11 @@ export default function Editor() {
   // Track the current URL slug for redirect detection
   const urlSlugRef = useRef(postSlug)
   
-  // Textarea ref for auto-resize
+  // Textarea ref for auto-resize (raw markdown mode)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  
+  // Tiptap editor instance for MenuBar
+  const [editor, setEditor] = useState<EditorInstance | null>(null)
 
   // Load existing post
   useEffect(() => {
@@ -108,7 +113,12 @@ export default function Editor() {
 
   // Keyboard shortcuts
   useKeyboard([
-    { ...SHORTCUTS.TOGGLE_VIEW, handler: () => { if (status === 'published' && slug) router.push(`/e/${slug}`) } },
+    { ...SHORTCUTS.TOGGLE_VIEW, handler: () => { 
+      if (status === 'published' && slug) {
+        if (hasUnsavedChanges && !confirm('You have unsaved changes. Discard them?')) return
+        router.push(`/e/${slug}`)
+      }
+    }},
     { ...SHORTCUTS.PREV, handler: () => { if (prevSlug) router.push(`/writer/editor/${prevSlug}`) } },
     { ...SHORTCUTS.NEXT, handler: () => { if (nextSlug) router.push(`/writer/editor/${nextSlug}`) } },
     { ...SHORTCUTS.ESCAPE_BACK, handler: () => router.push('/writer') },
@@ -192,14 +202,15 @@ export default function Editor() {
     return () => clearTimeout(timeout)
   }, [markdown, title, postSlug, status, handleSave])
 
-  // Auto-resize textarea to fit content
+  // Auto-resize textarea to fit content (only in raw markdown mode)
   useEffect(() => {
+    if (!showMarkdown) return
     const textarea = textareaRef.current
     if (textarea) {
       textarea.style.height = 'auto'
       textarea.style.height = `${textarea.scrollHeight}px`
     }
-  }, [markdown])
+  }, [markdown, showMarkdown])
 
   const handleUnpublish = useCallback(async () => {
     if (!confirmUnpublish(title)) return
@@ -246,14 +257,15 @@ export default function Editor() {
             <ThemeToggle />
 
             <button
-              onClick={() => setShowPreview(!showPreview)}
+              onClick={() => setShowMarkdown(!showMarkdown)}
               className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                showPreview
+                showMarkdown
                   ? 'bg-gray-100 dark:bg-gray-800'
                   : 'hover:bg-gray-100 dark:hover:bg-gray-800'
               } text-gray-700 dark:text-gray-300`}
+              title={showMarkdown ? 'Switch to rich text editor' : 'Switch to raw markdown'}
             >
-              {showPreview ? 'Edit' : 'Preview'}
+              {showMarkdown ? 'Rich Text' : 'Markdown'}
             </button>
 
             {status === 'draft' && (
@@ -278,42 +290,44 @@ export default function Editor() {
         </div>
       </header>
 
+      {/* Fixed toolbar below header (only in WYSIWYG mode) */}
+      {!showMarkdown && <MenuBar editor={editor} />}
+
       <main className="flex-1 overflow-auto">
         <div className="max-w-2xl mx-auto px-6 py-12">
-          {showPreview ? (
-            <article>
-              <h1 className="text-title font-bold mb-8">{title || 'Untitled'}</h1>
-              <div 
-                className="prose dark:prose-invert"
-                dangerouslySetInnerHTML={{ __html: renderMarkdown(markdown) }}
-              />
-            </article>
+          {/* Title and subtitle are always editable */}
+          <input
+            type="text"
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+            placeholder="Title"
+            className="w-full text-title font-bold bg-transparent border-none outline-none placeholder-gray-300 dark:placeholder-gray-700 mb-2"
+          />
+
+          <input
+            type="text"
+            value={subtitle}
+            onChange={e => setSubtitle(e.target.value)}
+            placeholder="Subtitle (shown on homepage)"
+            className="w-full text-lg bg-transparent border-none outline-none placeholder-gray-300 dark:placeholder-gray-700 text-gray-500 dark:text-gray-400 mb-8"
+          />
+
+          {/* Toggle between WYSIWYG and raw markdown */}
+          {showMarkdown ? (
+            <textarea
+              ref={textareaRef}
+              value={markdown}
+              onChange={e => setMarkdown(e.target.value)}
+              placeholder="Write your story in Markdown..."
+              className="w-full min-h-[500px] bg-transparent border-none outline-none resize-none placeholder-gray-400 leading-relaxed overflow-hidden font-mono text-sm"
+            />
           ) : (
-            <>
-              <input
-                type="text"
-                value={title}
-                onChange={e => setTitle(e.target.value)}
-                placeholder="Title"
-                className="w-full text-title font-bold bg-transparent border-none outline-none placeholder-gray-300 dark:placeholder-gray-700 mb-2"
-              />
-
-              <input
-                type="text"
-                value={subtitle}
-                onChange={e => setSubtitle(e.target.value)}
-                placeholder="Subtitle (shown on homepage)"
-                className="w-full text-lg bg-transparent border-none outline-none placeholder-gray-300 dark:placeholder-gray-700 text-gray-500 dark:text-gray-400 mb-8"
-              />
-
-              <textarea
-                ref={textareaRef}
-                value={markdown}
-                onChange={e => setMarkdown(e.target.value)}
-                placeholder="Write your story in Markdown..."
-                className="w-full min-h-[500px] bg-transparent border-none outline-none resize-none placeholder-gray-400 leading-relaxed overflow-hidden"
-              />
-            </>
+            <TiptapEditor
+              content={markdown}
+              onChange={setMarkdown}
+              placeholder="Write your story..."
+              onEditorReady={setEditor}
+            />
           )}
 
           <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800 space-y-4">

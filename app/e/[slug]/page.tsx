@@ -60,7 +60,7 @@ export async function generateMetadata({ params }: Props) {
   if (!post) return { title: 'Not Found' }
   return {
     title: post.title,
-    description: post.markdown.substring(0, 160),
+    description: post.subtitle || post.markdown.substring(0, 160),
   }
 }
 
@@ -87,6 +87,9 @@ export default async function EssayPage({ params }: Props) {
         </Link>
         <article className="space-y-6">
           <h1 className="text-title font-bold text-gray-900 dark:text-white">{post.title}</h1>
+          {post.subtitle && (
+            <p className="text-lg text-gray-500 dark:text-gray-400 -mt-4">{post.subtitle}</p>
+          )}
           
           <header className="space-y-1 text-sm text-gray-600 dark:text-gray-400 mb-8">
             <div>

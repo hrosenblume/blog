@@ -19,7 +19,7 @@ export function useKeyboard(shortcuts: Shortcut[]) {
       const isTyping =
         e.target instanceof HTMLInputElement ||
         e.target instanceof HTMLTextAreaElement ||
-        (e.target instanceof HTMLElement && e.target.isContentEditable)
+        (e.target instanceof HTMLElement && e.target.closest('[contenteditable="true"]'))
 
       for (const shortcut of shortcutsRef.current) {
         if (!shortcut.allowInInput && isTyping) continue

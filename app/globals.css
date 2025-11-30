@@ -116,3 +116,29 @@ a, button {
   }
 }
 
+/* Tiptap editor styles */
+.ProseMirror:focus {
+  outline: none;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: #9ca3af;
+  pointer-events: none;
+  float: left;
+  height: 0;
+}
+
+/* Ensure Tiptap editor uses same prose typography */
+.ProseMirror h1 {
+  font-size: var(--font-h1);
+}
+
+.ProseMirror h2 {
+  font-size: var(--font-h2);
+}
+
+.ProseMirror h3 {
+  font-size: var(--font-h3);
+}
+
