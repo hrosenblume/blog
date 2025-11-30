@@ -366,19 +366,166 @@ cd /var/www/blog
 npx prisma studio  # Opens database GUI on port 5555
 ```
 
-### To-dos
+---
+
+## Production Readiness Assessment
+
+### ✅ Already Production-Ready
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| **Build config** | ✅ | `output: 'standalone'` configured in `next.config.js` |
+| **Authentication** | ✅ | `trustHost: true` enabled, middleware handles proxy headers |
+| **Environment variables** | ✅ | `.env.example` pattern, no secrets in code |
+| **Database** | ✅ | SQLite works on VPS with persistent filesystem |
+| **Image uploads** | ✅ | Local filesystem works on VPS |
+| **Dev-only code** | ✅ | Prisma Studio link gated by `NODE_ENV === 'development'` |
+
+### ⚠️ Considerations for This Setup
+
+**SQLite on VPS:**
+- Works perfectly for a personal blog
+- Single-writer model (no concurrent writes from multiple servers)
+- Database file at `/var/www/blog/prisma/prod.db`
+- **Must back up** this file regularly
+
+**Local Image Storage:**
+- Images stored at `/var/www/blog/public/uploads/`
+- Persists across deploys (unlike serverless)
+- **Must back up** this directory regularly
+
+**Rate Limiting:**
+- Currently none on API routes
+- Cloudflare provides DDoS protection at the edge
+- For additional protection, can add Caddy rate limiting or app-level middleware
+
+### Security Hardening (Optional)
+
+Add to `next.config.js` for security headers:
+
+```javascript
+const nextConfig = {
+  output: 'standalone',
+  headers: async () => [
+    {
+      source: '/:path*',
+      headers: [
+        { key: 'X-Frame-Options', value: 'DENY' },
+        { key: 'X-Content-Type-Options', value: 'nosniff' },
+        { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+        { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+      ],
+    },
+  ],
+  // ... rest of config
+}
+```
+
+---
+
+## Backup Strategy
+
+### Database Backup
+
+Create `/var/www/blog/backup.sh`:
+
+```bash
+#!/bin/bash
+BACKUP_DIR="/var/backups/blog"
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+
+mkdir -p $BACKUP_DIR
+
+# Backup database
+cp /var/www/blog/prisma/prod.db "$BACKUP_DIR/prod_$TIMESTAMP.db"
+
+# Backup uploads
+tar -czf "$BACKUP_DIR/uploads_$TIMESTAMP.tar.gz" -C /var/www/blog/public uploads
+
+# Keep only last 7 days of backups
+find $BACKUP_DIR -type f -mtime +7 -delete
+
+echo "Backup completed: $TIMESTAMP"
+```
+
+Make executable and add to cron:
+
+```bash
+chmod +x /var/www/blog/backup.sh
+
+# Add to crontab (runs daily at 2am)
+crontab -e
+# Add this line:
+0 2 * * * /var/www/blog/backup.sh >> /var/log/blog-backup.log 2>&1
+```
+
+### Off-site Backup (Optional)
+
+For critical data, sync backups to external storage:
+
+```bash
+# Example: rsync to another server
+rsync -avz /var/backups/blog/ user@backup-server:/backups/blog/
+
+# Example: upload to S3/R2
+aws s3 sync /var/backups/blog/ s3://your-bucket/blog-backups/
+```
+
+---
+
+## Production Checklist
+
+### Pre-Deployment
 
 - [ ] Create DigitalOcean droplet (Ubuntu 24.04, $6/month)
 - [ ] Install Node.js 20, PM2, and Caddy on server
-- [ ] Clone repo, install deps, configure .env, build app
+- [ ] Clone repo, install deps, configure `.env`, build app
 - [ ] Start app with PM2 and enable startup on boot
 - [ ] Configure Caddy with hunterrosenblume.com + 4 alias redirects
+
+### DNS & CDN
+
 - [ ] Add hunterrosenblume.com to Cloudflare, configure DNS and SSL
 - [ ] Add hunterr.net to Cloudflare, configure DNS and SSL
 - [ ] Add hrosenblume.com to Cloudflare, configure DNS and SSL
 - [ ] Add hunterosenblu.me to Cloudflare, configure DNS and SSL
 - [ ] Add hunterr.org to Cloudflare, configure DNS and SSL
+- [ ] Set SSL mode to "Full (strict)" for all domains
+- [ ] Enable "Always Use HTTPS" for all domains
+
+### Authentication
+
 - [ ] Update Google OAuth redirect URI for hunterrosenblume.com
+- [ ] Verify `NEXTAUTH_URL` is `https://hunterrosenblume.com`
+- [ ] Verify `NEXTAUTH_SECRET` is set (not the dev value)
+- [ ] Test sign-in flow works correctly
+
+### Verification
+
 - [ ] Test hunterrosenblume.com routes and authentication flow
 - [ ] Test all 4 alias domains redirect to hunterrosenblume.com
+- [ ] Test essay creation and publishing
+- [ ] Test image upload functionality
+- [ ] Verify dark mode works correctly
+
+### Backups & Monitoring
+
+- [ ] Set up backup script with cron job
+- [ ] Verify backups are being created
+- [ ] (Optional) Set up off-site backup sync
+- [ ] (Optional) Set up uptime monitoring (UptimeRobot, Pingdom)
+- [ ] (Optional) Set up error tracking (Sentry)
+
+### Security (Optional but Recommended)
+
+- [ ] Add security headers to `next.config.js`
+- [ ] Enable Cloudflare firewall rules if needed
+- [ ] Set up SSH key authentication (disable password auth)
+- [ ] Configure UFW firewall on droplet (allow 22, 80, 443 only)
+
+### Post-Launch
+
+- [ ] Monitor PM2 logs for errors: `pm2 logs blog`
+- [ ] Check Cloudflare analytics for traffic patterns
+- [ ] Verify backups are running daily
 
