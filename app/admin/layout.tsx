@@ -1,9 +1,10 @@
 'use client'
 
-import { useSession } from 'next-auth/react'
+import { useSession, signOut } from 'next-auth/react'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { CenteredPage } from '@/components/CenteredPage'
+import { Dropdown, DropdownItem } from '@/components/Dropdown'
 
 export default function AdminLayout({
   children,
@@ -30,9 +31,9 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <header className="bg-white dark:bg-gray-800 shadow">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+    <div className="fixed inset-0 flex flex-col bg-gray-50 dark:bg-gray-900">
+      <header className="flex-shrink-0 bg-white dark:bg-gray-800 shadow">
+        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Link href="/admin" className="text-xl font-bold text-gray-900 dark:text-white">
               Admin
@@ -45,14 +46,33 @@ export default function AdminLayout({
               ))}
             </nav>
           </div>
-          <span className="text-sm text-gray-500 dark:text-gray-400">
-            {session.user?.email}
-          </span>
+          <Dropdown
+            trigger={
+              <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400">
+                <span className="text-sm">{session.user?.email}</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            }
+          >
+            <a
+              href="/"
+              className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-t-lg"
+            >
+              Back to site
+            </a>
+            <DropdownItem onClick={() => signOut({ callbackUrl: '/' })}>
+              Logout
+            </DropdownItem>
+          </Dropdown>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        {children}
+      <main className="flex-1 overflow-auto">
+        <div className="max-w-5xl mx-auto px-6 py-8">
+          {children}
+        </div>
       </main>
     </div>
   )

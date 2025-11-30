@@ -89,14 +89,35 @@ export default function WriterLayout({
                 }
               >
                 {session.user?.role === 'admin' && (
-                  <a
-                    href="/admin"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-t-lg"
-                  >
-                    Admin Panel
-                  </a>
+                  <>
+                    <a
+                      href="/admin"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-t-lg"
+                    >
+                      Admin Panel
+                    </a>
+                    {process.env.NODE_ENV === 'development' ? (
+                      <a
+                        href="http://localhost:5555"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        Prisma Studio
+                      </a>
+                    ) : process.env.NEXT_PUBLIC_DATABASE_DASHBOARD_URL ? (
+                      <a
+                        href={process.env.NEXT_PUBLIC_DATABASE_DASHBOARD_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        Database
+                      </a>
+                    ) : null}
+                  </>
                 )}
                 <DropdownItem onClick={() => signOut({ callbackUrl: '/' })}>
                   Logout
