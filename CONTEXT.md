@@ -579,10 +579,17 @@ allowedDevOrigins: [
 - Use `cn()` for conditional classes
 
 ### Git Workflow
-When committing changes (user types "g"):
-1. Run `git add -A` then `git diff --staged --stat` to see all file changes
-2. Read ALL modified files from `git status` (not just new/deleted)
-3. Review the **ENTIRE chat history** from the session for full context
-4. If new patterns/systems/configs were added, update `CONTEXT.md` and `.cursorrules` (no sensitive data)
-5. Write comprehensive commit messages summarizing ALL changes
-6. Be thorough — full context from all chats is required
+When user types "g", execute the full commit workflow (do NOT auto-commit after changes):
+
+1. **Stage & Review**: `git add -A && git status -sb && git diff --staged --stat`
+2. **Read modified files**: Check all files in `git status` for context if needed
+3. **Review chat history**: Understand the ENTIRE session — what was discussed and why
+4. **Update documentation**: If significant new patterns/systems/configs were added:
+   - Update `CONTEXT.md` with new systems or patterns
+   - Update `.cursorrules` with new conventions or rules
+   - No sensitive data — use env var references instead
+5. **Stage doc updates**: If docs were updated, run `git add -A` again
+6. **Commit**: Comprehensive message summarizing ALL changes (including doc updates)
+7. **Push**: `git push origin main`
+
+Key: Be thorough, don't skip steps, include everything in one atomic commit.

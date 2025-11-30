@@ -322,12 +322,28 @@ When using `dev:tunnel`:
 2. **App NextAuth** — Your app's authentication (users must be in database)
 
 ## Git Workflow
-- When user types "g", commit all changes and push to `origin main`
-- **Do NOT auto-commit** after making changes — wait for explicit "g"
-- Before committing:
-  1. Run `git add -A` then `git diff --staged --stat` to see all file changes
-  2. Read ALL modified files from `git status` (not just new/deleted, also modified)
-  3. Review the **ENTIRE chat history** from the session for full context
-  4. If significant new patterns/systems/configs were added, update `CONTEXT.md` and `.cursorrules` (no sensitive data)
-- Commit messages must comprehensively summarize ALL changes
-- Be thorough — you need full context from all chats
+
+### When user types "g"
+Execute the full commit workflow — do NOT auto-commit after making changes, wait for explicit "g".
+
+### Steps (in order)
+1. **Stage & Review**: Run `git add -A && git status -sb && git diff --staged --stat`
+2. **Read modified files**: Check all files listed in `git status` if needed for context
+3. **Review chat history**: Understand the ENTIRE session — what was discussed, changed, and why
+4. **Update documentation**: If significant new patterns/systems/configs were added:
+   - Update `CONTEXT.md` with new systems or patterns
+   - Update `.cursorrules` with new conventions or rules
+   - No sensitive data (URLs, emails, secrets) — use env var references
+5. **Stage doc updates**: If you updated docs, run `git add -A` again
+6. **Commit**: Write a comprehensive message summarizing ALL changes (including doc updates)
+7. **Push**: `git push origin main`
+
+### Commit Messages
+- First line: Brief summary of the main change
+- Body: List specific changes, especially for multi-file commits
+- Include doc updates in the message if `.cursorrules` or `CONTEXT.md` were modified
+
+### Key Rules
+- Be thorough — full context from all chats is required
+- Don't skip steps — documentation updates are part of the commit
+- One atomic commit per "g" — include everything together
