@@ -21,3 +21,17 @@ Add a new section to the homepage called "Select Investments" that showcases com
 
 ---
 
+## Custom Homepage Essay Order
+
+Allow manual control over which essays appear on the homepage and in what order (instead of just showing most recent). Options include a "featured" toggle per essay or full drag-and-drop ordering in admin.
+
+---
+
+## RSS Feed + Email Subscription
+
+Allow readers to subscribe to new essays:
+- **RSS feed** at `/feed.xml` with autodiscovery
+- **Email newsletter** via Buttondown or Mailchimp
+- Subscribe form on homepage/footer
+
+---
