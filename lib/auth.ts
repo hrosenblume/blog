@@ -1,5 +1,5 @@
-import { NextAuthOptions, getServerSession } from 'next-auth'
-import GoogleProvider from 'next-auth/providers/google'
+import NextAuth from 'next-auth'
+import Google from 'next-auth/providers/google'
 import { NextResponse } from 'next/server'
 import { prisma } from './db'
 
@@ -18,9 +18,10 @@ declare module 'next-auth' {
 // Email normalization helper
 export const normalizeEmail = (email: string) => email.toLowerCase().trim()
 
-export const authOptions: NextAuthOptions = {
+// NextAuth v5 configuration
+export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
-    GoogleProvider({
+    Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
@@ -46,7 +47,7 @@ export const authOptions: NextAuthOptions = {
     signIn: '/auth/signin',
     error: '/auth/error',
   },
-}
+})
 
 // Helper to check if user is admin
 export async function isAdmin(email: string | null | undefined): Promise<boolean> {
@@ -64,8 +65,8 @@ export const forbidden = () => NextResponse.json({ error: 'Admin access required
 export const notFound = () => NextResponse.json({ error: 'Not found' }, { status: 404 })
 export const badRequest = (error: string) => NextResponse.json({ error }, { status: 400 })
 
-// Session helpers for API routes
-export const requireSession = () => getServerSession(authOptions)
+// Session helpers for API routes (using new auth() function)
+export const requireSession = () => auth()
 
 export async function requireAdmin() {
   const session = await requireSession()

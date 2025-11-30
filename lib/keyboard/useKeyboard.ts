@@ -40,3 +40,4 @@ export function useKeyboard(shortcuts: Shortcut[]) {
   }, []) // Empty deps - only run once, ref keeps handlers fresh
 }
 
+

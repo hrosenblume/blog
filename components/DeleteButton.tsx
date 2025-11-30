@@ -26,3 +26,4 @@ export function DeleteButton({ endpoint, confirmMessage }: DeleteButtonProps) {
   )
 }
 
+
