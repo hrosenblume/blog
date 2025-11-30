@@ -110,13 +110,17 @@ blog/
 ├── public/
 │   ├── polyhedra/              # Fallback GIFs for no-JS
 │   └── uploads/                # User uploaded images (gitignored)
-└── scripts/
-    ├── assign-shapes.js        # Assign polyhedra to posts
-    └── polyhedra/              # Polyhedra build system
-        ├── build-shapes.js     # Generate shapes.json
-        ├── data/               # Shape definitions (Platonic, etc.)
-        ├── index.js            # GIF generation script
-        └── off-parser.js       # OFF file parser
+├── scripts/
+│   ├── assign-shapes.js        # Assign polyhedra to posts
+│   └── polyhedra/              # Polyhedra build system
+│       ├── build-shapes.js     # Generate shapes.json
+│       ├── data/               # Shape definitions (Platonic, etc.)
+│       ├── index.js            # GIF generation script
+│       └── off-parser.js       # OFF file parser
+└── plans/                      # Project planning files
+    ├── Tomorrow.md             # Immediate/short-term tasks
+    ├── Future.md               # Long-term ideas and features
+    └── tmp/                    # Working drafts (gitignored)
 ```
 
 ---
@@ -588,6 +592,16 @@ allowedDevOrigins: [
 - Server Components by default
 - `'use client'` only when needed
 - Use `cn()` for conditional classes
+
+### Planning Files (`plans/`)
+
+Project planning and ideation files:
+
+| File | Purpose |
+|------|---------|
+| `Tomorrow.md` | Immediate/short-term tasks — things to work on next |
+| `Future.md` | Long-term ideas and features — someday/maybe list |
+| `tmp/` | Working drafts and brainstorming (gitignored) |
 
 ### Git Workflow
 When user types "g", execute the full commit workflow (do NOT auto-commit after changes):

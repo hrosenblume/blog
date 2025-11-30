@@ -342,13 +342,22 @@ Execute the full commit workflow — do NOT auto-commit after making changes, wa
 1. **Stage & Review**: Run `git add -A && git status -sb && git diff --staged --stat`
 2. **Read modified files**: Check all files listed in `git status` if needed for context
 3. **Review chat history**: Understand the ENTIRE session — what was discussed, changed, and why
-4. **Update documentation**: If significant new patterns/systems/configs were added:
-   - Update `CONTEXT.md` with new systems or patterns
-   - Update `.cursorrules` with new conventions or rules
+4. **Update documentation** (REQUIRED for significant changes):
+   - **`CONTEXT.md`**: Update when adding new systems, patterns, file structure changes, or architectural decisions
+   - **`.cursorrules`**: Update when adding new conventions, rules, or workflow patterns
    - No sensitive data (URLs, emails, secrets) — use env var references
 5. **Stage doc updates**: If you updated docs, run `git add -A` again
 6. **Commit**: Write a comprehensive message summarizing ALL changes (including doc updates)
 7. **Push**: `git push origin main`
+
+### What Requires Documentation Updates
+| Change Type | Update `CONTEXT.md` | Update `.cursorrules` |
+|-------------|--------------------|-----------------------|
+| New file/folder structure | ✅ | — |
+| New system or feature | ✅ | — |
+| New code pattern or convention | — | ✅ |
+| New workflow or rule | — | ✅ |
+| New DRY abstraction | ✅ | ✅ |
 
 ### Commit Messages
 - First line: Brief summary of the main change
@@ -359,3 +368,13 @@ Execute the full commit workflow — do NOT auto-commit after making changes, wa
 - Be thorough — full context from all chats is required
 - Don't skip steps — documentation updates are part of the commit
 - One atomic commit per "g" — include everything together
+
+## Planning Files
+
+Project planning lives in the `plans/` folder:
+
+| File | Purpose |
+|------|---------|
+| `Tomorrow.md` | Immediate/short-term tasks — things to work on next |
+| `Future.md` | Long-term ideas and features — someday/maybe list |
+| `tmp/` | Working drafts and brainstorming (gitignored) |
