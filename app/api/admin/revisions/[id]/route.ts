@@ -3,9 +3,10 @@ import { withAdmin, notFound } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 
 // GET /api/admin/revisions/[id] - Get single revision with post info
-export const GET = withAdmin(async (request: NextRequest, { params }: { params: { id: string } }) => {
+export const GET = withAdmin(async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+  const { id } = await params
   const revision = await prisma.revision.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       post: {
         select: { id: true, title: true, subtitle: true, slug: true, markdown: true, polyhedraShape: true }

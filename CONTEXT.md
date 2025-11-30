@@ -309,6 +309,9 @@ Used across admin tables for consistent styling.
    - `admin`: Full access to `/admin` + `/writer`
    - `writer`: Access to `/writer` only
 
+### First-Time Setup
+Set `WRITER_EMAIL` and `WRITER_NAME` in `.env.local`, then run `npm run db:setup` to create your admin user. The email must match your Google account.
+
 ### Key Auth Logic (`lib/auth.ts`)
 - `signIn` callback: Checks if user email exists in database
 - `session` callback: Attaches user role to session
@@ -416,6 +419,17 @@ GOOGLE_CLIENT_SECRET="<your-google-client-secret>"
 
 # Contact email (public - visible in browser for mailto links)
 NEXT_PUBLIC_CONTACT_EMAIL="your-email@example.com"
+
+# Admin user for seeding (used by npm run db:seed)
+WRITER_EMAIL="your-email@example.com"
+WRITER_NAME="Your Name"
+```
+
+### Initial Setup
+```bash
+cp .env.example .env.local   # Copy template
+# Edit .env.local with your real values
+npm run db:setup             # Push schema + seed admin user
 ```
 
 ---
@@ -429,7 +443,8 @@ NEXT_PUBLIC_CONTACT_EMAIL="your-email@example.com"
 | `npm start` | Start production server |
 | `npm run db:push` | Push Prisma schema to database |
 | `npm run db:studio` | Open Prisma Studio GUI |
-| `npm run db:seed` | Seed the database |
+| `npm run db:seed` | Seed admin user + sample essays |
+| `npm run db:setup` | Run db:push + db:seed (first-time setup) |
 | `node scripts/polyhedra/build-shapes.js` | Regenerate shapes.json |
 | `node scripts/assign-shapes.js` | Assign shapes to posts |
 

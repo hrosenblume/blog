@@ -5,8 +5,9 @@ import { prisma } from '@/lib/db'
 import { wordCount } from '@/lib/markdown'
 
 // GET /api/posts/by-slug/[slug] - Get single post by slug
-export const GET = withSession(async (request: NextRequest, { params }: { params: { slug: string } }) => {
-  const post = await prisma.post.findUnique({ where: { slug: params.slug } })
+export const GET = withSession(async (request: NextRequest, { params }: { params: Promise<{ slug: string }> }) => {
+  const { slug } = await params
+  const post = await prisma.post.findUnique({ where: { slug } })
   if (!post) return notFound()
 
   // Get adjacent posts (same status, ordered by updatedAt desc)
@@ -46,8 +47,9 @@ export const GET = withSession(async (request: NextRequest, { params }: { params
 })
 
 // PATCH /api/posts/by-slug/[slug] - Update post by slug
-export const PATCH = withSession(async (request: NextRequest, { params }: { params: { slug: string } }) => {
-  const post = await prisma.post.findUnique({ where: { slug: params.slug } })
+export const PATCH = withSession(async (request: NextRequest, { params }: { params: Promise<{ slug: string }> }) => {
+  const { slug } = await params
+  const post = await prisma.post.findUnique({ where: { slug } })
   if (!post) return notFound()
 
   const data = await request.json()
@@ -118,8 +120,9 @@ export const PATCH = withSession(async (request: NextRequest, { params }: { para
 })
 
 // DELETE /api/posts/by-slug/[slug] - Soft delete post (sets status to 'deleted')
-export const DELETE = withSession(async (request: NextRequest, { params }: { params: { slug: string } }) => {
-  const post = await prisma.post.findUnique({ where: { slug: params.slug } })
+export const DELETE = withSession(async (request: NextRequest, { params }: { params: Promise<{ slug: string }> }) => {
+  const { slug } = await params
+  const post = await prisma.post.findUnique({ where: { slug } })
   if (!post) return notFound()
 
   await prisma.post.update({ where: { id: post.id }, data: { status: 'deleted' } })

@@ -6,8 +6,9 @@ import { wordCount } from '@/lib/markdown'
 import { getRandomShape } from '@/lib/polyhedra/shapes'
 
 // GET /api/posts/[id] - Get single post
-export const GET = withSession(async (request: NextRequest, { params }: { params: { id: string } }) => {
-  const post = await prisma.post.findUnique({ where: { id: params.id } })
+export const GET = withSession(async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+  const { id } = await params
+  const post = await prisma.post.findUnique({ where: { id } })
   if (!post) return notFound()
 
   return NextResponse.json({
@@ -23,8 +24,9 @@ export const GET = withSession(async (request: NextRequest, { params }: { params
 })
 
 // PATCH /api/posts/[id] - Update post
-export const PATCH = withSession(async (request: NextRequest, { params }: { params: { id: string } }) => {
-  const post = await prisma.post.findUnique({ where: { id: params.id } })
+export const PATCH = withSession(async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+  const { id } = await params
+  const post = await prisma.post.findUnique({ where: { id } })
   if (!post) return notFound()
 
   const data = await request.json()
@@ -91,7 +93,7 @@ export const PATCH = withSession(async (request: NextRequest, { params }: { para
     })
   }
 
-  const updated = await prisma.post.update({ where: { id: params.id }, data: updates })
+  const updated = await prisma.post.update({ where: { id }, data: updates })
 
   // Revalidate cached pages so changes appear immediately
   revalidatePath('/')
@@ -104,11 +106,12 @@ export const PATCH = withSession(async (request: NextRequest, { params }: { para
 })
 
 // DELETE /api/posts/[id] - Soft delete post (sets status to 'deleted')
-export const DELETE = withSession(async (request: NextRequest, { params }: { params: { id: string } }) => {
-  const post = await prisma.post.findUnique({ where: { id: params.id } })
+export const DELETE = withSession(async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+  const { id } = await params
+  const post = await prisma.post.findUnique({ where: { id } })
   if (!post) return notFound()
 
-  await prisma.post.update({ where: { id: params.id }, data: { status: 'deleted' } })
+  await prisma.post.update({ where: { id }, data: { status: 'deleted' } })
 
   // Revalidate cached pages
   revalidatePath('/')

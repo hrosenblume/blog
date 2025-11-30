@@ -4,9 +4,10 @@ import { withAdmin, notFound } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 
 // POST /api/admin/revisions/[id]/restore - Restore a revision to its post
-export const POST = withAdmin(async (request: NextRequest, { params }: { params: { id: string } }) => {
+export const POST = withAdmin(async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+  const { id } = await params
   const revision = await prisma.revision.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: { post: true }
   })
 

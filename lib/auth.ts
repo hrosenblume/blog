@@ -1,6 +1,6 @@
 import NextAuth from 'next-auth'
 import Google from 'next-auth/providers/google'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from './db'
 
 // Extend the session type to include role
@@ -75,20 +75,21 @@ export async function requireAdmin() {
 }
 
 // Higher-order auth wrappers for API routes
-type ApiHandler<T = Response> = (...args: unknown[]) => Promise<T>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ApiHandler = (request: NextRequest, context?: any) => Promise<Response>
 
-export function withSession<T extends ApiHandler>(handler: T): T {
-  return (async (...args: Parameters<T>) => {
+export function withSession(handler: ApiHandler): ApiHandler {
+  return async (request, context) => {
     const session = await requireSession()
     if (!session) return unauthorized()
-    return handler(...args)
-  }) as T
+    return handler(request, context)
+  }
 }
 
-export function withAdmin<T extends ApiHandler>(handler: T): T {
-  return (async (...args: Parameters<T>) => {
+export function withAdmin(handler: ApiHandler): ApiHandler {
+  return async (request, context) => {
     const session = await requireAdmin()
     if (!session) return unauthorized()
-    return handler(...args)
-  }) as T
+    return handler(request, context)
+  }
 }

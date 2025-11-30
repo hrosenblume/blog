@@ -53,7 +53,7 @@ export default function WriterLayout({
   }
 
   return (
-    <div className="min-h-screen">
+    <div className={isEditor ? 'fixed inset-0' : 'min-h-screen'}>
       {!isEditor && (
         <header className="fixed top-0 left-0 right-0 z-50 border-b border-gray-200 dark:border-gray-800 bg-page">
           <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">

@@ -131,6 +131,7 @@ scripts/           # Build/dev scripts
 - Admin: full access to /admin + /writer
 - Writer: access to /writer only
 - Protect routes in layout.tsx files
+- **First-time setup**: Set `WRITER_EMAIL` in `.env.local`, run `npm run db:setup`
 
 ## Key Patterns
 
@@ -220,6 +221,15 @@ NEXTAUTH_SECRET       # NextAuth encryption secret
 GOOGLE_CLIENT_ID      # OAuth client ID
 GOOGLE_CLIENT_SECRET  # OAuth client secret
 NEXT_PUBLIC_CONTACT_EMAIL  # Public contact email (mailto links)
+WRITER_EMAIL          # Admin email for db:seed (your Google login email)
+WRITER_NAME           # Admin display name for db:seed
+```
+
+### Initial Setup
+```bash
+cp .env.example .env.local   # Copy template
+# Edit .env.local with your values
+npm run db:setup             # Push schema + seed admin user
 ```
 
 ## Don't
