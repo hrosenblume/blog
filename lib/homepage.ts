@@ -14,9 +14,9 @@ export const HOMEPAGE = {
     [
       { text: 'I started as a ' },
       { text: 'Thiel Fellow', href: 'https://thielfellowship.org' },
-      { text: ' and software engineer. More recently, I am the co-founder and CEO of ' },
+      { text: ' / software engineer. '},],[{text:'More recently, I am the co-founder and CEO of ' },
       { text: 'Ordo', href: 'https://ordo.com' },
-      { text: ', a school lunch company. This year we\'re serving over 3 million meals in 15 states.' },
+      { text: ', a school lunch company. This year we\'re serving 3 million meals in 15 states.' },
     ],
     // Paragraph 2
     [
@@ -26,7 +26,7 @@ export const HOMEPAGE = {
       /*{ text: 'A decade into building, I'm writing about it.' },*/
       /*{ text: 'Ten years into building, I\'m writing about it too.' },*/
       /*{ text: 'Ten years into building, I\'m sharing my Notes app.' },*/
-      { text: "Ten years into building, I share my private notes." },
+      { text: "Ten years into building, I'm sharing my thoughts." },
     ],
     // Paragraph 3
     [
@@ -36,9 +36,9 @@ export const HOMEPAGE = {
 
   // Notes section
   notes: {
-    title: 'Recent Notes',
+    title: 'Recent Essays',
     maxItems: null as number | null, // null = show all
-    emptyMessage: 'No notes yet.',
+    emptyMessage: 'No essays yet.',
   },
 
   // Footer links
