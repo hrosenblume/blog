@@ -73,11 +73,7 @@ export function PolyhedraCanvas({ shape, size = 60, className = '', index = 0, h
     if (!ctx) return
 
     // Get shape data, fallback to cube if not found
-    let shapeData = SHAPES[shape]
-    if (!shapeData) {
-      console.warn(`Shape "${shape}" not found, using cube`)
-      shapeData = SHAPES.cube
-    }
+    const shapeData = SHAPES[shape] || SHAPES.cube
 
     // Normalize vertices
     const vertices = normalizeVertices(shapeData.vertices)
