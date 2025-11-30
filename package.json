@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:tunnel": "bash -c 'for port in 3000 3001 3002 3003 3004; do lsof -ti:$port | xargs kill -9 2>/dev/null; done; set -a; source .env.local; set +a; AUTH_URL=https://$NGROK_DOMAIN next dev & npx ngrok http 3000 --domain=$NGROK_DOMAIN --oauth=google --oauth-allow-email=$NGROK_OAUTH_EMAIL --oauth-allow-email=$WRITER_EMAIL'",
+    "dev:tunnel:open": "bash -c 'for port in 3000 3001 3002 3003 3004; do lsof -ti:$port | xargs kill -9 2>/dev/null; done; set -a; source .env.local; set +a; AUTH_URL=https://$NGROK_DOMAIN next dev & npx ngrok http 3000 --domain=$NGROK_DOMAIN'",
     "dev:mobile": "npm run dev:tunnel",
     "build": "prisma generate && next build",
     "start": "next start",
@@ -12,7 +13,8 @@
     "db:push": "export $(grep -v '^#' .env.local | xargs) && prisma db push",
     "db:studio": "export $(grep -v '^#' .env.local | xargs) && prisma studio",
     "db:seed": "npx tsx --env-file=.env.local prisma/seed.ts",
-    "db:setup": "npm run db:push && npm run db:seed"
+    "db:setup": "npm run db:push && npm run db:seed",
+    "build:thumbnails": "node scripts/polyhedra/build-thumbnails.js"
   },
   "dependencies": {
     "@prisma/client": "^4.16.2",

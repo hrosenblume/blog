@@ -1,6 +1,6 @@
 export const ESSAYS_PAGE = {
   // Metadata
-  title: 'All Essays',
+  title: 'Essays',
   descriptionPrefix: 'All essays by ',
 
   // Header + navigation

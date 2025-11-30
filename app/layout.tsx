@@ -3,39 +3,51 @@ import { Inter } from 'next/font/google'
 import { Providers } from './providers'
 import { Metadata } from 'next'
 import { HOMEPAGE } from '@/lib/homepage'
+import { getBaseUrl, SITE_DESCRIPTION, SITE_KEYWORDS, TWITTER_HANDLE, OG_STYLE, OG_SIZE_SQUARE } from '@/lib/metadata'
 
 const inter = Inter({ subsets: ['latin'] })
 
-export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://example.com'),
-  title: {
-    default: HOMEPAGE.name,
-    template: `%s | ${HOMEPAGE.name}`,
-  },
-  description: 'Essays on startups, building, and life.',
-  keywords: ['essays', 'blog', 'startups', 'building', 'writing'],
-  authors: [{ name: HOMEPAGE.name }],
-  creator: HOMEPAGE.name,
-  openGraph: {
-    type: 'website',
-    locale: 'en_US',
-    siteName: HOMEPAGE.name,
-  },
-  twitter: {
-    card: 'summary_large_image',
-    creator: '@hrosenblume',
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
+export async function generateMetadata(): Promise<Metadata> {
+  const baseUrl = await getBaseUrl()
+  
+  return {
+    metadataBase: new URL(baseUrl),
+    title: {
+      default: HOMEPAGE.name,
+      template: `%s | ${HOMEPAGE.name}`,
+    },
+    description: SITE_DESCRIPTION,
+    keywords: SITE_KEYWORDS,
+    authors: [{ name: HOMEPAGE.name }],
+    creator: HOMEPAGE.name,
+    openGraph: {
+      type: 'website',
+      locale: 'en_US',
+      siteName: HOMEPAGE.name,
+      images: [{
+        url: `${baseUrl}/polyhedra/thumbnails/${OG_STYLE.defaultShape}.png`,
+        width: OG_SIZE_SQUARE.width,
+        height: OG_SIZE_SQUARE.height,
+        alt: HOMEPAGE.name,
+      }],
+    },
+    twitter: {
+      card: 'summary',
+      creator: TWITTER_HANDLE,
+      images: [`${baseUrl}/polyhedra/thumbnails/${OG_STYLE.defaultShape}.png`],
+    },
+    robots: {
       index: true,
       follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
     },
-  },
+  }
 }
 
 export default function RootLayout({

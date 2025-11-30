@@ -1,10 +1,11 @@
 import { ImageResponse } from 'next/og'
 import { HOMEPAGE } from '@/lib/homepage'
+import { OG_SIZE, OG_CONTENT_TYPE, OG_FONT_FAMILY } from '@/lib/metadata'
 
 export const runtime = 'edge'
 export const alt = 'Writer Dashboard'
-export const size = { width: 1200, height: 630 }
-export const contentType = 'image/png'
+export const size = OG_SIZE
+export const contentType = OG_CONTENT_TYPE
 
 export default async function Image() {
   return new ImageResponse(
@@ -18,7 +19,7 @@ export default async function Image() {
           alignItems: 'center',
           justifyContent: 'center',
           background: '#f5f5f5',
-          fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          fontFamily: OG_FONT_FAMILY,
         }}
       >
         <div style={{ fontSize: 64, fontWeight: 700, color: '#000' }}>

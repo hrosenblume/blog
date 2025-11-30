@@ -8,6 +8,7 @@ import { HomepageFooter } from '@/components/HomepageFooter'
 import { BackLink } from '@/components/BackLink'
 import { PageContainer } from '@/components/PageContainer'
 import { HOMEPAGE } from '@/lib/homepage'
+import { getBaseUrl, OG_STYLE, OG_SIZE_SQUARE } from '@/lib/metadata'
 
 export const revalidate = 60
 
@@ -65,8 +66,12 @@ export async function generateMetadata({ params }: Props) {
   const post = await getPost(slug)
   if (!post) return { title: 'Not Found' }
   
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://example.com'
+  const baseUrl = await getBaseUrl()
   const description = post.subtitle || post.markdown.replace(/[#*_\[\]]/g, '').slice(0, 160).trim() + '...'
+  
+  // Use polyhedra thumbnail as OG image
+  const shapeName = post.polyhedraShape || OG_STYLE.defaultShape
+  const imageUrl = `${baseUrl}/polyhedra/thumbnails/${shapeName}.png`
   
   return {
     title: post.title,
@@ -80,11 +85,18 @@ export async function generateMetadata({ params }: Props) {
       type: 'article',
       publishedTime: post.publishedAt?.toISOString(),
       authors: [HOMEPAGE.name],
+      images: [{
+        url: imageUrl,
+        width: OG_SIZE_SQUARE.width,
+        height: OG_SIZE_SQUARE.height,
+        alt: post.title,
+      }],
     },
     twitter: {
-      card: 'summary_large_image',
+      card: 'summary',
       title: post.title,
       description,
+      images: [imageUrl],
     },
   }
 }
