@@ -273,7 +273,7 @@ export default function Editor() {
         setShowMarkdown={setShowMarkdown}
       />
 
-      <main className="flex-1 overflow-auto pb-20">
+      <main className="flex-1 overflow-auto pb-20 overscroll-contain">
         <div className="max-w-2xl mx-auto px-6 pt-12 pb-24">
           {/* Title and subtitle are always editable */}
           <input
@@ -375,7 +375,7 @@ export default function Editor() {
         </div>
       </main>
 
-      <footer className="fixed bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-800 px-6 py-3 bg-page">
+      <footer className="fixed bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-800 px-6 py-3 bg-page touch-none">
         <div className="flex items-center justify-between text-sm text-gray-500">
           <span>{words} words</span>
           {lastSaved && (

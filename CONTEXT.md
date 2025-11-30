@@ -279,6 +279,20 @@ useKeyboard([
 - Works with both internal routes and external URLs
 - Used in: `EssayNav`, `HomepageFooter`, bio links
 
+**Mobile Scroll Fixes for Fixed Elements:**
+When using fixed elements (header, footer, toolbar) with a scrollable content area, iOS Safari can "freeze" scroll if touch starts on a fixed element. Fix with:
+- `overscroll-contain` on the main scrollable container (prevents scroll chaining)
+- `touch-none` on fixed elements that don't need scroll interaction (prevents touch capture)
+
+```tsx
+<main className="flex-1 overflow-auto overscroll-contain">
+  {/* scrollable content */}
+</main>
+<footer className="fixed bottom-0 ... touch-none">
+  {/* non-scrollable footer */}
+</footer>
+```
+
 ### 6. Secret Navigation
 
 `SecretNav` wraps the author name on the homepage:

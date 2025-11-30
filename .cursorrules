@@ -265,6 +265,23 @@ npm run db:setup             # Push schema + seed admin user
 - Use it for nav links where scroll might be confused with tap
 - Works with both internal routes and external URLs
 
+### Mobile Scroll Fixes
+When using fixed elements (header, footer, toolbar) with a scrollable content area:
+- Add `overscroll-contain` to the main scrollable container (prevents scroll chaining)
+- Add `touch-none` to fixed elements that don't need scroll interaction (prevents touch capture)
+
+Example (editor page with fixed footer):
+```tsx
+<main className="flex-1 overflow-auto overscroll-contain">
+  {/* scrollable content */}
+</main>
+<footer className="fixed bottom-0 ... touch-none">
+  {/* non-scrollable footer */}
+</footer>
+```
+
+This prevents iOS Safari from "freezing" scroll when touch starts on a fixed element.
+
 ## ngrok Tunnel (Mobile Testing)
 
 The project supports ngrok tunneling for testing on mobile devices with OAuth protection.
