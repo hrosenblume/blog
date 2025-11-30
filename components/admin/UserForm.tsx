@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Spinner } from '@/components/Spinner'
+import { BackLink } from '@/components/BackLink'
 
 interface User { id: string; email: string; name: string | null; role: string }
 
@@ -71,11 +72,7 @@ export function UserFormPage({ userId }: { userId?: string }) {
 
   return (
     <div>
-      <div className="mb-8">
-        <Link href="/admin/users" className="text-primary hover:underline">
-          ← Back to Users
-        </Link>
-      </div>
+      <BackLink href="/admin/users" label="Back to Users" />
       <h1 className="text-section font-bold mb-8">
         {isEdit ? 'Edit User' : 'Add New User'}
       </h1>

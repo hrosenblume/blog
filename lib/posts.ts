@@ -3,6 +3,16 @@ import { prisma } from '@/lib/db'
 import { getRandomShape } from '@/lib/polyhedra/shapes'
 import { Post } from '@prisma/client'
 
+// Shared types for post operations
+interface CreatePostData {
+  title: string
+  subtitle?: string | null
+  slug: string
+  markdown?: string
+  polyhedraShape?: string | null
+  status?: 'draft' | 'published'
+}
+
 interface UpdatePostData {
   title?: string
   subtitle?: string
@@ -12,9 +22,12 @@ interface UpdatePostData {
   status?: string
 }
 
-type UpdatePostResult = 
+type PostResult = 
   | { success: true; post: Post }
   | { success: false; error: string }
+
+// Keep old type alias for backwards compatibility
+type UpdatePostResult = PostResult
 
 /**
  * Shared post update logic used by both /api/posts/[id] and /api/posts/by-slug/[slug]
@@ -93,4 +106,82 @@ export async function updatePost(post: Post, data: UpdatePostData): Promise<Upda
   return { success: true, post: updated }
 }
 
+/**
+ * Create a new post with validation, slug uniqueness check, and initial revision.
+ * Used by POST /api/posts
+ */
+export async function createPost(data: CreatePostData): Promise<PostResult> {
+  // Validate required fields
+  if (!data.title?.trim()) {
+    return { success: false, error: 'Title is required' }
+  }
+  if (!data.slug?.trim()) {
+    return { success: false, error: 'Slug is required' }
+  }
+
+  const title = data.title.trim()
+  const slug = data.slug.trim()
+  const subtitle = data.subtitle?.trim() || null
+  const markdown = data.markdown ?? ''
+  const polyhedraShape = data.polyhedraShape || null
+  const status = data.status ?? 'draft'
+
+  // Check slug uniqueness
+  const existing = await prisma.post.findUnique({ where: { slug } })
+  if (existing) {
+    return { success: false, error: `Slug "${slug}" already exists` }
+  }
+
+  // Create post with initial revision
+  const post = await prisma.post.create({
+    data: {
+      title,
+      subtitle,
+      slug,
+      markdown,
+      polyhedraShape,
+      status,
+      publishedAt: status === 'published' ? new Date() : null,
+      revisions: {
+        create: {
+          title,
+          subtitle,
+          markdown,
+          polyhedraShape,
+        },
+      },
+    },
+  })
+
+  // Invalidate homepage cache
+  revalidatePath('/')
+
+  return { success: true, post }
+}
+
+/**
+ * Soft delete a post by setting status to 'deleted'.
+ * Used by DELETE /api/posts/[id] and DELETE /api/posts/by-slug/[slug]
+ */
+export async function deletePost(postOrId: Post | string): Promise<PostResult> {
+  // Accept either a Post object or an ID string
+  const post = typeof postOrId === 'string'
+    ? await prisma.post.findUnique({ where: { id: postOrId } })
+    : postOrId
+
+  if (!post) {
+    return { success: false, error: 'Post not found' }
+  }
+
+  const updated = await prisma.post.update({
+    where: { id: post.id },
+    data: { status: 'deleted' },
+  })
+
+  // Revalidate cached pages
+  revalidatePath('/')
+  revalidatePath(`/e/${post.slug}`)
+
+  return { success: true, post: updated }
+}
 

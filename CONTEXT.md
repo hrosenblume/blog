@@ -36,8 +36,7 @@
 ```
 blog/
 ├── app/                        # Next.js App Router
-│   ├── _components/            # App-level client components
-│   │   └── HomeKeyboardNav.tsx
+│   ├── _components/            # App-level client components (currently empty)
 │   ├── api/                    # API routes
 │   │   ├── admin/              # Admin-only APIs
 │   │   │   ├── revisions/      # Revision management + restore
@@ -61,10 +60,16 @@ blog/
 │   └── providers.tsx           # SessionProvider + ThemeProvider
 ├── components/                 # Shared UI components
 │   ├── admin/                  # Admin-specific components
+│   │   ├── AdminActionsMenu.tsx # Dropdown menu for table actions
+│   │   ├── AdminTable.tsx      # Generic table component (desktop + mobile)
+│   │   ├── Pagination.tsx      # Pagination controls
+│   │   └── UserForm.tsx        # User create/edit form
 │   ├── editor/                 # Editor-specific components
 │   │   ├── EditorNavbar.tsx    # Editor top navigation
 │   │   ├── EditorToolbar.tsx   # Formatting toolbar
-│   │   └── FloatingEditorToolbar.tsx  # Bubble menu toolbar
+│   │   ├── FloatingEditorToolbar.tsx  # Bubble menu toolbar
+│   │   └── PostMetadataFooter.tsx     # Editor metadata display (URL, shape, status)
+│   ├── BackLink.tsx            # Reusable back navigation link
 │   ├── Button.tsx              # Button with variants + loading
 │   ├── CenteredPage.tsx        # Loading/centered layout wrapper
 │   ├── DeleteButton.tsx        # Confirm-delete button
@@ -74,6 +79,7 @@ blog/
 │   ├── EssayLink.tsx           # Homepage essay row with polyhedra
 │   ├── EssayNav.tsx            # Prev/Next essay navigation
 │   ├── HomepageFooter.tsx      # Footer with social links
+│   ├── PageContainer.tsx       # Consistent page layout wrapper
 │   ├── PolyhedraCanvas.tsx     # 3D polyhedra renderer
 │   ├── SecretNav.tsx           # 5-tap + Cmd+/ navigation
 │   ├── Spinner.tsx             # Loading spinner
@@ -85,14 +91,15 @@ blog/
 │   ├── auth.ts                 # NextAuth config + isAdmin helper
 │   ├── db.ts                   # Prisma client singleton
 │   ├── editor/                 # Editor-specific utilities
-│   │   └── markdown-helpers.ts # Markdown toolbar helper functions
+│   │   ├── markdown-helpers.ts # Markdown toolbar helper functions
+│   │   └── usePostEditor.ts    # Editor state management hook
 │   ├── homepage.ts             # ✏️ Homepage content config (DRY)
 │   ├── keyboard/               # Keyboard navigation system
 │   │   ├── index.ts            # Exports
 │   │   ├── shortcuts.ts        # Shortcut definitions
 │   │   └── useKeyboard.ts      # useKeyboard hook
-│   ├── markdown.ts             # Markdown rendering + utils
-│   ├── posts.ts                # Shared post update logic (DRY)
+│   ├── markdown.ts             # Markdown rendering (server + client exports)
+│   ├── posts.ts                # Post CRUD logic: create, update, delete (DRY)
 │   ├── turndown.ts             # HTML to markdown conversion
 │   ├── polyhedra/              # 3D polyhedra system
 │   │   ├── renderer.ts         # Canvas rendering logic
@@ -347,11 +354,92 @@ When using fixed elements (header, footer, toolbar) with a scrollable content ar
 
 ```typescript
 export const tableHeaderClass = 'px-6 py-3 text-left text-xs ...'
-export const cellClass = 'px-6 py-4 whitespace-nowrap text-sm ...'
-export const linkClass = 'text-blue-600 hover:text-blue-800 ...'
+export const tableCellClass = 'px-6 py-4 whitespace-nowrap text-sm ...'
+export const cardClass = 'bg-card rounded-lg shadow'
+export const emptyStateClass = 'bg-card rounded-lg shadow p-8 text-center ...'
 ```
 
 Used across admin tables for consistent styling.
+
+### 8. Admin Table Abstraction (DRY)
+
+`components/admin/AdminTable.tsx` is a generic Server Component for admin tables:
+
+```tsx
+<AdminTable
+  columns={[
+    { header: 'Title', className: 'max-w-[200px]' },
+    { header: 'Status' },
+  ]}
+  rows={items.map(item => ({
+    key: item.id,
+    cells: [
+      <span className="truncate block">{item.title}</span>,
+      <StatusBadge status={item.status} />,
+    ],
+    actions: <AdminActionsMenu editHref={...} deleteEndpoint={...} />,
+    // Mobile card fields...
+  }))}
+  emptyMessage="No items found."
+/>
+```
+
+**Features:**
+- Desktop table with proper thead/tbody structure
+- Mobile card fallback (auto-switches at `md` breakpoint)
+- Empty state handling
+- Column max-width support with truncation
+- Actions column with dropdown menu
+
+**Used by:** `admin/posts/page.tsx`, `admin/users/page.tsx`, `admin/revisions/page.tsx`
+
+### 9. Editor State Hook (DRY)
+
+`lib/editor/usePostEditor.ts` encapsulates all editor state and logic:
+
+```tsx
+const {
+  post, setPost,           // { title, subtitle, slug, markdown, polyhedraShape, status }
+  ui,                      // { loading, saving, lastSaved, hasUnsavedChanges, showMarkdown }
+  nav,                     // { prevSlug, nextSlug }
+  actions,                 // { save, publish, unpublish, delete }
+  editor, setEditor,       // Tiptap instance
+} = usePostEditor(slug)
+```
+
+**Encapsulates:**
+- All 15+ `useState` calls
+- Load post effect
+- Auto-generate slug from title
+- Track unsaved changes
+- Beforeunload warning
+- Autosave debounce (3 seconds)
+- Save, publish, unpublish, delete handlers
+
+**Used by:** `app/writer/editor/[[...slug]]/page.tsx`
+
+### 10. Post CRUD Helpers (DRY)
+
+`lib/posts.ts` provides centralized post operations:
+
+```typescript
+// Create a new post with validation and revision
+const result = await createPost({ title, slug, markdown, status })
+
+// Update an existing post
+const result = await updatePost(id, { title, markdown })
+
+// Soft-delete a post
+const result = await deletePost(id)
+```
+
+**Features:**
+- Slug uniqueness validation
+- Automatic revision creation
+- Path revalidation
+- Consistent error handling
+
+**Used by:** API routes (`/api/posts/*`), editor hook
 
 ---
 
@@ -601,11 +689,17 @@ allowedDevOrigins: [
 - `dynamic = 'force-dynamic'` for admin pages
 
 ### DRY Principles
-1. **Typography**: CSS variables + Tailwind utilities
+1. **Typography**: CSS variables + Tailwind utilities (`globals.css`)
 2. **Homepage content**: `lib/homepage.ts`
 3. **Shared styles**: `lib/styles.ts`
 4. **Keyboard shortcuts**: `lib/keyboard/shortcuts.ts`
 5. **Polyhedra shapes**: Generated from single source of truth
+6. **Admin tables**: `components/admin/AdminTable.tsx`
+7. **Editor state**: `lib/editor/usePostEditor.ts`
+8. **Post CRUD**: `lib/posts.ts` (create, update, delete)
+9. **Page layout**: `components/PageContainer.tsx`
+10. **Back navigation**: `components/BackLink.tsx`
+11. **UI components**: Check `components/ui/` (shadcn) before creating custom
 
 ### Error Handling
 - 404: Custom `not-found.tsx`

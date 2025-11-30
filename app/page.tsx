@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { prisma } from '@/lib/db'
 import { SecretNav } from '@/components/SecretNav'
-import { HomeKeyboardNav } from '@/app/_components/HomeKeyboardNav'
 import { EssayLink } from '@/components/EssayLink'
 import { HomepageFooter } from '@/components/HomepageFooter'
 import { TapLink } from '@/components/TapLink'
@@ -33,8 +32,6 @@ export default async function Home() {
 
   return (
     <main className="max-w-2xl mx-auto px-6 py-16">
-      <HomeKeyboardNav />
-      
       <header className="mb-16">
         <h1 className="text-title font-bold mb-6 dark:text-white">
           <SecretNav>{HOMEPAGE.name}</SecretNav>

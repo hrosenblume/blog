@@ -1,18 +1,15 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { useRouter, useParams } from 'next/navigation'
-import type { Editor as EditorInstance } from '@tiptap/react'
-import { generateSlug, wordCount } from '@/lib/markdown'
+import { useParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
+import { usePostEditor } from '@/lib/editor/usePostEditor'
 import { Spinner } from '@/components/Spinner'
 import { CenteredPage } from '@/components/CenteredPage'
-import { PolyhedraCanvas } from '@/components/PolyhedraCanvas'
 import { TiptapEditor, EditorToolbar } from '@/components/TiptapEditor'
 import { EditorNavbar } from '@/components/editor/EditorNavbar'
-import { CheckIcon, LockIcon } from '@/components/Icons'
-import { getRandomShape } from '@/lib/polyhedra/shapes'
-import { confirmPublish, confirmUnpublish } from '@/lib/utils/confirm'
+import { PostMetadataFooter } from '@/components/editor/PostMetadataFooter'
+import { CheckIcon } from '@/components/Icons'
 import { formatSavedTime } from '@/lib/utils/format'
 
 // Success screen shown after publishing
@@ -35,225 +32,46 @@ export default function Editor() {
   const params = useParams()
   const postSlug = params.slug?.[0] as string | undefined
 
-  // Post content state
-  const [title, setTitle] = useState('')
-  const [subtitle, setSubtitle] = useState('')
-  const [slug, setSlug] = useState('')
-  const [markdown, setMarkdown] = useState('')
-  const [polyhedraShape, setPolyhedraShape] = useState('cube') // Fixed default, random set on mount for new posts
-  const [status, setStatus] = useState<'draft' | 'published'>('draft')
-  const [isManualSlug, setIsManualSlug] = useState(false)
-
-  // UI state
-  const [loading, setLoading] = useState(!!postSlug)
-  const [saving, setSaving] = useState(false)
-  const [lastSaved, setLastSaved] = useState<Date | null>(null)
-  const [showMarkdown, setShowMarkdown] = useState(false) // Toggle between WYSIWYG and raw markdown
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
-  const [publishSuccess, setPublishSuccess] = useState(false)
-  
-  // Adjacent posts for navigation
-  const [prevSlug, setPrevSlug] = useState<string | null>(null)
-  const [nextSlug, setNextSlug] = useState<string | null>(null)
-  
-  // Track last saved content to detect changes
-  const lastSavedContent = useRef({ title: '', subtitle: '', slug: '', markdown: '', polyhedraShape: '' })
-  
-  // Track the current URL slug for redirect detection
-  const urlSlugRef = useRef(postSlug)
-  
-  // Textarea ref for auto-resize (raw markdown mode)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
-  
-  // Tiptap editor instance for EditorToolbar
-  const [editor, setEditor] = useState<EditorInstance | null>(null)
-
-  // Load existing post
-  useEffect(() => {
-    if (!postSlug) return
-    
-    fetch(`/api/posts/by-slug/${postSlug}`)
-      .then(res => res.json())
-      .then(data => {
-        setTitle(data.title)
-        setSubtitle(data.subtitle || '')
-        setSlug(data.slug)
-        setMarkdown(data.markdown)
-        setPolyhedraShape(data.polyhedraShape || 'cube')
-        setStatus(data.status)
-        setPrevSlug(data.prevSlug)
-        setNextSlug(data.nextSlug)
-        setIsManualSlug(true)
-        setLoading(false)
-        setLastSaved(new Date(data.updatedAt))
-        lastSavedContent.current = { title: data.title, subtitle: data.subtitle || '', slug: data.slug, markdown: data.markdown, polyhedraShape: data.polyhedraShape || '' }
-        urlSlugRef.current = data.slug
-      })
-      .catch(() => {
-        router.push('/writer')
-      })
-  }, [postSlug, router])
-
-  // Set random shape for new posts (after mount to avoid hydration mismatch)
-  useEffect(() => {
-    if (!postSlug) {
-      setPolyhedraShape(getRandomShape())
-    }
-  }, [postSlug])
-
-  // Auto-generate slug from title
-  useEffect(() => {
-    if (!isManualSlug && title) {
-      setSlug(generateSlug(title))
-    }
-  }, [title, isManualSlug])
-
-  // Track unsaved changes
-  useEffect(() => {
-    const saved = lastSavedContent.current
-    const hasChanges = title !== saved.title || subtitle !== saved.subtitle || slug !== saved.slug || markdown !== saved.markdown || polyhedraShape !== saved.polyhedraShape
-    setHasUnsavedChanges(hasChanges)
-  }, [title, subtitle, slug, markdown, polyhedraShape])
-
-  // Browser back/refresh warning for unsaved changes
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (hasUnsavedChanges) {
-        e.preventDefault()
-        e.returnValue = '' // Required for Chrome
-      }
-    }
-    window.addEventListener('beforeunload', handleBeforeUnload)
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
-  }, [hasUnsavedChanges])
+  const {
+    post,
+    setTitle,
+    setSubtitle,
+    setSlug,
+    setMarkdown,
+    regenerateShape,
+    ui,
+    setShowMarkdown,
+    nav,
+    actions,
+    editor,
+    setEditor,
+    textareaRef,
+  } = usePostEditor(postSlug)
 
   // Keyboard shortcuts
   useKeyboard([
-    { ...SHORTCUTS.TOGGLE_VIEW, handler: () => { 
-      if (status === 'published' && slug) {
-        if (hasUnsavedChanges && !confirm('You have unsaved changes. Discard them?')) return
-        router.push(`/e/${slug}`)
-      }
-    }},
-    { ...SHORTCUTS.PREV, handler: () => { if (prevSlug) router.push(`/writer/editor/${prevSlug}`) } },
-    { ...SHORTCUTS.NEXT, handler: () => { if (nextSlug) router.push(`/writer/editor/${nextSlug}`) } },
-    { ...SHORTCUTS.ESCAPE_BACK, handler: () => {
-      if (hasUnsavedChanges && !confirm('You have unsaved changes. Leave anyway?')) return
-      router.push('/writer')
-    }},
+    {
+      ...SHORTCUTS.TOGGLE_VIEW,
+      handler: () => {
+        if (post.status === 'published' && post.slug) {
+          if (ui.hasUnsavedChanges && !confirm('You have unsaved changes. Discard them?')) return
+          router.push(`/e/${post.slug}`)
+        }
+      },
+    },
+    { ...SHORTCUTS.PREV, handler: () => { if (nav.prevSlug) router.push(`/writer/editor/${nav.prevSlug}`) } },
+    { ...SHORTCUTS.NEXT, handler: () => { if (nav.nextSlug) router.push(`/writer/editor/${nav.nextSlug}`) } },
+    {
+      ...SHORTCUTS.ESCAPE_BACK,
+      handler: () => {
+        if (ui.hasUnsavedChanges && !confirm('You have unsaved changes. Leave anyway?')) return
+        router.push('/writer')
+      },
+    },
   ])
 
-  const handleSlugChange = useCallback((value: string) => {
-    setSlug(value)
-    setIsManualSlug(true)
-  }, [])
-
-  const handleSave = useCallback(async (publishStatus: 'draft' | 'published') => {
-    if (!title.trim()) {
-      alert('Title is required')
-      return
-    }
-    if (!slug.trim()) {
-      alert('Slug is required')
-      return
-    }
-
-    if (publishStatus === 'published' && !confirmPublish()) {
-      return
-    }
-
-    setSaving(true)
-
-    try {
-      const data = { title: title.trim(), subtitle: subtitle.trim() || null, slug: slug.trim(), markdown, polyhedraShape, status: publishStatus }
-      
-      if (postSlug) {
-        const res = await fetch(`/api/posts/by-slug/${urlSlugRef.current}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
-        })
-        const result = await res.json()
-        
-        // If slug changed, redirect to new URL
-        if (result.slug !== urlSlugRef.current) {
-          urlSlugRef.current = result.slug
-          router.replace(`/writer/editor/${result.slug}`)
-        }
-      } else {
-        const res = await fetch('/api/posts', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
-        })
-        const result = await res.json()
-        if (!res.ok) {
-          throw new Error(result.error)
-        }
-        urlSlugRef.current = result.slug
-        router.push(`/writer/editor/${result.slug}`)
-      }
-
-      setStatus(publishStatus)
-      setLastSaved(new Date())
-      lastSavedContent.current = { title: title.trim(), subtitle: subtitle.trim(), slug: slug.trim(), markdown, polyhedraShape }
-      setHasUnsavedChanges(false)
-
-      if (publishStatus === 'published') {
-        setPublishSuccess(true)
-        // Hard navigate to the live essay to bypass Router Cache
-        setTimeout(() => {
-          window.location.href = `/e/${slug.trim()}`
-        }, 1000)
-      }
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to save')
-    } finally {
-      setSaving(false)
-    }
-  }, [postSlug, title, subtitle, slug, markdown, polyhedraShape, router])
-
-  // Autosave drafts after 3 seconds of inactivity
-  useEffect(() => {
-    if (!postSlug || !title.trim() || status === 'published') return
-    
-    const timeout = setTimeout(() => handleSave('draft'), 3000)
-    return () => clearTimeout(timeout)
-  }, [markdown, title, postSlug, status, handleSave])
-
-  // Auto-resize textarea to fit content (only in raw markdown mode)
-  useEffect(() => {
-    if (!showMarkdown) return
-    const textarea = textareaRef.current
-    if (textarea) {
-      textarea.style.height = 'auto'
-      textarea.style.height = `${textarea.scrollHeight}px`
-    }
-  }, [markdown, showMarkdown])
-
-  const handleUnpublish = useCallback(async () => {
-    if (!confirmUnpublish(title)) return
-    
-    await fetch(`/api/posts/by-slug/${urlSlugRef.current}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'draft' }),
-    })
-    router.push('/writer')
-  }, [title, router])
-
-  const handleDelete = useCallback(async () => {
-    if (!postSlug) return
-    if (!confirm(`Are you sure you want to delete "${title || 'this post'}"? This cannot be undone.`)) return
-    
-    await fetch(`/api/posts/by-slug/${urlSlugRef.current}`, {
-      method: 'DELETE',
-    })
-    router.push('/writer')
-  }, [postSlug, title, router])
-
   // Loading state
-  if (loading) {
+  if (ui.loading) {
     return (
       <CenteredPage>
         <Spinner />
@@ -262,143 +80,82 @@ export default function Editor() {
   }
 
   // Success state after publishing
-  if (publishSuccess) {
+  if (ui.publishSuccess) {
     return <PublishSuccess />
   }
-
-  const words = wordCount(markdown)
 
   return (
     <div className="h-screen flex flex-col">
       <EditorNavbar
-        status={status}
-        hasUnsavedChanges={hasUnsavedChanges}
-        saving={saving}
-        onSave={handleSave}
+        status={post.status}
+        hasUnsavedChanges={ui.hasUnsavedChanges}
+        saving={ui.saving}
+        onSave={actions.save}
       />
 
       {/* Fixed toolbar below header */}
-      <EditorToolbar 
-        editor={showMarkdown ? null : editor}
-        textareaRef={showMarkdown ? textareaRef : undefined}
-        markdown={showMarkdown ? markdown : undefined}
-        onMarkdownChange={showMarkdown ? setMarkdown : undefined}
-        showMarkdown={showMarkdown}
+      <EditorToolbar
+        editor={ui.showMarkdown ? null : editor}
+        textareaRef={ui.showMarkdown ? textareaRef : undefined}
+        markdown={ui.showMarkdown ? post.markdown : undefined}
+        onMarkdownChange={ui.showMarkdown ? setMarkdown : undefined}
+        showMarkdown={ui.showMarkdown}
         setShowMarkdown={setShowMarkdown}
       />
 
       <main className="flex-1 overflow-auto pb-20 overscroll-contain">
         <div className="max-w-2xl mx-auto px-6 pt-12 pb-24">
-          {/* Title and subtitle are always editable */}
+          {/* Title and subtitle */}
           <input
             type="text"
-            value={title}
-            onChange={e => setTitle(e.target.value)}
+            value={post.title}
+            onChange={(e) => setTitle(e.target.value)}
             placeholder="Title"
             className="w-full text-title font-bold bg-transparent border-none outline-none placeholder-gray-300 dark:placeholder-gray-700 mb-2"
           />
 
           <input
             type="text"
-            value={subtitle}
-            onChange={e => setSubtitle(e.target.value)}
+            value={post.subtitle}
+            onChange={(e) => setSubtitle(e.target.value)}
             placeholder="Subtitle (shown on homepage)"
             className="w-full text-lg bg-transparent border-none outline-none placeholder-gray-300 dark:placeholder-gray-700 text-gray-500 dark:text-gray-400 mb-8"
           />
 
           {/* Toggle between WYSIWYG and raw markdown */}
-          {showMarkdown ? (
+          {ui.showMarkdown ? (
             <textarea
               ref={textareaRef}
-              value={markdown}
-              onChange={e => setMarkdown(e.target.value)}
+              value={post.markdown}
+              onChange={(e) => setMarkdown(e.target.value)}
               placeholder="Write your story in Markdown..."
               className="w-full min-h-[500px] bg-transparent border-none outline-none resize-none placeholder-gray-400 leading-relaxed overflow-hidden font-mono text-sm"
             />
           ) : (
             <TiptapEditor
-              content={markdown}
+              content={post.markdown}
               onChange={setMarkdown}
               placeholder="Write your story..."
               onEditorReady={setEditor}
             />
           )}
 
-          <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800 space-y-4">
-            {/* URL */}
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2">
-                <span className="text-gray-500 w-14">URL</span>
-                <span className="text-gray-400">/e/</span>
-                {status === 'published' ? (
-                  <span className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400">
-                    {slug}
-                    <LockIcon className="text-gray-400" />
-                  </span>
-                ) : (
-                  <input
-                    type="text"
-                    value={slug}
-                    onChange={e => handleSlugChange(e.target.value)}
-                    placeholder="post-slug"
-                    className="flex-1 bg-transparent border-none outline-none placeholder-gray-400 text-gray-600 dark:text-gray-400"
-                  />
-                )}
-              </div>
-            </div>
-
-            {/* Shape */}
-            <div className="flex items-center justify-between text-sm gap-2">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="text-muted-foreground w-14 flex-shrink-0">Shape</span>
-                <div className="flex items-center gap-2 min-w-0">
-                  <PolyhedraCanvas shape={polyhedraShape} size={36} />
-                  <span 
-                    className="text-muted-foreground font-mono text-xs truncate max-w-[100px] md:max-w-none"
-                    title={polyhedraShape}
-                  >
-                    {polyhedraShape}
-                  </span>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setPolyhedraShape(getRandomShape())}
-                className="flex-shrink-0 px-2.5 py-1 text-xs rounded bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
-              >
-                Regenerate
-              </button>
-            </div>
-
-            {/* Status */}
-            {status === 'published' && (
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground w-14">Status</span>
-                  <span className="text-green-600 dark:text-green-400">Published</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleUnpublish}
-                  className="px-2.5 py-1 text-xs rounded bg-secondary text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                >
-                  Unpublish
-                </button>
-              </div>
-            )}
-
-            {/* Word count - subtle, at the bottom */}
-            <div className="text-sm text-muted-foreground pt-2 border-t border-border">
-              {words.toLocaleString()} words · ~{Math.ceil(words / 200)} min read
-            </div>
-          </div>
+          <PostMetadataFooter
+            slug={post.slug}
+            status={post.status}
+            polyhedraShape={post.polyhedraShape}
+            markdown={post.markdown}
+            onSlugChange={setSlug}
+            onShapeRegenerate={regenerateShape}
+            onUnpublish={actions.unpublish}
+          />
         </div>
       </main>
 
       <footer className="fixed bottom-0 left-0 right-0 border-t border-border px-4 sm:px-6 py-3 bg-background touch-none">
         <div className="flex items-center justify-end text-sm text-muted-foreground">
-          {lastSaved ? (
-            <span>Saved {formatSavedTime(lastSaved)}</span>
+          {ui.lastSaved ? (
+            <span>Saved {formatSavedTime(ui.lastSaved)}</span>
           ) : (
             <span>Not saved yet</span>
           )}

@@ -5,6 +5,8 @@ import { renderMarkdown } from '@/lib/markdown'
 import { KeyboardNav } from './_components/KeyboardNav'
 import { EssayNav } from '@/components/EssayNav'
 import { HomepageFooter } from '@/components/HomepageFooter'
+import { BackLink } from '@/components/BackLink'
+import { PageContainer } from '@/components/PageContainer'
 import { HOMEPAGE } from '@/lib/homepage'
 
 export const revalidate = 60
@@ -101,13 +103,8 @@ export default async function EssayPage({ params }: Props) {
   return (
     <div className="min-h-screen">
       <KeyboardNav prevSlug={prev?.slug ?? null} nextSlug={next?.slug ?? null} slug={post.slug} />
-      <div className="max-w-2xl mx-auto px-6 py-16">
-        <Link 
-          href="/"
-          className="inline-flex items-center min-h-[44px] px-3 py-2 -mx-3 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors mb-6"
-        >
-          ← Home
-        </Link>
+      <PageContainer>
+        <BackLink href="/" label="Home" />
 
         <article className="space-y-6">
           <h1 className="text-title font-bold">{post.title}</h1>
@@ -143,7 +140,7 @@ export default async function EssayPage({ params }: Props) {
         />
 
         <HomepageFooter />
-      </div>
+      </PageContainer>
     </div>
   )
 }

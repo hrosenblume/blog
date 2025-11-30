@@ -13,7 +13,7 @@ Personal essay blog built with Next.js 15 (App Router), React 19, Prisma (SQLite
 - **Styling**: Tailwind CSS with dark mode (class-based via next-themes)
 - **Editor**: Tiptap WYSIWYG (converts to/from markdown via marked + turndown)
 - **3D Graphics**: Canvas API (client-side polyhedra rendering)
-- **UI**: React 19
+- **UI**: React 19, shadcn/ui components
 
 ## Code Style
 
@@ -33,6 +33,10 @@ Personal essay blog built with Next.js 15 (App Router), React 19, Prisma (SQLite
 - Props interfaces defined inline or in same file
 - Use `cn()` utility from `@/lib/utils/cn` for conditional classes
 - Components in `/components` are shared; page-specific components stay in route `_components/` folders
+- **Before creating any new UI component**, check if shadcn/ui has one in `components/ui/`:
+  - Button, Badge, Input, Label, Select, Textarea, DropdownMenu, AlertDialog
+  - See https://ui.shadcn.com/docs/components for full list
+  - Use `npx shadcn@latest add <component>` to add new shadcn components
 
 ### Styling
 - Use Tailwind CSS exclusively
@@ -253,6 +257,7 @@ npm run db:setup             # Push schema + seed admin user
 - Don't use raw Tailwind font sizes (`text-sm`, `text-lg`) — use the typography scale
 - Don't duplicate values — if something is used twice, abstract it
 - Don't define keyboard shortcuts inline — add to `lib/keyboard/shortcuts.ts`
+- Don't create custom UI components when shadcn/ui has an equivalent — check `components/ui/` first
 
 ## Do
 - Keep components small and focused

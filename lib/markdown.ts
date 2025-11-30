@@ -7,6 +7,9 @@ marked.setOptions({
   breaks: true,
 })
 
+/**
+ * Render markdown to sanitized HTML (for server-side rendering of essays)
+ */
 export function renderMarkdown(markdown: string): string {
   const html = marked.parse(markdown) as string
   return sanitizeHtml(html, {
@@ -17,6 +20,14 @@ export function renderMarkdown(markdown: string): string {
       a: ['href', 'target', 'rel'],
     },
   })
+}
+
+/**
+ * Convert markdown to HTML without sanitization (for Tiptap editor which handles its own sanitization)
+ * This is safe to use client-side since Tiptap sanitizes content internally.
+ */
+export function markdownToHtml(markdown: string): string {
+  return marked.parse(markdown, { gfm: true, breaks: true }) as string
 }
 
 // Calculate word count from markdown

@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db'
 import Link from 'next/link'
 import { Pagination } from '@/components/admin/Pagination'
+import { AdminTable, AdminTableRow } from '@/components/admin/AdminTable'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
@@ -29,6 +30,41 @@ export default async function RevisionsPage({ searchParams }: PageProps) {
 
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)
 
+  const columns = [
+    { header: 'Post', maxWidth: 'max-w-[200px]' },
+    { header: 'Content Preview', maxWidth: 'max-w-[300px]' },
+    { header: 'Created' },
+    { header: 'Status' },
+  ]
+
+  const rows: AdminTableRow[] = revisions.map((revision) => {
+    const isCurrent = revision.markdown === revision.post.markdown
+    return {
+      key: revision.id,
+      cells: [
+        <Link key="post" href={`/writer/editor/${revision.post.slug}`} className="hover:underline">
+          {revision.post.title || 'Untitled'}
+        </Link>,
+        <span key="preview" className="text-muted-foreground">
+          {revision.markdown.slice(0, 80)}{revision.markdown.length > 80 ? '...' : ''}
+        </span>,
+        <span key="created" className="text-muted-foreground">{new Date(revision.createdAt).toLocaleString()}</span>,
+        isCurrent ? (
+          <Badge key="status" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-green-200 dark:border-green-800">
+            Current
+          </Badge>
+        ) : (
+          <Badge key="status" variant="secondary">Past</Badge>
+        ),
+      ],
+      actions: (
+        <Button variant="ghost" size="sm" asChild>
+          <Link href={`/admin/revisions/${revision.id}`}>View</Link>
+        </Button>
+      ),
+    }
+  })
+
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
@@ -42,61 +78,11 @@ export default async function RevisionsPage({ searchParams }: PageProps) {
 
       <Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/admin/revisions" position="top" />
 
-      <div className="bg-card rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-border">
-          <thead className="bg-muted">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Post</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Content Preview</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Created</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {revisions.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">
-                  No revisions yet.
-                </td>
-              </tr>
-            ) : (
-              revisions.map((revision) => {
-                const isCurrent = revision.markdown === revision.post.markdown
-                return (
-                  <tr key={revision.id} className="hover:bg-accent/50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <Link href={`/writer/editor/${revision.post.slug}`} className="hover:underline">
-                        {revision.post.title || 'Untitled'}
-                      </Link>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground max-w-md truncate">
-                      {revision.markdown.slice(0, 80)}{revision.markdown.length > 80 ? '...' : ''}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                      {new Date(revision.createdAt).toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {isCurrent ? (
-                        <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-green-200 dark:border-green-800">
-                          Current
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary">Past</Badge>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/admin/revisions/${revision.id}`}>View</Link>
-                      </Button>
-                    </td>
-                  </tr>
-                )
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+      <AdminTable
+        columns={columns}
+        rows={rows}
+        emptyMessage="No revisions yet."
+      />
 
       <Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/admin/revisions" position="bottom" />
     </div>

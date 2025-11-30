@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { revalidatePath } from 'next/cache'
 import { withSession, badRequest } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { wordCount } from '@/lib/markdown'
+import { createPost } from '@/lib/posts'
 
 // GET /api/posts - List all posts (excludes deleted)
 export const GET = withSession(async () => {
@@ -27,36 +27,11 @@ export const GET = withSession(async () => {
 
 // POST /api/posts - Create new post
 export const POST = withSession(async (request: NextRequest) => {
-  const { title, subtitle, slug, markdown, polyhedraShape, status } = await request.json()
+  const result = await createPost(await request.json())
+  
+  if (!result.success) {
+    return badRequest(result.error)
+  }
 
-  if (!title?.trim()) return badRequest('Title is required')
-  if (!slug?.trim()) return badRequest('Slug is required')
-
-  const existing = await prisma.post.findUnique({ where: { slug } })
-  if (existing) return badRequest(`Slug "${slug}" already exists`)
-
-  const post = await prisma.post.create({
-    data: {
-      title: title.trim(),
-      subtitle: subtitle?.trim() || null,
-      slug: slug.trim(),
-      markdown: markdown ?? '',
-      polyhedraShape: polyhedraShape || null,
-      status: status ?? 'draft',
-      publishedAt: status === 'published' ? new Date() : null,
-      revisions: { 
-        create: { 
-          title: title.trim(),
-          subtitle: subtitle?.trim() || null,
-          markdown: markdown ?? '',
-          polyhedraShape: polyhedraShape || null,
-        } 
-      },
-    },
-  })
-
-  // Invalidate homepage cache
-  revalidatePath('/')
-
-  return NextResponse.json({ id: post.id, slug: post.slug, status: post.status })
+  return NextResponse.json({ id: result.post.id, slug: result.post.slug, status: result.post.status })
 })

@@ -6,15 +6,10 @@ import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
-import { marked } from 'marked'
+import { markdownToHtml } from '@/lib/markdown'
 import { htmlToMarkdown } from '@/lib/turndown'
 import { EditorToolbar } from '@/components/editor/EditorToolbar'
 import { FloatingEditorToolbar } from '@/components/editor/FloatingEditorToolbar'
-
-// Client-safe markdown to HTML (no sanitize-html - Tiptap handles sanitization)
-function markdownToHtml(markdown: string): string {
-  return marked.parse(markdown, { gfm: true, breaks: true }) as string
-}
 
 interface TiptapEditorProps {
   content: string // markdown

@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { revalidatePath } from 'next/cache'
 import { withSession, notFound, badRequest } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { wordCount } from '@/lib/markdown'
-import { updatePost } from '@/lib/posts'
+import { updatePost, deletePost } from '@/lib/posts'
 
 // GET /api/posts/[id] - Get single post
 export const GET = withSession(async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
@@ -38,14 +37,9 @@ export const PATCH = withSession(async (request: NextRequest, { params }: { para
 // DELETE /api/posts/[id] - Soft delete post (sets status to 'deleted')
 export const DELETE = withSession(async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params
-  const post = await prisma.post.findUnique({ where: { id } })
-  if (!post) return notFound()
-
-  await prisma.post.update({ where: { id }, data: { status: 'deleted' } })
-
-  // Revalidate cached pages
-  revalidatePath('/')
-  revalidatePath(`/e/${post.slug}`)
+  const result = await deletePost(id)
+  
+  if (!result.success) return notFound()
 
   return NextResponse.json({ success: true })
 })

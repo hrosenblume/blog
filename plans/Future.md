@@ -35,3 +35,24 @@ Allow readers to subscribe to new essays:
 - Subscribe form on homepage/footer
 
 ---
+
+## Visual Bio Section
+
+Transform the plaintext bio section on the homepage into something more visually engaging.
+
+**Ideas:**
+- Animated typewriter effect for key phrases
+- Subtle gradient or highlight on important words/links
+- Interactive elements (hover effects, micro-animations)
+- Background texture or pattern that complements the polyhedra aesthetic
+- Photo/avatar with creative treatment (duotone, geometric mask, etc.)
+- Timeline or visual representation of career journey
+- Pull quotes or highlighted stats that stand out
+
+**Design considerations:**
+- Keep the minimal aesthetic — enhance, don't overwhelm
+- Ensure accessibility (motion preferences, contrast)
+- Mobile-first approach
+- Should feel cohesive with the 3D polyhedra and overall site vibe
+
+---

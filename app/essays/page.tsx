@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { prisma } from '@/lib/db'
 import { EssayLink } from '@/components/EssayLink'
 import { HomepageFooter } from '@/components/HomepageFooter'
+import { BackLink } from '@/components/BackLink'
+import { PageContainer } from '@/components/PageContainer'
 import { HOMEPAGE } from '@/lib/homepage'
 import { ESSAYS_PAGE } from '@/lib/essays'
 
@@ -25,15 +27,9 @@ export default async function EssaysPage() {
 
   return (
     <div className="min-h-screen">
-      <div className="max-w-2xl mx-auto px-6 py-16">
-        {/* Header */}
+      <PageContainer>
         <header className="mb-8">
-          <Link 
-            href={ESSAYS_PAGE.backLink.href}
-            className="inline-flex items-center min-h-[44px] px-3 py-2 -mx-3 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors mb-4"
-          >
-            {ESSAYS_PAGE.backLink.label}
-          </Link>
+          <BackLink href={ESSAYS_PAGE.backLink.href} label={ESSAYS_PAGE.backLink.label.replace('← ', '')} />
           <h1 className="text-title font-bold">{ESSAYS_PAGE.title}</h1>
           <p className="text-muted-foreground mt-1">
             {ESSAYS_PAGE.recommendation.intro}
@@ -44,14 +40,13 @@ export default async function EssaysPage() {
           </p>
         </header>
 
-        {/* Essays list */}
         {essays.length === 0 ? (
           <p className="text-muted-foreground">{ESSAYS_PAGE.emptyMessage}</p>
         ) : (
           <div className="-mx-6">
             {essays.map((essay, index) => (
-              <EssayLink 
-                key={essay.id} 
+              <EssayLink
+                key={essay.id}
                 slug={essay.slug}
                 title={essay.title}
                 subtitle={essay.subtitle}
@@ -63,8 +58,7 @@ export default async function EssaysPage() {
         )}
 
         <HomepageFooter />
-      </div>
+      </PageContainer>
     </div>
   )
 }
-
