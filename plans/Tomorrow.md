@@ -21,7 +21,7 @@ Follow [buildfor.plan.md](buildfor.plan.md) for detailed steps:
 ## 3. Minor Improvements
 
 - [ ] Back button behavior in browser (navigating away from drafts, unsaved changes warnings, etc.)
-- [ ] Larger dropdowns
+- [ ] Larger dropdowns on mobile
 - [ ] Home button on essays should have a larger click area
 - [ ] Essay editor: hide word count (mental clutter)
 - [ ] Make light/dark button in footer larger on mobile
@@ -34,6 +34,10 @@ Follow [buildfor.plan.md](buildfor.plan.md) for detailed steps:
 - [ ] Custom control over homepage "recent essays" order and selection
 - [ ] Subscription option: RSS feed + simple email (Buttondown/Mailchimp, low maintenance)
 - [ ] Essays should be in infinite loop (navigating past last essay wraps to first)
+- [ ] Mobile: regen shapes with long names breaks layout
+- [ ] Admin doesn't work on mobile — need smarter build with less code (programmatic) or mobile app
+- [ ] shadcn/ui for component library to simplify
+- [ ] Remove Prisma — no use for it in this project. Clean up all references in dropdowns, etc.
 
 ## 4. Go Live
 
