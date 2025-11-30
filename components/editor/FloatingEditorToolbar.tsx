@@ -16,3 +16,4 @@ export function FloatingEditorToolbar({ editor }: FloatingEditorToolbarProps) {
   return null
 }
 
+
