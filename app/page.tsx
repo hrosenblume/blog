@@ -81,7 +81,7 @@ export default async function Home() {
                   href="/essays"
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  View all {allPosts.length} essays →
+                  {allPosts.length >= 20 ? `View all ${allPosts.length} essays →` : 'View all essays →'}
                 </Link>
               </div>
             )}

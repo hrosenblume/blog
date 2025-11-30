@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { renderMarkdown } from '@/lib/markdown'
 import { KeyboardNav } from './_components/KeyboardNav'
 import { EssayNav } from '@/components/EssayNav'
+import { HomepageFooter } from '@/components/HomepageFooter'
 import { HOMEPAGE } from '@/lib/homepage'
 
 export const revalidate = 60
@@ -101,21 +102,12 @@ export default async function EssayPage({ params }: Props) {
     <div className="min-h-screen">
       <KeyboardNav prevSlug={prev?.slug ?? null} nextSlug={next?.slug ?? null} slug={post.slug} />
       <div className="max-w-2xl mx-auto px-6 py-16">
-        {/* Navigation header */}
-        <nav className="flex items-center justify-between mb-6">
-          <Link 
-            href="/"
-            className="inline-flex items-center min-h-[44px] px-3 py-2 -mx-3 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors"
-          >
-            ← Home
-          </Link>
-          <Link 
-            href="/essays"
-            className="inline-flex items-center min-h-[44px] px-3 py-2 -mr-3 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors"
-          >
-            All Essays
-          </Link>
-        </nav>
+        <Link 
+          href="/"
+          className="inline-flex items-center min-h-[44px] px-3 py-2 -mx-3 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors mb-6"
+        >
+          ← Home
+        </Link>
 
         <article className="space-y-6">
           <h1 className="text-title font-bold">{post.title}</h1>
@@ -149,6 +141,8 @@ export default async function EssayPage({ params }: Props) {
           isFirst={isFirst} 
           isLast={isLast} 
         />
+
+        <HomepageFooter />
       </div>
     </div>
   )

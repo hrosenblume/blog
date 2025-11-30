@@ -1,8 +1,8 @@
 import Link from 'next/link'
 import { prisma } from '@/lib/db'
 import { EssayLink } from '@/components/EssayLink'
+import { HomepageFooter } from '@/components/HomepageFooter'
 import { HOMEPAGE } from '@/lib/homepage'
-import { ThemeToggle } from '@/components/ThemeToggle'
 
 export const metadata = {
   title: 'All Essays',
@@ -26,20 +26,21 @@ export default async function EssaysPage() {
     <div className="min-h-screen">
       <div className="max-w-2xl mx-auto px-6 py-16">
         {/* Header */}
-        <header className="flex items-center justify-between mb-12">
-          <div>
-            <Link 
-              href="/"
-              className="inline-flex items-center min-h-[44px] px-3 py-2 -mx-3 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors mb-4"
-            >
-              ← Home
+        <header className="mb-8">
+          <Link 
+            href="/"
+            className="inline-flex items-center min-h-[44px] px-3 py-2 -mx-3 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors mb-4"
+          >
+            ← Home
+          </Link>
+          <h1 className="text-title font-bold">All Essays</h1>
+          <p className="text-muted-foreground mt-1">
+            Not sure which to read? Try{' '}
+            <Link href="/e/p3-startups" className="underline hover:text-foreground">
+              P<sup>3</sup> Startups
             </Link>
-            <h1 className="text-title font-bold">All Essays</h1>
-            <p className="text-muted-foreground mt-1">
-              {essays.length} essay{essays.length !== 1 ? 's' : ''}
-            </p>
-          </div>
-          <ThemeToggle size="md" />
+            .
+          </p>
         </header>
 
         {/* Essays list */}
@@ -59,6 +60,8 @@ export default async function EssaysPage() {
             ))}
           </div>
         )}
+
+        <HomepageFooter />
       </div>
     </div>
   )

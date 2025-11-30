@@ -8,6 +8,7 @@ const nextConfig = {
     'hunter2.ngrok.dev',
     '*.ngrok.dev',
     '*.ngrok-free.app',
+    '192.168.68.*',
   ],
 }
 

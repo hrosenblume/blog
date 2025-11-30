@@ -37,7 +37,7 @@ export const HOMEPAGE = {
   // Notes section
   notes: {
     title: 'Recent Essays',
-    maxItems: null as number | null, // null = show all
+    maxItems: 6, // Show max 6 on homepage, then "View all essays" link
     emptyMessage: 'No essays yet.',
   },
 
