@@ -26,6 +26,13 @@ Follow [buildfor.plan.md](buildfor.plan.md) for detailed steps:
 - [ ] Essay editor: hide word count (mental clutter)
 - [ ] Make light/dark button in footer larger on mobile
 - [ ] Tap essay polyhedron → spin super fast and animate into the essay page
+- [ ] Switch to shadcn/ui for admin components (reduce boilerplate, consistent styling)
+- [ ] Add sitemap.xml and SEO basics (meta tags, Open Graph, robots.txt)
+- [ ] Social share previews (OG images, Twitter cards)
+- [ ] "View all essays" link on homepage (and optionally on each essay page)
+- [ ] Essay page date format: no date, or custom "written X / posted Y" format
+- [ ] Custom control over homepage "recent essays" order and selection
+- [ ] Subscription option: RSS feed + simple email (Buttondown/Mailchimp, low maintenance)
 
 ## 4. Go Live
 
