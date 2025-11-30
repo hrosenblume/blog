@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { PolyhedraCanvas } from '@/components/PolyhedraCanvas'
 import { ChevronRightIcon } from '@/components/Icons'
 
@@ -17,18 +18,14 @@ export function EssayLink({ slug, title, subtitle, polyhedraShape, index }: Essa
   const router = useRouter()
   const [hovered, setHovered] = useState(false)
   const [clicked, setClicked] = useState(false)
-  const [prefetched, setPrefetched] = useState(false)
 
-  const prefetch = () => {
-    if (prefetched) return
-    router.prefetch(`/e/${slug}`)
-    setPrefetched(true)
-  }
-
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
+    // Allow cmd/ctrl+click to open in new tab naturally
+    if (e.metaKey || e.ctrlKey) return
+    
     if (clicked) return
 
-    prefetch()
+    e.preventDefault()
     setClicked(true)
     // Ensure at least 200ms of fast spin before navigation
     setTimeout(() => {
@@ -36,31 +33,14 @@ export function EssayLink({ slug, title, subtitle, polyhedraShape, index }: Essa
     }, 200)
   }
 
-  const handleMouseEnter = () => {
-    setHovered(true)
-    prefetch()
-  }
-
-  const handleMouseLeave = () => {
-    setHovered(false)
-  }
-
-  const handleFocus = () => {
-    setHovered(true)
-    prefetch()
-  }
-
-  const handleBlur = () => {
-    setHovered(false)
-  }
-
   return (
-    <button
+    <Link
+      href={`/e/${slug}`}
       onClick={handleClick}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      onFocus={handleFocus}
-      onBlur={handleBlur}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onFocus={() => setHovered(true)}
+      onBlur={() => setHovered(false)}
       className="group block w-full text-left border-b border-border transition-colors hover:bg-accent px-6 py-5"
     >
       <div className="flex items-center gap-4">
@@ -87,6 +67,6 @@ export function EssayLink({ slug, title, subtitle, polyhedraShape, index }: Essa
         
         <ChevronRightIcon className="w-5 h-5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all flex-shrink-0" />
       </div>
-    </button>
+    </Link>
   )
 }

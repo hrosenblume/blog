@@ -97,6 +97,9 @@ export default function AdminLayout({
                 <DropdownMenuItem asChild>
                   <a href="/">Back to site</a>
                 </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/writer">Back to writer</Link>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => signOut({ callbackUrl: '/' })}>
                   Logout
@@ -126,6 +129,13 @@ export default function AdminLayout({
               <a href="/" className="block py-3 text-muted-foreground hover:text-foreground">
                 Back to site
               </a>
+              <Link 
+                href="/writer"
+                onClick={() => setMobileNavOpen(false)}
+                className="block py-3 text-muted-foreground hover:text-foreground"
+              >
+                Back to writer
+              </Link>
               <button 
                 onClick={() => signOut({ callbackUrl: '/' })}
                 className="block w-full text-left py-3 text-destructive"

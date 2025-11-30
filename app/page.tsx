@@ -6,7 +6,8 @@ import { HomepageFooter } from '@/components/HomepageFooter'
 import { TapLink } from '@/components/TapLink'
 import { HOMEPAGE } from '@/lib/homepage'
 
-export const revalidate = 60
+// Revalidate every hour (homepage content changes rarely)
+export const revalidate = 3600
 
 async function getPublishedPosts() {
   return prisma.post.findMany({

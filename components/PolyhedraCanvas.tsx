@@ -1,14 +1,13 @@
 'use client'
 
 import { useRef, useEffect, useState } from 'react'
-import { getShape, SHAPES } from '@/lib/polyhedra/shapes'
+import { SHAPES } from '@/lib/polyhedra/shapes'
 import { 
   renderFrame, 
   normalizeVertices, 
   EDGE_COLORS, 
   seededShuffle, 
   hashString,
-  type Point3D 
 } from '@/lib/polyhedra/renderer'
 
 interface PolyhedraCanvasProps {
