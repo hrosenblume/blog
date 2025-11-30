@@ -4,8 +4,7 @@ import { useSession, signOut } from 'next-auth/react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect } from 'react'
 import Link from 'next/link'
-import { PolyhedraCanvas } from '@/components/PolyhedraCanvas'
-import { CenteredPage } from '@/components/CenteredPage'
+import { PageLoader } from '@/components/PageLoader'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import {
   DropdownMenu,
@@ -48,11 +47,7 @@ export default function WriterLayout({
   ])
 
   if (status === 'loading') {
-    return (
-      <CenteredPage>
-        <PolyhedraCanvas shape="cube" size={60} clicked={true} />
-      </CenteredPage>
-    )
+    return <PageLoader />
   }
 
   if (!session) {

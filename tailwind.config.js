@@ -55,15 +55,6 @@ module.exports = {
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
       },
-      keyframes: {
-        'cube-rotate': {
-          '0%': { transform: 'rotateX(20deg) rotateY(0deg)' },
-          '100%': { transform: 'rotateX(20deg) rotateY(360deg)' },
-        },
-      },
-      animation: {
-        'cube-rotate': 'cube-rotate 2s linear infinite',
-      },
     },
   },
   plugins: [require('tailwindcss-animate')],

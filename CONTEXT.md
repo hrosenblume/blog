@@ -52,7 +52,8 @@ blog/
 │   ├── e/[slug]/               # Public essay pages
 │   │   └── _components/        # Essay-specific components
 │   ├── writer/                 # Writer dashboard (protected)
-│   │   └── editor/[[...slug]]/ # WYSIWYG editor
+│   │   ├── loading.tsx         # PageLoader for route transitions
+│   │   └── editor/[[...slug]]/ # WYSIWYG editor (has own loading.tsx)
 │   ├── globals.css             # Global styles + typography variables
 │   ├── layout.tsx              # Root layout
 │   ├── not-found.tsx           # 404 page
@@ -80,9 +81,9 @@ blog/
 │   ├── EssayNav.tsx            # Prev/Next essay navigation
 │   ├── HomepageFooter.tsx      # Footer with social links
 │   ├── PageContainer.tsx       # Consistent page layout wrapper
+│   ├── PageLoader.tsx          # Loading spinner (polyhedra-based)
 │   ├── PolyhedraCanvas.tsx     # 3D polyhedra renderer
 │   ├── SecretNav.tsx           # 5-tap + Cmd+/ navigation
-│   ├── Spinner.tsx             # Loading spinner
 │   ├── StatusBadge.tsx         # Status pill component
 │   ├── TapLink.tsx             # iOS scroll-aware link
 │   ├── ThemeToggle.tsx         # Dark mode toggle
