@@ -395,8 +395,8 @@ export default function Editor() {
         </div>
       </main>
 
-      <footer className="fixed bottom-0 left-0 right-0 border-t border-border px-6 py-3 bg-background touch-none">
-        <div className="flex items-center justify-center text-sm text-muted-foreground">
+      <footer className="fixed bottom-0 left-0 right-0 border-t border-border px-4 sm:px-6 py-3 bg-background touch-none">
+        <div className="flex items-center justify-end text-sm text-muted-foreground">
           {lastSaved ? (
             <span>Saved {formatSavedTime(lastSaved)}</span>
           ) : (
