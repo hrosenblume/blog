@@ -17,21 +17,51 @@ export function EssayLink({ slug, title, subtitle, polyhedraShape, index }: Essa
   const router = useRouter()
   const [hovered, setHovered] = useState(false)
   const [clicked, setClicked] = useState(false)
+  const [prefetched, setPrefetched] = useState(false)
+
+  const prefetch = () => {
+    if (prefetched) return
+    router.prefetch(`/e/${slug}`)
+    setPrefetched(true)
+  }
 
   const handleClick = () => {
+    if (clicked) return
+
+    prefetch()
     setClicked(true)
-    // Short delay to show the fast spin, then navigate
+    // Ensure at least 200ms of fast spin before navigation
     setTimeout(() => {
       router.push(`/e/${slug}`)
-    }, 250)
+    }, 200)
+  }
+
+  const handleMouseEnter = () => {
+    setHovered(true)
+    prefetch()
+  }
+
+  const handleMouseLeave = () => {
+    setHovered(false)
+  }
+
+  const handleFocus = () => {
+    setHovered(true)
+    prefetch()
+  }
+
+  const handleBlur = () => {
+    setHovered(false)
   }
 
   return (
     <button
       onClick={handleClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
       className="group block w-full text-left border-b border-border transition-colors hover:bg-accent px-6 py-5"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
     >
       <div className="flex items-center gap-4">
         <div className="flex-shrink-0 w-[60px] h-[60px] rounded overflow-hidden">

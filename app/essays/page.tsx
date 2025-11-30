@@ -3,10 +3,11 @@ import { prisma } from '@/lib/db'
 import { EssayLink } from '@/components/EssayLink'
 import { HomepageFooter } from '@/components/HomepageFooter'
 import { HOMEPAGE } from '@/lib/homepage'
+import { ESSAYS_PAGE } from '@/lib/essays'
 
 export const metadata = {
-  title: 'All Essays',
-  description: `All essays by ${HOMEPAGE.name}`,
+  title: ESSAYS_PAGE.title,
+  description: `${ESSAYS_PAGE.descriptionPrefix}${HOMEPAGE.name}`,
 }
 
 export default async function EssaysPage() {
@@ -28,16 +29,16 @@ export default async function EssaysPage() {
         {/* Header */}
         <header className="mb-8">
           <Link 
-            href="/"
+            href={ESSAYS_PAGE.backLink.href}
             className="inline-flex items-center min-h-[44px] px-3 py-2 -mx-3 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors mb-4"
           >
-            ← Home
+            {ESSAYS_PAGE.backLink.label}
           </Link>
-          <h1 className="text-title font-bold">All Essays</h1>
+          <h1 className="text-title font-bold">{ESSAYS_PAGE.title}</h1>
           <p className="text-muted-foreground mt-1">
-            Not sure which to read? Try{' '}
-            <Link href="/e/p3-startups" className="underline hover:text-foreground">
-              P<sup>3</sup> Startups
+            {ESSAYS_PAGE.recommendation.intro}
+            <Link href={`/e/${ESSAYS_PAGE.recommendation.slug}`} className="underline hover:text-foreground">
+              {ESSAYS_PAGE.recommendation.label}
             </Link>
             .
           </p>
@@ -45,7 +46,7 @@ export default async function EssaysPage() {
 
         {/* Essays list */}
         {essays.length === 0 ? (
-          <p className="text-muted-foreground">No essays published yet.</p>
+          <p className="text-muted-foreground">{ESSAYS_PAGE.emptyMessage}</p>
         ) : (
           <div className="-mx-6">
             {essays.map((essay, index) => (

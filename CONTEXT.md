@@ -244,6 +244,32 @@ export const HOMEPAGE = {
 
 Edit `lib/homepage.ts` to change name, bio, email, or footer links globally.
 
+### 2b. Essays Page Copy (DRY)
+
+The `/essays` listing page uses a small config object in `lib/essays.ts`:
+
+```typescript
+export const ESSAYS_PAGE = {
+  title: 'All Essays',
+  descriptionPrefix: 'All essays by ',
+  backLink: {
+    href: '/',
+    label: '← Home',
+  },
+  recommendation: {
+    intro: 'Not sure which to read? Try ',
+    slug: 'p3-startups',
+    label: 'P^3 Startups',
+  },
+  emptyMessage: 'No essays published yet.',
+} as const
+```
+
+**Used by:**
+- `app/essays/page.tsx` — Metadata, header title, recommendation blurb, back link label, and empty-state copy.
+
+Edit `lib/essays.ts` to change the essays index page copy in one place.
+
 ### 3. Polyhedra System
 
 Animated 3D wireframe polyhedra rendered client-side using Canvas:
