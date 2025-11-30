@@ -1,9 +1,10 @@
 'use client'
 
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { ThemeToggle } from '@/components/ThemeToggle'
-import { Button } from '@/components/Button'
+import { Button } from '@/components/ui/button'
 import { ChevronLeftIcon } from '@/components/Icons'
+import { Spinner } from '@/components/Spinner'
 
 interface EditorNavbarProps {
   status: 'draft' | 'published'
@@ -18,16 +19,26 @@ export function EditorNavbar({
   saving,
   onSave,
 }: EditorNavbarProps) {
+  const router = useRouter()
+
+  const handleBack = () => {
+    if (hasUnsavedChanges) {
+      const confirmed = window.confirm('You have unsaved changes. Leave anyway?')
+      if (!confirmed) return
+    }
+    router.push('/writer')
+  }
+
   return (
-    <header className="border-b border-gray-200 dark:border-gray-800 px-4 sm:px-6 py-3 sm:py-4">
+    <header className="border-b border-border px-4 sm:px-6 py-3 sm:py-4">
       <div className="flex items-center justify-between">
-        <Link
-          href="/writer"
-          className="inline-flex items-center gap-1.5 sm:gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+        <button
+          onClick={handleBack}
+          className="inline-flex items-center gap-1.5 sm:gap-2 text-muted-foreground hover:text-foreground min-h-[44px] px-2 -mx-2 rounded-lg hover:bg-accent transition-colors"
         >
           <ChevronLeftIcon />
           <span className="hidden sm:inline">Back</span>
-        </Link>
+        </button>
 
         <div className="flex items-center gap-2 sm:gap-3">
           <ThemeToggle size="md" />
@@ -36,18 +47,18 @@ export function EditorNavbar({
             <Button
               variant="secondary"
               onClick={() => onSave('draft')}
-              loading={saving}
-              disabled={!hasUnsavedChanges}
+              disabled={saving || !hasUnsavedChanges}
             >
+              {saving && <Spinner className="w-4 h-4" />}
               {hasUnsavedChanges ? 'Save Draft' : 'Saved'}
             </Button>
           )}
 
           <Button
             onClick={() => onSave('published')}
-            loading={saving}
-            disabled={status === 'published' && !hasUnsavedChanges}
+            disabled={saving || (status === 'published' && !hasUnsavedChanges)}
           >
+            {saving && <Spinner className="w-4 h-4" />}
             {status === 'published' && !hasUnsavedChanges ? 'Published' : 'Publish'}
           </Button>
         </div>
@@ -55,4 +66,3 @@ export function EditorNavbar({
     </header>
   )
 }
-

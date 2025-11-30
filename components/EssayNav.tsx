@@ -1,38 +1,45 @@
 'use client'
 
 import { TapLink } from '@/components/TapLink'
-import { navLinkClass } from '@/lib/styles'
 import { cn } from '@/lib/utils/cn'
 
 interface EssayNavProps {
   prev: { slug: string; title: string } | null
   next: { slug: string; title: string } | null
+  isFirst?: boolean  // At first essay, "Previous" wraps to last
+  isLast?: boolean   // At last essay, "Next" wraps to first
 }
 
-export function EssayNav({ prev, next }: EssayNavProps) {
+const navLinkClass = 'flex-1 flex flex-col justify-center px-6 overflow-hidden transition-colors text-muted-foreground hover:bg-accent hover:text-foreground active:bg-accent/80'
+
+export function EssayNav({ prev, next, isFirst = false, isLast = false }: EssayNavProps) {
   if (!prev && !next) return null
 
   const hasBoth = prev && next
 
   return (
-    <nav className="mt-16 -mx-6 border-y border-gray-200 dark:border-gray-800">
+    <nav className="mt-16 -mx-6 border-y border-border">
       <div className="flex h-36">
         {prev && (
           <TapLink href={`/e/${prev.slug}`} className={navLinkClass}>
-            <span className="text-xs uppercase tracking-wide mb-1">« Last</span>
-            <span className="font-medium text-gray-900 dark:text-white line-clamp-3">{prev.title}</span>
+            <span className="text-xs uppercase tracking-wide mb-1">
+              {isFirst ? '« Last Essay' : '« Previous'}
+            </span>
+            <span className="font-medium text-foreground line-clamp-3">{prev.title}</span>
           </TapLink>
         )}
 
-        {hasBoth && <div className="w-px bg-gray-200 dark:bg-gray-800" />}
+        {hasBoth && <div className="w-px bg-border" />}
 
         {next && (
           <TapLink
             href={`/e/${next.slug}`}
             className={cn(navLinkClass, hasBoth && 'items-end text-right')}
           >
-            <span className="text-xs uppercase tracking-wide mb-1">Next »</span>
-            <span className="font-medium text-gray-900 dark:text-white line-clamp-3">{next.title}</span>
+            <span className="text-xs uppercase tracking-wide mb-1">
+              {isLast ? 'First Essay »' : 'Next »'}
+            </span>
+            <span className="font-medium text-foreground line-clamp-3">{next.title}</span>
           </TapLink>
         )}
       </div>

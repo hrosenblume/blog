@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
 
 interface DeleteButtonProps {
   endpoint: string
@@ -17,14 +18,13 @@ export function DeleteButton({ endpoint, confirmMessage }: DeleteButtonProps) {
   }
 
   return (
-    <button
+    <Button
+      variant="ghost"
+      size="sm"
       onClick={handleDelete}
-      className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+      className="text-destructive hover:text-destructive hover:bg-destructive/10"
     >
       Delete
-    </button>
+    </Button>
   )
 }
-
-
-

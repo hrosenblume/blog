@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { prisma } from '@/lib/db'
 import { SecretNav } from '@/components/SecretNav'
 import { HomeKeyboardNav } from '@/app/_components/HomeKeyboardNav'
@@ -59,20 +60,32 @@ export default async function Home() {
         <h2 className="text-h1 font-semibold mb-8 dark:text-white">{HOMEPAGE.notes.title}</h2>
         
         {posts.length === 0 ? (
-          <p className="text-gray-500">{HOMEPAGE.notes.emptyMessage}</p>
+          <p className="text-muted-foreground">{HOMEPAGE.notes.emptyMessage}</p>
         ) : (
-          <div className="-mx-6">
-            {posts.map((post, index) => (
-              <EssayLink
-                key={post.id}
-                slug={post.slug}
-                title={post.title}
-                subtitle={post.subtitle}
-                polyhedraShape={post.polyhedraShape}
-                index={index}
-              />
-            ))}
-          </div>
+          <>
+            <div className="-mx-6">
+              {posts.map((post, index) => (
+                <EssayLink
+                  key={post.id}
+                  slug={post.slug}
+                  title={post.title}
+                  subtitle={post.subtitle}
+                  polyhedraShape={post.polyhedraShape}
+                  index={index}
+                />
+              ))}
+            </div>
+            {HOMEPAGE.notes.maxItems && allPosts.length > HOMEPAGE.notes.maxItems && (
+              <div className="mt-8 text-center">
+                <Link 
+                  href="/essays"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  View all {allPosts.length} essays →
+                </Link>
+              </div>
+            )}
+          </>
         )}
       </section>
 

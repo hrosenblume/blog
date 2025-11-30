@@ -5,7 +5,14 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Spinner } from '@/components/Spinner'
 import { CenteredPage } from '@/components/CenteredPage'
-import { Dropdown, DropdownItem } from '@/components/Dropdown'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Button } from '@/components/ui/button'
 import { PlusIcon, MoreVerticalIcon } from '@/components/Icons'
 import { formatRelativeTime, formatNumber } from '@/lib/utils/format'
 import { confirmPublish, confirmUnpublish } from '@/lib/utils/confirm'
@@ -110,30 +117,27 @@ export default function Dashboard() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-title font-bold mb-2">{HOMEPAGE.name}</h1>
-            <p className="text-gray-600 dark:text-gray-400">Welcome to your workspace</p>
+            <p className="text-muted-foreground">Welcome to your workspace</p>
           </div>
-          <Link
-            href="/writer/editor"
-            className="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-opacity"
-          >
-            <PlusIcon />
-            New Essay
-          </Link>
+          <Button asChild className="hidden sm:inline-flex gap-2">
+            <Link href="/writer/editor">
+              <PlusIcon />
+              New Essay
+            </Link>
+          </Button>
         </div>
       </header>
 
-      <Link
-        href="/writer/editor"
-        className="sm:hidden fixed bottom-6 right-6 flex items-center justify-center w-14 h-14 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full shadow-lg hover:opacity-90 transition-opacity z-50"
-        aria-label="New Essay"
-      >
-        <PlusIcon className="w-6 h-6" />
-      </Link>
+      <Button asChild size="icon" className="sm:hidden fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-lg z-50">
+        <Link href="/writer/editor" aria-label="New Essay">
+          <PlusIcon className="w-6 h-6" />
+        </Link>
+      </Button>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
         {stats.map(stat => (
-          <div key={stat.label} className="border-b border-gray-200 dark:border-gray-800 pb-4">
-            <p className="text-gray-600 dark:text-gray-400 mb-2">{stat.label}</p>
+          <div key={stat.label} className="border-b border-border pb-4">
+            <p className="text-muted-foreground mb-2">{stat.label}</p>
             <p className="text-2xl font-semibold">{stat.value}</p>
           </div>
         ))}
@@ -145,7 +149,7 @@ export default function Dashboard() {
           placeholder="Search articles..."
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
-          className="w-full px-0 py-2 bg-transparent border-b border-gray-200 dark:border-gray-800 outline-none focus:border-gray-400 dark:focus:border-gray-600 placeholder-gray-400"
+          className="w-full px-0 py-2 bg-transparent border-b border-border outline-none focus:border-ring placeholder:text-muted-foreground"
         />
       </div>
 
@@ -158,7 +162,7 @@ export default function Dashboard() {
             ))}
           </div>
         ) : (
-          <p className="text-gray-500">No drafts</p>
+          <p className="text-muted-foreground">No drafts</p>
         )}
       </section>
 
@@ -171,7 +175,7 @@ export default function Dashboard() {
             ))}
           </div>
         ) : (
-          <p className="text-gray-500">No published articles</p>
+          <p className="text-muted-foreground">No published articles</p>
         )}
       </section>
     </div>
@@ -190,54 +194,52 @@ function PostItem({
   onPublish: (id: string) => void
 }) {
   return (
-    <div className="flex items-center justify-between py-4 border-b border-gray-100 dark:border-gray-800 group">
+    <div className="flex items-center justify-between py-4 border-b border-border group">
       <div className="flex-1 min-w-0">
         <Link href={`/writer/editor/${post.slug}`} className="block">
-          <h3 className="font-medium truncate group-hover:text-gray-600 dark:group-hover:text-gray-300">
+          <h3 className="font-medium truncate group-hover:text-muted-foreground">
             {post.title || 'Untitled'}
           </h3>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             {formatRelativeTime(post.updatedAt)} · {post.wordCount} words
           </p>
         </Link>
       </div>
       
-      <Dropdown
-        trigger={
-          <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
-            <MoreVerticalIcon className="text-gray-400" />
-          </button>
-        }
-      >
-        <Link
-          href={`/writer/editor/${post.slug}`}
-          className="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded-t-lg"
-        >
-          Edit
-        </Link>
-        {post.status === 'draft' && (
-          <DropdownItem onClick={() => onPublish(post.id)}>
-            Publish
-          </DropdownItem>
-        )}
-        {post.status === 'published' && (
-          <>
-            <Link
-              href={`/e/${post.slug}`}
-              target="_blank"
-              className="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
-              View Live
-            </Link>
-            <DropdownItem onClick={() => onUnpublish(post.id)}>
-              Unpublish
-            </DropdownItem>
-          </>
-        )}
-        <DropdownItem destructive onClick={() => onDelete(post.id)}>
-          Delete
-        </DropdownItem>
-      </Dropdown>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon">
+            <MoreVerticalIcon className="text-muted-foreground" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem asChild>
+            <Link href={`/writer/editor/${post.slug}`}>Edit</Link>
+          </DropdownMenuItem>
+          {post.status === 'draft' && (
+            <DropdownMenuItem onClick={() => onPublish(post.id)}>
+              Publish
+            </DropdownMenuItem>
+          )}
+          {post.status === 'published' && (
+            <>
+              <DropdownMenuItem asChild>
+                <Link href={`/e/${post.slug}`} target="_blank">View Live</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onUnpublish(post.id)}>
+                Unpublish
+              </DropdownMenuItem>
+            </>
+          )}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem 
+            onClick={() => onDelete(post.id)}
+            className="text-destructive focus:text-destructive"
+          >
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   )
 }

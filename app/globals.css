@@ -2,31 +2,72 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --bg-page: white;
-  --text-primary: #111827;
-  
-  /* Typography scale - adjust here to resize all text */
-  --font-title: 1.5rem;     /* 24px - page titles */
-  --font-h1: 1.375rem;      /* 22px - article h1 */
-  --font-h2: 1.125rem;      /* 18px - h2 */
-  --font-h3: 1rem;          /* 16px - h3 */
-  --font-section: 1.125rem; /* 18px - section headers */
-  --font-body: 1rem;        /* 16px - bio, subtitles */
-}
+@layer base {
+  :root {
+    /* shadcn/ui theme variables (Zinc) */
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 10% 3.9%;
+    --radius: 0.5rem;
 
-.dark {
-  --bg-page: black;
-  --text-primary: white;
-}
+    /* Typography scale */
+    --font-title: 1.5rem;     /* 24px - page titles */
+    --font-h1: 1.375rem;      /* 22px - article h1 */
+    --font-h2: 1.125rem;      /* 18px - h2 */
+    --font-h3: 1rem;          /* 16px - h3 */
+    --font-section: 1.125rem; /* 18px - section headers */
+    --font-body: 1rem;        /* 16px - bio, subtitles */
+  }
 
-body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  padding-bottom: 2rem;
-  background-color: var(--bg-page);
-  color: var(--text-primary);
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    padding-bottom: 2rem;
+  }
 }
 
 /* Smooth transitions for dark mode */
@@ -86,11 +127,11 @@ a, button {
 }
 
 .prose code {
-  @apply bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-sm;
+  @apply bg-muted px-1.5 py-0.5 rounded text-sm;
 }
 
 .prose pre {
-  @apply bg-gray-100 dark:bg-gray-800 p-4 rounded-lg overflow-x-auto mb-4;
+  @apply bg-muted p-4 rounded-lg overflow-x-auto mb-4;
 }
 
 .prose pre code {
@@ -98,7 +139,7 @@ a, button {
 }
 
 .prose blockquote {
-  @apply border-l-4 border-gray-300 dark:border-gray-700 pl-4 italic my-4;
+  @apply border-l-4 border-border pl-4 italic my-4;
 }
 
 .prose img {
@@ -106,7 +147,7 @@ a, button {
 }
 
 .prose hr {
-  @apply my-8 border-gray-200 dark:border-gray-800;
+  @apply my-8 border-border;
 }
 
 /* Accessibility: Pause GIF animations for users who prefer reduced motion */
@@ -123,7 +164,7 @@ a, button {
 
 .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
-  color: #9ca3af;
+  @apply text-muted-foreground;
   pointer-events: none;
   float: left;
   height: 0;
@@ -141,4 +182,3 @@ a, button {
 .ProseMirror h3 {
   font-size: var(--font-h3);
 }
-

@@ -2,7 +2,6 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/db'
 import { renderMarkdown } from '@/lib/markdown'
-import { formatDate } from '@/lib/utils/format'
 import { KeyboardNav } from './_components/KeyboardNav'
 import { EssayNav } from '@/components/EssayNav'
 import { HOMEPAGE } from '@/lib/homepage'
@@ -19,31 +18,35 @@ async function getPost(slug: string) {
   })
 }
 
-async function getAdjacentPosts(currentId: string, publishedAt: Date | null) {
-  if (!publishedAt) return { prev: null, next: null }
+// Get adjacent posts with wrap-around (infinite loop)
+async function getAdjacentPosts(currentSlug: string) {
+  const essays = await prisma.post.findMany({
+    where: { status: 'published' },
+    orderBy: { publishedAt: 'desc' },
+    select: { slug: true, title: true },
+  })
+
+  const currentIndex = essays.findIndex(e => e.slug === currentSlug)
   
-  const [prev, next] = await Promise.all([
-    // Previous = newer post (go back up the timeline)
-    prisma.post.findFirst({
-      where: { 
-        status: 'published',
-        publishedAt: { gt: publishedAt },
-      },
-      orderBy: { publishedAt: 'asc' },
-      select: { slug: true, title: true },
-    }),
-    // Next = older post (continue reading down the timeline)
-    prisma.post.findFirst({
-      where: { 
-        status: 'published',
-        publishedAt: { lt: publishedAt },
-      },
-      orderBy: { publishedAt: 'desc' },
-      select: { slug: true, title: true },
-    }),
-  ])
-  
-  return { prev, next }
+  // If not found or only one essay, no navigation
+  if (currentIndex === -1 || essays.length <= 1) {
+    return { prev: null, next: null, isFirst: false, isLast: false }
+  }
+
+  const totalEssays = essays.length
+  const isFirst = currentIndex === 0
+  const isLast = currentIndex === totalEssays - 1
+
+  // Wrap around logic
+  const prevIndex = (currentIndex - 1 + totalEssays) % totalEssays
+  const nextIndex = (currentIndex + 1) % totalEssays
+
+  return {
+    prev: essays[prevIndex],
+    next: essays[nextIndex],
+    isFirst,
+    isLast,
+  }
 }
 
 export async function generateStaticParams() {
@@ -58,9 +61,28 @@ export async function generateMetadata({ params }: Props) {
   const { slug } = await params
   const post = await getPost(slug)
   if (!post) return { title: 'Not Found' }
+  
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://example.com'
+  const description = post.subtitle || post.markdown.replace(/[#*_\[\]]/g, '').slice(0, 160).trim() + '...'
+  
   return {
     title: post.title,
-    description: post.subtitle || post.markdown.substring(0, 160),
+    description,
+    alternates: {
+      canonical: `${baseUrl}/e/${slug}`,
+    },
+    openGraph: {
+      title: post.title,
+      description,
+      type: 'article',
+      publishedTime: post.publishedAt?.toISOString(),
+      authors: [HOMEPAGE.name],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description,
+    },
   }
 }
 
@@ -72,55 +94,61 @@ export default async function EssayPage({ params }: Props) {
     notFound()
   }
 
-  const { prev, next } = await getAdjacentPosts(post.id, post.publishedAt)
+  const { prev, next, isFirst, isLast } = await getAdjacentPosts(post.slug)
   const htmlContent = renderMarkdown(post.markdown)
 
   return (
     <div className="min-h-screen">
       <KeyboardNav prevSlug={prev?.slug ?? null} nextSlug={next?.slug ?? null} slug={post.slug} />
       <div className="max-w-2xl mx-auto px-6 py-16">
-        <Link 
-          href="/"
-          className="inline-block text-sm text-gray-500 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors mb-8"
-        >
-          ← Home
-        </Link>
+        {/* Navigation header */}
+        <nav className="flex items-center justify-between mb-6">
+          <Link 
+            href="/"
+            className="inline-flex items-center min-h-[44px] px-3 py-2 -mx-3 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors"
+          >
+            ← Home
+          </Link>
+          <Link 
+            href="/essays"
+            className="inline-flex items-center min-h-[44px] px-3 py-2 -mr-3 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors"
+          >
+            All Essays
+          </Link>
+        </nav>
+
         <article className="space-y-6">
-          <h1 className="text-title font-bold text-gray-900 dark:text-white">{post.title}</h1>
+          <h1 className="text-title font-bold">{post.title}</h1>
           {post.subtitle && (
-            <p className="text-lg text-gray-500 dark:text-gray-400 -mt-4">{post.subtitle}</p>
+            <p className="text-lg text-muted-foreground -mt-4">{post.subtitle}</p>
           )}
           
-          <header className="space-y-1 text-sm text-gray-600 dark:text-gray-400 mb-8">
-            <div>
-              <Link 
-                href="/" 
-                className="underline hover:text-gray-900 dark:hover:text-white transition-colors"
-              >
-                {HOMEPAGE.name}
-              </Link>
-            </div>
-            {post.publishedAt && (
-              <time dateTime={post.publishedAt.toISOString()}>
-                {formatDate(post.publishedAt)}
-              </time>
-            )}
+          {/* Author byline - no date per plan 11 */}
+          <header className="text-sm text-muted-foreground mb-8">
+            <Link 
+              href="/" 
+              className="underline hover:text-foreground transition-colors"
+            >
+              {HOMEPAGE.name}
+            </Link>
           </header>
 
           <div 
             className="prose prose-gray dark:prose-invert max-w-none
               prose-headings:font-semibold prose-headings:mt-8 prose-headings:mb-4
-              prose-p:text-gray-900 prose-p:dark:text-white prose-p:leading-relaxed
-              prose-a:text-gray-900 prose-a:dark:text-white prose-a:underline
-              prose-strong:text-gray-900 prose-strong:dark:text-white
-              prose-code:text-gray-900 prose-code:dark:text-white
-              prose-blockquote:border-gray-300 prose-blockquote:dark:border-gray-700
-              prose-blockquote:text-gray-600 prose-blockquote:dark:text-gray-400"
+              prose-p:leading-relaxed
+              prose-a:underline
+              prose-blockquote:border-border"
             dangerouslySetInnerHTML={{ __html: htmlContent }}
           />
         </article>
 
-        <EssayNav key={post.slug} prev={prev} next={next} />
+        <EssayNav 
+          prev={prev} 
+          next={next} 
+          isFirst={isFirst} 
+          isLast={isLast} 
+        />
       </div>
     </div>
   )

@@ -24,9 +24,10 @@ export function ThemeToggle({ size = 'sm', className }: ThemeToggleProps) {
       onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
       className={cn(
         sizeClasses[size],
-        'rounded-md border border-gray-300 dark:border-gray-700',
-        'hover:bg-gray-100 dark:hover:bg-gray-800',
-        'text-gray-600 dark:text-gray-400',
+        'rounded-md border border-border',
+        'hover:bg-accent',
+        'text-muted-foreground',
+        'min-w-[44px] min-h-[44px] flex items-center justify-center',
         className
       )}
       aria-label="Toggle dark mode"

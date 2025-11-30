@@ -54,6 +54,12 @@ export const MoreVerticalIcon = ({ className }: IconProps) => (
   </svg>
 )
 
+export const MenuIcon = ({ className }: IconProps) => (
+  <svg className={cn('w-5 h-5', className)} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+  </svg>
+)
+
 // Theme
 export const SunIcon = ({ className }: IconProps) => (
   <svg className={cn('w-4 h-4', className)} fill="none" stroke="currentColor" viewBox="0 0 24 24">

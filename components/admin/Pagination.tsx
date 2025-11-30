@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { cn } from '@/lib/utils/cn'
+import { Button } from '@/components/ui/button'
 
 interface PaginationProps {
   currentPage: number
@@ -49,58 +50,51 @@ export function Pagination({ currentPage, totalPages, baseUrl, position = 'top' 
     return pages
   }
 
-  const buttonBase = 'px-3 py-2 text-sm font-medium rounded-md transition-colors'
-  const buttonActive = 'bg-blue-600 text-white'
-  const buttonInactive = 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-  const buttonDisabled = 'text-gray-400 dark:text-gray-600 cursor-not-allowed'
-
   return (
-    <div className={cn("flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-800 rounded-lg shadow", spacingClass)}>
-      <div className="text-sm text-gray-500 dark:text-gray-400">
+    <div className={cn("flex items-center justify-between px-4 py-3 bg-card rounded-lg shadow", spacingClass)}>
+      <div className="text-sm text-muted-foreground">
         Page {currentPage} of {totalPages}
       </div>
       
       <nav className="flex items-center gap-1">
         {/* Previous button */}
         {currentPage > 1 ? (
-          <Link
-            href={getPageUrl(currentPage - 1)}
-            className={cn(buttonBase, buttonInactive)}
-          >
-            ← Prev
-          </Link>
+          <Button variant="ghost" size="sm" asChild>
+            <Link href={getPageUrl(currentPage - 1)}>← Prev</Link>
+          </Button>
         ) : (
-          <span className={cn(buttonBase, buttonDisabled)}>← Prev</span>
+          <Button variant="ghost" size="sm" disabled>← Prev</Button>
         )}
         
         {/* Page numbers */}
         {getPageNumbers().map((page, i) => 
           page === 'ellipsis' ? (
-            <span key={`ellipsis-${i}`} className="px-2 text-gray-400">…</span>
+            <span key={`ellipsis-${i}`} className="px-2 text-muted-foreground">…</span>
           ) : (
-            <Link
+            <Button
               key={page}
-              href={getPageUrl(page)}
-              className={cn(buttonBase, page === currentPage ? buttonActive : buttonInactive)}
+              variant={page === currentPage ? 'default' : 'ghost'}
+              size="sm"
+              asChild={page !== currentPage}
             >
-              {page}
-            </Link>
+              {page === currentPage ? (
+                <span>{page}</span>
+              ) : (
+                <Link href={getPageUrl(page)}>{page}</Link>
+              )}
+            </Button>
           )
         )}
         
         {/* Next button */}
         {currentPage < totalPages ? (
-          <Link
-            href={getPageUrl(currentPage + 1)}
-            className={cn(buttonBase, buttonInactive)}
-          >
-            Next →
-          </Link>
+          <Button variant="ghost" size="sm" asChild>
+            <Link href={getPageUrl(currentPage + 1)}>Next →</Link>
+          </Button>
         ) : (
-          <span className={cn(buttonBase, buttonDisabled)}>Next →</span>
+          <Button variant="ghost" size="sm" disabled>Next →</Button>
         )}
       </nav>
     </div>
   )
 }
-

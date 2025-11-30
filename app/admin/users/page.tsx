@@ -2,8 +2,7 @@ import { prisma } from '@/lib/db'
 import Link from 'next/link'
 import { DeleteButton } from '@/components/DeleteButton'
 import { StatusBadge } from '@/components/StatusBadge'
-import { TableEmptyRow } from '@/components/admin/TableEmptyRow'
-import { tableHeaderClass, tableHeaderRightClass, cellClass, cellPrimaryClass, actionCellClass, linkClass } from '@/lib/styles'
+import { Button } from '@/components/ui/button'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,44 +11,75 @@ export default async function UsersPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-section font-bold text-gray-900 dark:text-white">Users</h1>
-        <Link href="/admin/users/new" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-          Add User
-        </Link>
+      <div className="flex items-center justify-between mb-6 md:mb-8">
+        <h1 className="text-section font-bold">Users</h1>
+        <Button asChild>
+          <Link href="/admin/users/new">Add User</Link>
+        </Button>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gray-50 dark:bg-gray-900">
-            <tr>
-              <th className={tableHeaderClass}>Email</th>
-              <th className={tableHeaderClass}>Name</th>
-              <th className={tableHeaderClass}>Role</th>
-              <th className={tableHeaderClass}>Created</th>
-              <th className={tableHeaderRightClass}>Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-            {users.length === 0 ? (
-              <TableEmptyRow colSpan={5}>No users yet. Add one to get started.</TableEmptyRow>
-            ) : (
-              users.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                  <td className={cellPrimaryClass}>{user.email}</td>
-                  <td className={cellClass}>{user.name || '—'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap"><StatusBadge status={user.role} /></td>
-                  <td className={cellClass}>{new Date(user.createdAt).toLocaleDateString()}</td>
-                  <td className={actionCellClass}>
-                    <Link href={`/admin/users/${user.id}`} className={`${linkClass} mr-4`}>Edit</Link>
-                    <DeleteButton endpoint={`/api/admin/users/${user.id}`} confirmMessage={`Delete user "${user.email}"?`} />
-                  </td>
+      {users.length === 0 ? (
+        <div className="bg-card rounded-lg shadow p-8 text-center text-muted-foreground">
+          No users yet. Add one to get started.
+        </div>
+      ) : (
+        <>
+          {/* Desktop table */}
+          <div className="hidden md:block bg-card rounded-lg shadow overflow-hidden">
+            <table className="min-w-full divide-y divide-border">
+              <thead className="bg-muted">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Email</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Role</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Created</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Actions</th>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {users.map((user) => (
+                  <tr key={user.id} className="hover:bg-accent/50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">{user.email}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{user.name || '—'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap"><StatusBadge status={user.role} /></td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{new Date(user.createdAt).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm space-x-2">
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/admin/users/${user.id}`}>Edit</Link>
+                      </Button>
+                      <DeleteButton endpoint={`/api/admin/users/${user.id}`} confirmMessage={`Delete user "${user.email}"?`} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile cards */}
+          <div className="md:hidden space-y-4">
+            {users.map((user) => (
+              <div key={user.id} className="bg-card rounded-lg shadow p-4">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium truncate">{user.email}</p>
+                    <p className="text-sm text-muted-foreground">{user.name || 'No name'}</p>
+                  </div>
+                  <StatusBadge status={user.role} />
+                </div>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Created {new Date(user.createdAt).toLocaleDateString()}
+                </p>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="secondary" asChild className="flex-1">
+                    <Link href={`/admin/users/${user.id}`}>Edit</Link>
+                  </Button>
+                  <DeleteButton endpoint={`/api/admin/users/${user.id}`} confirmMessage={`Delete user "${user.email}"?`} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   )
 }

@@ -115,6 +115,18 @@ export default function Editor() {
     setHasUnsavedChanges(hasChanges)
   }, [title, subtitle, slug, markdown, polyhedraShape])
 
+  // Browser back/refresh warning for unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault()
+        e.returnValue = '' // Required for Chrome
+      }
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [hasUnsavedChanges])
+
   // Keyboard shortcuts
   useKeyboard([
     { ...SHORTCUTS.TOGGLE_VIEW, handler: () => { 
@@ -125,7 +137,10 @@ export default function Editor() {
     }},
     { ...SHORTCUTS.PREV, handler: () => { if (prevSlug) router.push(`/writer/editor/${prevSlug}`) } },
     { ...SHORTCUTS.NEXT, handler: () => { if (nextSlug) router.push(`/writer/editor/${nextSlug}`) } },
-    { ...SHORTCUTS.ESCAPE_BACK, handler: () => router.push('/writer') },
+    { ...SHORTCUTS.ESCAPE_BACK, handler: () => {
+      if (hasUnsavedChanges && !confirm('You have unsaved changes. Leave anyway?')) return
+      router.push('/writer')
+    }},
   ])
 
   const handleSlugChange = useCallback((value: string) => {
@@ -333,12 +348,15 @@ export default function Editor() {
             </div>
 
             {/* Shape */}
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2">
-                <span className="text-gray-500 w-14">Shape</span>
-                <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between text-sm gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-muted-foreground w-14 flex-shrink-0">Shape</span>
+                <div className="flex items-center gap-2 min-w-0">
                   <PolyhedraCanvas shape={polyhedraShape} size={36} />
-                  <span className="text-gray-600 dark:text-gray-400 font-mono text-xs">
+                  <span 
+                    className="text-muted-foreground font-mono text-xs truncate max-w-[100px] md:max-w-none"
+                    title={polyhedraShape}
+                  >
                     {polyhedraShape}
                   </span>
                 </div>
@@ -346,7 +364,7 @@ export default function Editor() {
               <button
                 type="button"
                 onClick={() => setPolyhedraShape(getRandomShape())}
-                className="px-2.5 py-1 text-xs rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                className="flex-shrink-0 px-2.5 py-1 text-xs rounded bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
               >
                 Regenerate
               </button>
@@ -356,27 +374,33 @@ export default function Editor() {
             {status === 'published' && (
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-500 w-14">Status</span>
+                  <span className="text-muted-foreground w-14">Status</span>
                   <span className="text-green-600 dark:text-green-400">Published</span>
                 </div>
                 <button
                   type="button"
                   onClick={handleUnpublish}
-                  className="px-2.5 py-1 text-xs rounded bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors"
+                  className="px-2.5 py-1 text-xs rounded bg-secondary text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                 >
                   Unpublish
                 </button>
               </div>
             )}
+
+            {/* Word count - subtle, at the bottom */}
+            <div className="text-sm text-muted-foreground pt-2 border-t border-border">
+              {words.toLocaleString()} words · ~{Math.ceil(words / 200)} min read
+            </div>
           </div>
         </div>
       </main>
 
-      <footer className="fixed bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-800 px-6 py-3 bg-page touch-none">
-        <div className="flex items-center justify-between text-sm text-gray-500">
-          <span>{words} words</span>
-          {lastSaved && (
+      <footer className="fixed bottom-0 left-0 right-0 border-t border-border px-6 py-3 bg-background touch-none">
+        <div className="flex items-center justify-center text-sm text-muted-foreground">
+          {lastSaved ? (
             <span>Saved {formatSavedTime(lastSaved)}</span>
+          ) : (
+            <span>Not saved yet</span>
           )}
         </div>
       </footer>

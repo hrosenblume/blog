@@ -2,9 +2,8 @@ import { prisma } from '@/lib/db'
 import Link from 'next/link'
 import { DeleteButton } from '@/components/DeleteButton'
 import { StatusBadge } from '@/components/StatusBadge'
-import { TableEmptyRow } from '@/components/admin/TableEmptyRow'
 import { Pagination } from '@/components/admin/Pagination'
-import { tableHeaderClass, tableHeaderRightClass, cellClass, cellPrimaryClass, actionCellClass, linkClass } from '@/lib/styles'
+import { Button } from '@/components/ui/button'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,56 +32,94 @@ export default async function PostsPage({ searchParams }: PageProps) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6 md:mb-8">
         <div>
-          <h1 className="text-section font-bold text-gray-900 dark:text-white">Posts</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <h1 className="text-section font-bold">Posts</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             {totalCount} total post{totalCount !== 1 ? 's' : ''}
           </p>
         </div>
-        <Link href="/writer/editor" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-          New Post
-        </Link>
+        <Button asChild>
+          <Link href="/writer/editor">New Post</Link>
+        </Button>
       </div>
 
       <Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/admin/posts" position="top" />
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gray-50 dark:bg-gray-900">
-            <tr>
-              <th className={tableHeaderClass}>Title</th>
-              <th className={tableHeaderClass}>Slug</th>
-              <th className={tableHeaderClass}>Status</th>
-              <th className={tableHeaderClass}>Revisions</th>
-              <th className={tableHeaderClass}>Updated</th>
-              <th className={tableHeaderRightClass}>Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-            {posts.length === 0 ? (
-              <TableEmptyRow colSpan={6}>No posts yet.</TableEmptyRow>
-            ) : (
-              posts.map((post) => (
-                <tr key={post.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                  <td className={cellPrimaryClass}>{post.title || 'Untitled'}</td>
-                  <td className={`${cellClass} font-mono`}>{post.slug}</td>
-                  <td className="px-6 py-4 whitespace-nowrap"><StatusBadge status={post.status} /></td>
-                  <td className={cellClass}>{post._count.revisions}</td>
-                  <td className={cellClass}>{new Date(post.updatedAt).toLocaleDateString()}</td>
-                  <td className={actionCellClass}>
-                    <Link href={`/writer/editor/${post.slug}`} className={`${linkClass} mr-4`}>Edit</Link>
-                    {post.status === 'published' && (
-                      <Link href={`/e/${post.slug}`} className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 mr-4" target="_blank">View</Link>
-                    )}
-                    <DeleteButton endpoint={`/api/posts/${post.id}`} confirmMessage={`Delete "${post.title || 'Untitled'}"? This will also delete all revisions.`} />
-                  </td>
+      {posts.length === 0 ? (
+        <div className="bg-card rounded-lg shadow p-8 text-center text-muted-foreground">
+          No posts yet.
+        </div>
+      ) : (
+        <>
+          {/* Desktop table */}
+          <div className="hidden md:block bg-card rounded-lg shadow overflow-hidden">
+            <table className="min-w-full divide-y divide-border">
+              <thead className="bg-muted">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Title</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Slug</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Revisions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Updated</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Actions</th>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {posts.map((post) => (
+                  <tr key={post.id} className="hover:bg-accent/50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">{post.title || 'Untitled'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground font-mono">{post.slug}</td>
+                    <td className="px-6 py-4 whitespace-nowrap"><StatusBadge status={post.status} /></td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{post._count.revisions}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{new Date(post.updatedAt).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm space-x-2">
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/writer/editor/${post.slug}`}>Edit</Link>
+                      </Button>
+                      {post.status === 'published' && (
+                        <Button variant="ghost" size="sm" asChild className="text-green-600 hover:text-green-700">
+                          <Link href={`/e/${post.slug}`} target="_blank">View</Link>
+                        </Button>
+                      )}
+                      <DeleteButton endpoint={`/api/posts/${post.id}`} confirmMessage={`Delete "${post.title || 'Untitled'}"? This will also delete all revisions.`} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile cards */}
+          <div className="md:hidden space-y-4">
+            {posts.map((post) => (
+              <div key={post.id} className="bg-card rounded-lg shadow p-4">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium truncate">{post.title || 'Untitled'}</p>
+                    <p className="text-sm text-muted-foreground font-mono truncate">{post.slug}</p>
+                  </div>
+                  <StatusBadge status={post.status} />
+                </div>
+                <p className="text-xs text-muted-foreground mb-3">
+                  {post._count.revisions} revision{post._count.revisions !== 1 ? 's' : ''} · Updated {new Date(post.updatedAt).toLocaleDateString()}
+                </p>
+                <div className="flex gap-2 flex-wrap">
+                  <Button size="sm" variant="secondary" asChild>
+                    <Link href={`/writer/editor/${post.slug}`}>Edit</Link>
+                  </Button>
+                  {post.status === 'published' && (
+                    <Button size="sm" variant="secondary" asChild>
+                      <Link href={`/e/${post.slug}`} target="_blank">View</Link>
+                    </Button>
+                  )}
+                  <DeleteButton endpoint={`/api/posts/${post.id}`} confirmMessage={`Delete "${post.title || 'Untitled'}"?`} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
       <Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/admin/posts" position="bottom" />
     </div>

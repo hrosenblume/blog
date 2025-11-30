@@ -17,6 +17,7 @@ interface PolyhedraCanvasProps {
   className?: string
   index?: number  // Used to cycle through fallback GIFs (0-5)
   hovered?: boolean  // Speed up rotation on hover
+  clicked?: boolean  // Even faster spin on click (before navigation)
 }
 
 // 6 fallback GIFs for when JavaScript is disabled
@@ -25,9 +26,10 @@ const FALLBACK_COUNT = 6
 // Rotation speeds (radians per millisecond)
 const BASE_SPEED = (2 * Math.PI) / 4000    // Full rotation in 4 seconds
 const HOVER_SPEED = (2 * Math.PI) / 375    // Full rotation in 0.375 seconds (~10x base)
+const CLICK_SPEED = (2 * Math.PI) / 100    // Full rotation in 0.1 seconds (~40x base)
 const ACCELERATION = 0.004                  // How fast speed changes (higher = snappier)
 
-export function PolyhedraCanvas({ shape, size = 60, className = '', index = 0, hovered = false }: PolyhedraCanvasProps) {
+export function PolyhedraCanvas({ shape, size = 60, className = '', index = 0, hovered = false, clicked = false }: PolyhedraCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationRef = useRef<number>(0)
   const angleRef = useRef<number>(0)        // Current rotation angle
@@ -114,7 +116,8 @@ export function PolyhedraCanvas({ shape, size = 60, className = '', index = 0, h
       lastTimeRef.current = timestamp
 
       // Smoothly accelerate/decelerate towards target speed
-      const targetSpeed = hovered ? HOVER_SPEED : BASE_SPEED
+      // Priority: clicked > hovered > base
+      const targetSpeed = clicked ? CLICK_SPEED : hovered ? HOVER_SPEED : BASE_SPEED
       speedRef.current += (targetSpeed - speedRef.current) * ACCELERATION * deltaTime
       
       // Update angle based on current interpolated speed
@@ -136,7 +139,7 @@ export function PolyhedraCanvas({ shape, size = 60, className = '', index = 0, h
         cancelAnimationFrame(animationRef.current)
       }
     }
-  }, [shape, size, isVisible, prefersReducedMotion, hovered])
+  }, [shape, size, isVisible, prefersReducedMotion, hovered, clicked])
 
   return (
     <div className={`relative ${className}`} style={{ width: size, height: size }}>
@@ -160,4 +163,3 @@ export function PolyhedraCanvas({ shape, size = 60, className = '', index = 0, h
     </div>
   )
 }
-
