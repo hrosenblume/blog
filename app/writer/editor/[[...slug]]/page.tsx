@@ -2,16 +2,14 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import Link from 'next/link'
 import type { Editor as EditorInstance } from '@tiptap/react'
 import { generateSlug, wordCount } from '@/lib/markdown'
 import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
-import { Button } from '@/components/Button'
 import { Spinner } from '@/components/Spinner'
 import { CenteredPage } from '@/components/CenteredPage'
-import { ThemeToggle } from '@/components/ThemeToggle'
 import { PolyhedraCanvas } from '@/components/PolyhedraCanvas'
-import { TiptapEditor, MenuBar } from '@/components/TiptapEditor'
+import { TiptapEditor, EditorToolbar } from '@/components/TiptapEditor'
+import { EditorNavbar } from '@/components/editor/EditorNavbar'
 import { getRandomShape } from '@/lib/polyhedra/shapes'
 import { confirmPublish, confirmUnpublish } from '@/lib/utils/confirm'
 import { formatSavedTime } from '@/lib/utils/format'
@@ -43,7 +41,7 @@ export default function Editor() {
   const [subtitle, setSubtitle] = useState('')
   const [slug, setSlug] = useState('')
   const [markdown, setMarkdown] = useState('')
-  const [polyhedraShape, setPolyhedraShape] = useState(() => getRandomShape())
+  const [polyhedraShape, setPolyhedraShape] = useState('cube') // Fixed default, random set on mount for new posts
   const [status, setStatus] = useState<'draft' | 'published'>('draft')
   const [isManualSlug, setIsManualSlug] = useState(false)
 
@@ -68,7 +66,7 @@ export default function Editor() {
   // Textarea ref for auto-resize (raw markdown mode)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   
-  // Tiptap editor instance for MenuBar
+  // Tiptap editor instance for EditorToolbar
   const [editor, setEditor] = useState<EditorInstance | null>(null)
 
   // Load existing post
@@ -96,6 +94,13 @@ export default function Editor() {
         router.push('/writer')
       })
   }, [postSlug, router])
+
+  // Set random shape for new posts (after mount to avoid hydration mismatch)
+  useEffect(() => {
+    if (!postSlug) {
+      setPolyhedraShape(getRandomShape())
+    }
+  }, [postSlug])
 
   // Auto-generate slug from title
   useEffect(() => {
@@ -223,6 +228,16 @@ export default function Editor() {
     router.push('/writer')
   }, [title, router])
 
+  const handleDelete = useCallback(async () => {
+    if (!postSlug) return
+    if (!confirm(`Are you sure you want to delete "${title || 'this post'}"? This cannot be undone.`)) return
+    
+    await fetch(`/api/posts/by-slug/${urlSlugRef.current}`, {
+      method: 'DELETE',
+    })
+    router.push('/writer')
+  }, [postSlug, title, router])
+
   // Loading state
   if (loading) {
     return (
@@ -241,57 +256,26 @@ export default function Editor() {
 
   return (
     <div className="h-screen flex flex-col">
-      <header className="border-b border-gray-200 dark:border-gray-800 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <Link
-            href="/writer"
-            className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back
-          </Link>
+      <EditorNavbar
+        postSlug={postSlug}
+        slug={slug}
+        status={status}
+        showMarkdown={showMarkdown}
+        setShowMarkdown={setShowMarkdown}
+        hasUnsavedChanges={hasUnsavedChanges}
+        saving={saving}
+        onSave={handleSave}
+        onUnpublish={handleUnpublish}
+        onDelete={handleDelete}
+      />
 
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-
-            <button
-              onClick={() => setShowMarkdown(!showMarkdown)}
-              className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                showMarkdown
-                  ? 'bg-gray-100 dark:bg-gray-800'
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-              } text-gray-700 dark:text-gray-300`}
-              title={showMarkdown ? 'Switch to rich text editor' : 'Switch to raw markdown'}
-            >
-              {showMarkdown ? 'Rich Text' : 'Markdown'}
-            </button>
-
-            {status === 'draft' && (
-              <Button
-                variant="secondary"
-                onClick={() => handleSave('draft')}
-                loading={saving}
-                disabled={!hasUnsavedChanges}
-              >
-                {hasUnsavedChanges ? 'Save Draft' : 'Saved'}
-              </Button>
-            )}
-
-            <Button
-              onClick={() => handleSave('published')}
-              loading={saving}
-              disabled={status === 'published' && !hasUnsavedChanges}
-            >
-              {status === 'published' && !hasUnsavedChanges ? 'Published' : 'Publish'}
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      {/* Fixed toolbar below header (only in WYSIWYG mode) */}
-      {!showMarkdown && <MenuBar editor={editor} />}
+      {/* Fixed toolbar below header */}
+      <EditorToolbar 
+        editor={showMarkdown ? null : editor}
+        textareaRef={showMarkdown ? textareaRef : undefined}
+        markdown={showMarkdown ? markdown : undefined}
+        onMarkdownChange={showMarkdown ? setMarkdown : undefined}
+      />
 
       <main className="flex-1 overflow-auto">
         <div className="max-w-2xl mx-auto px-6 py-12">

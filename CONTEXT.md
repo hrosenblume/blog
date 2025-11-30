@@ -412,6 +412,7 @@ DATABASE_URL="file:./dev.db"
 # NextAuth
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="<random-secret>"
+AUTH_TRUST_HOST=true  # Allows OAuth from multiple hosts (localhost, ngrok, etc.)
 
 # Google OAuth
 GOOGLE_CLIENT_ID="<your-google-client-id>"
@@ -423,6 +424,9 @@ NEXT_PUBLIC_CONTACT_EMAIL="your-email@example.com"
 # Admin user for seeding (used by npm run db:seed)
 WRITER_EMAIL="your-email@example.com"
 WRITER_NAME="Your Name"
+
+# Ngrok for mobile testing (optional)
+# NGROK_AUTHTOKEN="<your-ngrok-authtoken>"
 ```
 
 ### Initial Setup

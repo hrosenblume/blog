@@ -29,7 +29,7 @@ function AuthErrorContent() {
 
 export default function AuthError() {
   return (
-    <CenteredPage className="bg-gray-50 dark:bg-gray-900">
+    <CenteredPage className="bg-page">
       <Suspense fallback={
         <div className="max-w-md w-full space-y-8 p-8 text-center">
           <h1 className="text-title font-bold text-red-600">Access Denied</h1>

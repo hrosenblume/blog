@@ -5,6 +5,7 @@ import { join } from 'path'
 import { randomUUID } from 'crypto'
 
 const VALID_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'] as const
+const MAX_SIZE = 4 * 1024 * 1024 // 4MB
 
 export async function POST(request: NextRequest) {
   const session = await requireSession()
@@ -14,6 +15,7 @@ export async function POST(request: NextRequest) {
   const file = formData.get('image') as File | null
 
   if (!file) return badRequest('No image provided')
+  if (file.size > MAX_SIZE) return badRequest('File too large (max 4MB)')
   if (!VALID_TYPES.includes(file.type as typeof VALID_TYPES[number])) return badRequest('Invalid file type')
 
   const ext = file.name.split('.').pop()

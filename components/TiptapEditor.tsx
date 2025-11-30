@@ -4,10 +4,12 @@ import { useEffect, useMemo } from 'react'
 import { useEditor, EditorContent, Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
+import Link from '@tiptap/extension-link'
+import Image from '@tiptap/extension-image'
 import { marked } from 'marked'
 import { htmlToMarkdown } from '@/lib/turndown'
-import { MenuBar } from '@/components/editor/MenuBar'
-import { BubbleToolbar } from '@/components/editor/BubbleToolbar'
+import { EditorToolbar } from '@/components/editor/EditorToolbar'
+import { FloatingEditorToolbar } from '@/components/editor/FloatingEditorToolbar'
 
 // Client-safe markdown to HTML (no sanitize-html - Tiptap handles sanitization)
 function markdownToHtml(markdown: string): string {
@@ -35,6 +37,17 @@ export function TiptapEditor({ content, onChange, placeholder = 'Write your stor
       }),
       Placeholder.configure({
         placeholder,
+      }),
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+          class: 'text-blue-600 dark:text-blue-400 underline',
+        },
+      }),
+      Image.configure({
+        HTMLAttributes: {
+          class: 'rounded-lg max-w-full',
+        },
       }),
     ],
     content: initialHtml,
@@ -71,11 +84,11 @@ export function TiptapEditor({ content, onChange, placeholder = 'Write your stor
 
   return (
     <>
-      <BubbleToolbar editor={editor} />
+      <FloatingEditorToolbar editor={editor} />
       <EditorContent editor={editor} />
     </>
   )
 }
 
-// Export MenuBar separately so it can be rendered in different position
-export { MenuBar } from '@/components/editor/MenuBar'
+// Export EditorToolbar separately so it can be rendered in different position
+export { EditorToolbar } from '@/components/editor/EditorToolbar'

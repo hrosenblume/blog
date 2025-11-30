@@ -30,9 +30,11 @@ npm run dev
 DATABASE_URL="file:./dev.db"
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="your-secret-key"
+AUTH_TRUST_HOST=true
 GOOGLE_CLIENT_ID="your-google-client-id"
 GOOGLE_CLIENT_SECRET="your-google-client-secret"
 WRITER_EMAIL="your-email@gmail.com"
+# NGROK_AUTHTOKEN="your-ngrok-authtoken"  # Optional, for mobile testing
 ```
 
 ## Commands

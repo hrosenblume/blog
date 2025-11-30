@@ -20,6 +20,7 @@ export const normalizeEmail = (email: string) => email.toLowerCase().trim()
 
 // NextAuth v5 configuration
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  trustHost: true,
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,

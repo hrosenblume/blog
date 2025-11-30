@@ -5,7 +5,7 @@ import { CenteredPage } from '@/components/CenteredPage'
 
 export default function SignIn() {
   return (
-    <CenteredPage className="bg-gray-50 dark:bg-gray-900">
+    <CenteredPage className="bg-page">
       <div className="max-w-md w-full space-y-8 p-8">
         <div className="text-center">
           <h1 className="text-title font-bold text-gray-900 dark:text-white">
