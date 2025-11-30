@@ -60,3 +60,6 @@ venv/
 blog-js/
 
 certificates
+
+# Temporary plans
+plans/tmp/
