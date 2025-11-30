@@ -410,9 +410,9 @@ Set `WRITER_EMAIL` and `WRITER_NAME` in `.env.local`, then run `npm run db:setup
 DATABASE_URL="file:./dev.db"
 
 # NextAuth
-NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_URL=                # Leave empty for auto-detection (dev:tunnel sets this automatically)
 NEXTAUTH_SECRET="<random-secret>"
-AUTH_TRUST_HOST=true  # Allows OAuth from multiple hosts (localhost, ngrok, etc.)
+AUTH_TRUST_HOST=true         # Allows OAuth from multiple hosts (localhost, ngrok, etc.)
 
 # Google OAuth
 GOOGLE_CLIENT_ID="<your-google-client-id>"
@@ -442,7 +442,8 @@ npm run db:setup             # Push schema + seed admin user
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Start development server |
+| `npm run dev` | Start development server (localhost only) |
+| `npm run dev:tunnel` | Start dev server + ngrok tunnel with OAuth protection |
 | `npm run build` | Build for production |
 | `npm start` | Start production server |
 | `npm run db:push` | Push Prisma schema to database |
@@ -451,6 +452,83 @@ npm run db:setup             # Push schema + seed admin user
 | `npm run db:setup` | Run db:push + db:seed (first-time setup) |
 | `node scripts/polyhedra/build-shapes.js` | Regenerate shapes.json |
 | `node scripts/assign-shapes.js` | Assign shapes to posts |
+
+---
+
+## ngrok Tunnel (Mobile Testing)
+
+The project includes a tunneling setup for testing on real mobile devices with OAuth protection.
+
+### How It Works
+
+**`npm run dev:tunnel`** starts both Next.js and ngrok in one command:
+
+```bash
+export $(grep -v '^#' .env.local | xargs) && \
+NEXTAUTH_URL=https://<ngrok-domain> next dev & \
+ngrok http 3000 --domain=<ngrok-domain> --oauth=google --oauth-allow-email=$WRITER_EMAIL
+```
+
+1. Loads environment variables from `.env.local`
+2. Sets `NEXTAUTH_URL` to the ngrok domain (overrides auto-detection)
+3. Starts Next.js dev server in background
+4. Starts ngrok with Google OAuth protection
+
+### Two-Layer Authentication
+
+When accessing via ngrok tunnel:
+
+1. **ngrok OAuth layer** — Anyone accessing the tunnel URL must authenticate with Google. Only emails matching `$WRITER_EMAIL` are allowed through.
+2. **App NextAuth layer** — Your app's normal authentication. Users must exist in the database.
+
+This provides security-in-depth: even if someone guesses your ngrok URL, they can't access it without your Google account.
+
+### Middleware (`middleware.ts`)
+
+Handles proxy headers so NextAuth generates correct OAuth callback URLs:
+
+```typescript
+export function middleware(request: NextRequest) {
+  const forwardedHost = request.headers.get('x-forwarded-host')
+  if (forwardedHost) {
+    const requestHeaders = new Headers(request.headers)
+    requestHeaders.set('host', forwardedHost)
+    return NextResponse.next({ request: { headers: requestHeaders } })
+  }
+  return NextResponse.next()
+}
+
+export const config = {
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|polyhedra|uploads).*)'],
+}
+```
+
+The middleware runs on all routes (except static files) to ensure the correct host header is set.
+
+### Google OAuth Console Setup
+
+For OAuth to work on both localhost AND ngrok, add both callback URLs in Google Cloud Console:
+
+- `http://localhost:3000/api/auth/callback/google`
+- `https://<your-ngrok-domain>/api/auth/callback/google`
+
+### Auth Configuration
+
+In `lib/auth.ts`:
+- `trustHost: true` — Allows NextAuth to work from multiple origins
+- Works automatically with the middleware forwarding headers
+
+### next.config.js
+
+The `allowedDevOrigins` config allows ngrok domains in development:
+
+```javascript
+allowedDevOrigins: [
+  '<your-ngrok-domain>',
+  '*.ngrok.dev',
+  '*.ngrok-free.app',
+],
+```
 
 ---
 
@@ -483,3 +561,12 @@ npm run db:setup             # Push schema + seed admin user
 - Server Components by default
 - `'use client'` only when needed
 - Use `cn()` for conditional classes
+
+### Git Workflow
+When committing changes (user types "g"):
+1. Run `git add -A` then `git diff --staged --stat` to see all file changes
+2. Read ALL modified files from `git status` (not just new/deleted)
+3. Review the **ENTIRE chat history** from the session for full context
+4. If new patterns/systems/configs were added, update `CONTEXT.md` and `.cursorrules` (no sensitive data)
+5. Write comprehensive commit messages summarizing ALL changes
+6. Be thorough — full context from all chats is required

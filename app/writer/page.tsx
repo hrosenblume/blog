@@ -105,21 +105,35 @@ export default function Dashboard() {
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-16">
-      <header className="flex items-center justify-between mb-16">
-        <div>
-          <h1 className="text-title font-bold mb-2">{HOMEPAGE.name}</h1>
-          <p className="text-gray-600 dark:text-gray-400">Welcome to your workspace</p>
+      <header className="mb-16">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-title font-bold mb-2">{HOMEPAGE.name}</h1>
+            <p className="text-gray-600 dark:text-gray-400">Welcome to your workspace</p>
+          </div>
+          {/* Desktop: inline button */}
+          <Link
+            href="/writer/editor"
+            className="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-opacity"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            New Essay
+          </Link>
         </div>
-        <Link
-          href="/writer/editor"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-opacity"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          New Essay
-        </Link>
       </header>
+
+      {/* Mobile: Floating action button */}
+      <Link
+        href="/writer/editor"
+        className="sm:hidden fixed bottom-6 right-6 flex items-center justify-center w-14 h-14 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full shadow-lg hover:opacity-90 transition-opacity z-50"
+        aria-label="New Essay"
+      >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+        </svg>
+      </Link>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
         {stats.map(stat => (

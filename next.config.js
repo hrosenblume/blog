@@ -4,6 +4,11 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  allowedDevOrigins: [
+    'hunter2.ngrok.dev',
+    '*.ngrok.dev',
+    '*.ngrok-free.app',
+  ],
 }
 
 module.exports = nextConfig

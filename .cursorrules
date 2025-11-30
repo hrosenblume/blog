@@ -216,12 +216,12 @@ useKeyboard([
 ### Current Variables
 ```env
 DATABASE_URL          # Prisma database connection
-NEXTAUTH_URL          # NextAuth base URL
+NEXTAUTH_URL          # Leave empty for auto-detection (dev:tunnel sets this)
 NEXTAUTH_SECRET       # NextAuth encryption secret
 GOOGLE_CLIENT_ID      # OAuth client ID
 GOOGLE_CLIENT_SECRET  # OAuth client secret
 NEXT_PUBLIC_CONTACT_EMAIL  # Public contact email (mailto links)
-WRITER_EMAIL          # Admin email for db:seed (your Google login email)
+WRITER_EMAIL          # Admin email for db:seed + ngrok OAuth allowlist
 WRITER_NAME           # Admin display name for db:seed
 ```
 
@@ -265,8 +265,50 @@ npm run db:setup             # Push schema + seed admin user
 - Use it for nav links where scroll might be confused with tap
 - Works with both internal routes and external URLs
 
+## ngrok Tunnel (Mobile Testing)
+
+The project supports ngrok tunneling for testing on mobile devices with OAuth protection.
+
+### Scripts
+- `npm run dev` — Local development only (localhost:3000)
+- `npm run dev:tunnel` — Starts Next.js + ngrok tunnel with OAuth protection
+
+### How `dev:tunnel` Works
+1. Loads `.env.local` variables
+2. Sets `NEXTAUTH_URL` to the ngrok domain (required for OAuth callbacks)
+3. Starts Next.js dev server in background
+4. Starts ngrok with:
+   - Custom domain (configured in script)
+   - Google OAuth protection (`--oauth=google`)
+   - Email allowlist from `$WRITER_EMAIL` (`--oauth-allow-email`)
+
+### Middleware (`middleware.ts`)
+The middleware handles proxy headers for OAuth to work behind ngrok:
+- Forwards `x-forwarded-host` header to all routes
+- Required for NextAuth to generate correct callback URLs
+- Matcher excludes static files (`_next/static`, `_next/image`, etc.)
+
+### Google OAuth Setup for ngrok
+In Google Cloud Console, add BOTH callback URLs to your OAuth credentials:
+- `http://localhost:3000/api/auth/callback/google`
+- `https://<your-ngrok-domain>/api/auth/callback/google`
+
+### Auth Config (`lib/auth.ts`)
+- `trustHost: true` — Allows OAuth from multiple hosts
+- Works with both localhost and ngrok origins
+
+### Two-Layer Authentication
+When using `dev:tunnel`:
+1. **ngrok OAuth** — Protects the tunnel itself (only allowed emails can access)
+2. **App NextAuth** — Your app's authentication (users must be in database)
+
 ## Git Workflow
 - When user types "g", commit all changes and push to `origin main`
 - **Do NOT auto-commit** after making changes — wait for explicit "g"
-- Before committing: read ALL modified files from `git status`
-- Commit messages should be comprehensive and descriptive
+- Before committing:
+  1. Run `git add -A` then `git diff --staged --stat` to see all file changes
+  2. Read ALL modified files from `git status` (not just new/deleted, also modified)
+  3. Review the **ENTIRE chat history** from the session for full context
+  4. If significant new patterns/systems/configs were added, update `CONTEXT.md` and `.cursorrules` (no sensitive data)
+- Commit messages must comprehensively summarize ALL changes
+- Be thorough — you need full context from all chats

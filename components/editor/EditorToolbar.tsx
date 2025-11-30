@@ -10,6 +10,9 @@ interface EditorToolbarProps {
   textareaRef?: RefObject<HTMLTextAreaElement | null>
   markdown?: string
   onMarkdownChange?: (markdown: string) => void
+  // Mode toggle
+  showMarkdown?: boolean
+  setShowMarkdown?: (show: boolean) => void
 }
 
 interface ToolbarButtonProps {
@@ -148,7 +151,7 @@ function setHeadingAtCursor(
   })
 }
 
-export function EditorToolbar({ editor, textareaRef, markdown, onMarkdownChange }: EditorToolbarProps) {
+export function EditorToolbar({ editor, textareaRef, markdown, onMarkdownChange, showMarkdown, setShowMarkdown }: EditorToolbarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const isMarkdownMode = !editor && textareaRef && markdown !== undefined && onMarkdownChange
 
@@ -464,6 +467,20 @@ export function EditorToolbar({ editor, textareaRef, markdown, onMarkdownChange 
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" />
         </svg>
       </ToolbarButton>
+
+      {/* Markdown/Rich Text mode toggle */}
+      {setShowMarkdown && (
+        <>
+          <Divider />
+          <ToolbarButton
+            onClick={() => setShowMarkdown(!showMarkdown)}
+            active={showMarkdown}
+            title={showMarkdown ? 'Switch to rich text editor' : 'Switch to markdown mode'}
+          >
+            <span className="font-mono text-xs">MD</span>
+          </ToolbarButton>
+        </>
+      )}
     </div>
   )
 }
