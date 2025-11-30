@@ -18,7 +18,16 @@ Follow [buildfor.plan.md](buildfor.plan.md) for detailed steps:
 - [ ] Update Google OAuth redirect URI for production domain
 - [ ] Test full flow: homepage, login, writer dashboard, publish
 
-## 3. Go Live
+## 3. Minor Improvements
+
+- [ ] Back button behavior in browser (navigating away from drafts, unsaved changes warnings, etc.)
+- [ ] Larger dropdowns
+- [ ] Home button on essays should have a larger click area
+- [ ] Essay editor: hide word count (mental clutter)
+- [ ] Make light/dark button in footer larger on mobile
+- [ ] Tap essay polyhedron → spin super fast and animate into the essay page
+
+## 4. Go Live
 
 - [ ] Final review of published essays
 - [ ] Share the link
