@@ -11,7 +11,7 @@ Personal essay blog built with Next.js 15 (App Router), React 19, Prisma (SQLite
 - **Database**: SQLite via Prisma
 - **Auth**: NextAuth.js v5 with Google OAuth
 - **Styling**: Tailwind CSS with dark mode (class-based via next-themes)
-- **Markdown**: marked + sanitize-html
+- **Editor**: Tiptap WYSIWYG (converts to/from markdown via marked + turndown)
 - **3D Graphics**: Canvas API (client-side polyhedra rendering)
 - **UI**: React 19
 
@@ -83,7 +83,7 @@ Defined in `lib/keyboard/shortcuts.ts`:
 ```typescript
 export const SHORTCUTS = {
   THEME_TOGGLE: { key: '.', meta: true, allowInInput: true },
-  TOGGLE_VIEW: { key: '/', meta: true },
+  TOGGLE_VIEW: { key: '/', meta: true, allowInInput: true },
   NEW_ARTICLE: { key: 'n' },
   PREV: { key: 'ArrowLeft' },
   NEXT: { key: 'ArrowRight' },
@@ -95,8 +95,8 @@ export const SHORTCUTS = {
 
 ### API Routes
 - Return JSON responses
-- Always check session with `getServerSession(authOptions)`
-- Admin routes: Also check `isAdmin(session.user?.email)`
+- Use `withSession()` HOC wrapper from `@/lib/auth` for protected routes
+- Admin routes: Use `withAdmin()` HOC wrapper from `@/lib/auth`
 - Use proper HTTP status codes (401, 403, 404, 400)
 
 ### Database
@@ -161,9 +161,16 @@ if (session?.user?.role !== 'admin') redirect('/writer')
 
 ### API Route
 ```ts
+// Using HOC wrapper (preferred)
+export const GET = withSession(async (request) => {
+  // session is already validated
+  return NextResponse.json({ data: '...' })
+})
+
+// Or manually with auth()
 export async function GET() {
-  const session = await getServerSession(authOptions)
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await auth()
+  if (!session) return unauthorized()
   // ... handle request
 }
 ```
@@ -218,13 +225,15 @@ useKeyboard([
 ### Current Variables
 ```env
 DATABASE_URL          # Prisma database connection
-NEXTAUTH_URL          # Leave empty for auto-detection (dev:tunnel sets this)
+NEXTAUTH_URL          # Leave empty for auto-detection
 NEXTAUTH_SECRET       # NextAuth encryption secret
 GOOGLE_CLIENT_ID      # OAuth client ID
 GOOGLE_CLIENT_SECRET  # OAuth client secret
 NEXT_PUBLIC_CONTACT_EMAIL  # Public contact email (mailto links)
 WRITER_EMAIL          # Admin email for db:seed + ngrok OAuth allowlist
 WRITER_NAME           # Admin display name for db:seed
+NGROK_DOMAIN          # Your ngrok domain (for dev:tunnel)
+NGROK_OAUTH_EMAIL     # Additional email for ngrok OAuth allowlist (optional)
 ```
 
 ### Initial Setup
@@ -258,6 +267,8 @@ npm run db:setup             # Push schema + seed admin user
   - `lib/homepage.ts` for homepage content
   - `lib/styles.ts` for shared class strings
   - `lib/keyboard/shortcuts.ts` for keyboard shortcuts
+  - `lib/posts.ts` for post update logic
+  - `components/Icons.tsx` for SVG icons
 - Use `TapLink` for links that need iOS scroll detection
 - Support `prefers-reduced-motion` for animations
 - Update `.env.example` when adding new environment variables
@@ -291,15 +302,16 @@ The project supports ngrok tunneling for testing on mobile devices with OAuth pr
 ### Scripts
 - `npm run dev` — Local development only (localhost:3000)
 - `npm run dev:tunnel` — Starts Next.js + ngrok tunnel with OAuth protection
+- `npm run dev:mobile` — Alias for dev:tunnel
 
 ### How `dev:tunnel` Works
 1. Loads `.env.local` variables
-2. Sets `NEXTAUTH_URL` to the ngrok domain (required for OAuth callbacks)
+2. Sets `AUTH_URL` to the ngrok domain (required for OAuth callbacks)
 3. Starts Next.js dev server in background
 4. Starts ngrok with:
-   - Custom domain (configured in script)
+   - Custom domain from `$NGROK_DOMAIN`
    - Google OAuth protection (`--oauth=google`)
-   - Email allowlist from `$WRITER_EMAIL` (`--oauth-allow-email`)
+   - Email allowlist from `$NGROK_OAUTH_EMAIL` and `$WRITER_EMAIL`
 
 ### Middleware (`middleware.ts`)
 The middleware handles proxy headers for OAuth to work behind ngrok:

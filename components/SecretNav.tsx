@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useRef, useCallback } from 'react'
+import { useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
 
 const WRITER_PATH = '/writer'
 const TAP_COUNT = 5
@@ -14,16 +15,10 @@ export function SecretNav({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const tapTimestamps = useRef<number[]>([])
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.metaKey && e.key === '/') {
-        e.preventDefault()
-        router.push(getWriterPath())
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [router])
+  // Cmd+/ to navigate to writer
+  useKeyboard([
+    { ...SHORTCUTS.TOGGLE_VIEW, handler: () => router.push(getWriterPath()) },
+  ])
 
   const handleTap = useCallback(() => {
     const now = Date.now()

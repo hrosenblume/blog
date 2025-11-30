@@ -1,0 +1,95 @@
+import { revalidatePath } from 'next/cache'
+import { prisma } from '@/lib/db'
+import { getRandomShape } from '@/lib/polyhedra/shapes'
+import { Post } from '@prisma/client'
+
+interface UpdatePostData {
+  title?: string
+  subtitle?: string
+  slug?: string
+  markdown?: string
+  polyhedraShape?: string | null
+  status?: string
+}
+
+type UpdatePostResult = 
+  | { success: true; post: Post }
+  | { success: false; error: string }
+
+/**
+ * Shared post update logic used by both /api/posts/[id] and /api/posts/by-slug/[slug]
+ * Handles validation, slug uniqueness, revision creation, shape assignment, and cache revalidation
+ */
+export async function updatePost(post: Post, data: UpdatePostData): Promise<UpdatePostResult> {
+  const updates: Record<string, unknown> = {}
+
+  // Validate and set title
+  if (data.title !== undefined) {
+    if (!data.title.trim()) return { success: false, error: 'Title is required' }
+    updates.title = data.title.trim()
+  }
+
+  // Validate and set slug (check uniqueness if changed)
+  if (data.slug !== undefined) {
+    if (!data.slug.trim()) return { success: false, error: 'Slug is required' }
+    if (data.slug !== post.slug) {
+      const existing = await prisma.post.findUnique({ where: { slug: data.slug } })
+      if (existing) return { success: false, error: `Slug "${data.slug}" already exists` }
+    }
+    updates.slug = data.slug.trim()
+  }
+
+  // Set optional fields
+  if (data.subtitle !== undefined) updates.subtitle = data.subtitle || null
+  if (data.polyhedraShape !== undefined) updates.polyhedraShape = data.polyhedraShape
+  if (data.markdown !== undefined) updates.markdown = data.markdown
+
+  // Handle status change
+  if (data.status !== undefined) {
+    updates.status = data.status
+    if (data.status === 'published' && !post.publishedAt) updates.publishedAt = new Date()
+  }
+
+  // Assign random shape on first publish if none set
+  const isFirstPublish = data.status === 'published' && !post.publishedAt && !post.polyhedraShape
+  if (isFirstPublish) {
+    updates.polyhedraShape = getRandomShape()
+  }
+
+  // Check if any revision-tracked fields changed
+  const newTitle = (updates.title as string) ?? post.title
+  const newSubtitle = (updates.subtitle as string | null) ?? post.subtitle
+  const newMarkdown = (updates.markdown as string) ?? post.markdown
+  const newPolyhedraShape = (updates.polyhedraShape as string | null) ?? post.polyhedraShape
+
+  const hasContentChanges = 
+    newTitle !== post.title ||
+    newSubtitle !== post.subtitle ||
+    newMarkdown !== post.markdown ||
+    newPolyhedraShape !== post.polyhedraShape
+
+  // Create revision if content changed
+  if (hasContentChanges) {
+    await prisma.revision.create({
+      data: {
+        postId: post.id,
+        title: newTitle,
+        subtitle: newSubtitle,
+        markdown: newMarkdown,
+        polyhedraShape: newPolyhedraShape,
+      }
+    })
+  }
+
+  const updated = await prisma.post.update({ where: { id: post.id }, data: updates })
+
+  // Revalidate cached pages
+  revalidatePath('/')
+  revalidatePath(`/e/${updated.slug}`)
+  if (updates.slug && updates.slug !== post.slug) {
+    revalidatePath(`/e/${post.slug}`)
+  }
+
+  return { success: true, post: updated }
+}
+

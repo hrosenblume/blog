@@ -11,17 +11,6 @@ import type { NextRequest } from 'next/server'
 export function middleware(request: NextRequest) {
   const forwardedHost = request.headers.get('x-forwarded-host')
   const forwardedProto = request.headers.get('x-forwarded-proto')
-  const currentHost = request.headers.get('host')
-  
-  // Debug logging for auth routes
-  if (request.nextUrl.pathname.startsWith('/api/auth')) {
-    console.log('[middleware] Auth request:', {
-      path: request.nextUrl.pathname,
-      currentHost,
-      forwardedHost,
-      forwardedProto,
-    })
-  }
   
   // If behind a proxy, set headers for NextAuth to generate correct URLs
   if (forwardedHost) {

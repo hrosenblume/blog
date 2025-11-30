@@ -3,30 +3,21 @@
 import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils/cn'
+import { SunIcon, MoonIcon } from '@/components/Icons'
 
 interface ThemeToggleProps {
   size?: 'sm' | 'md'
   className?: string
 }
 
+const sizeClasses = { sm: 'p-1.5', md: 'p-2.5' }
+const iconSizes = { sm: 'w-4 h-4', md: 'w-5 h-5' }
+
 export function ThemeToggle({ size = 'sm', className }: ThemeToggleProps) {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
-  // Only render theme-dependent content after mount to avoid hydration mismatch
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  const sizeClasses = {
-    sm: 'p-1.5',
-    md: 'p-2.5',
-  }
-
-  const iconSizes = {
-    sm: 'w-4 h-4',
-    md: 'w-5 h-5',
-  }
+  useEffect(() => setMounted(true), [])
 
   return (
     <button
@@ -40,17 +31,12 @@ export function ThemeToggle({ size = 'sm', className }: ThemeToggleProps) {
       )}
       aria-label="Toggle dark mode"
     >
-      {/* Render placeholder until mounted to avoid hydration mismatch */}
       {!mounted ? (
         <div className={iconSizes[size]} />
       ) : theme === 'dark' ? (
-        <svg className={iconSizes[size]} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-        </svg>
+        <SunIcon className={iconSizes[size]} />
       ) : (
-        <svg className={iconSizes[size]} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-        </svg>
+        <MoonIcon className={iconSizes[size]} />
       )}
     </button>
   )

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { Button } from '@/components/Button'
+import { ChevronLeftIcon } from '@/components/Icons'
 
 interface EditorNavbarProps {
   status: 'draft' | 'published'
@@ -24,9 +25,7 @@ export function EditorNavbar({
           href="/writer"
           className="inline-flex items-center gap-1.5 sm:gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
+          <ChevronLeftIcon />
           <span className="hidden sm:inline">Back</span>
         </Link>
 

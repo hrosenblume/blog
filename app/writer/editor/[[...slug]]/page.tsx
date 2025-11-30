@@ -10,6 +10,7 @@ import { CenteredPage } from '@/components/CenteredPage'
 import { PolyhedraCanvas } from '@/components/PolyhedraCanvas'
 import { TiptapEditor, EditorToolbar } from '@/components/TiptapEditor'
 import { EditorNavbar } from '@/components/editor/EditorNavbar'
+import { CheckIcon, LockIcon } from '@/components/Icons'
 import { getRandomShape } from '@/lib/polyhedra/shapes'
 import { confirmPublish, confirmUnpublish } from '@/lib/utils/confirm'
 import { formatSavedTime } from '@/lib/utils/format'
@@ -20,9 +21,7 @@ function PublishSuccess() {
     <CenteredPage>
       <div className="text-center">
         <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-          <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
+          <CheckIcon className="text-green-600 dark:text-green-400" />
         </div>
         <h2 className="text-section font-bold text-gray-900 dark:text-white mb-2">Published!</h2>
         <p className="text-gray-500 dark:text-gray-400">Your essay is now live</p>
@@ -319,9 +318,7 @@ export default function Editor() {
                 {status === 'published' ? (
                   <span className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400">
                     {slug}
-                    <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
+                    <LockIcon className="text-gray-400" />
                   </span>
                 ) : (
                   <input

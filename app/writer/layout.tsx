@@ -8,6 +8,7 @@ import { Spinner } from '@/components/Spinner'
 import { CenteredPage } from '@/components/CenteredPage'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { Dropdown, DropdownItem } from '@/components/Dropdown'
+import { ExternalLinkIcon } from '@/components/Icons'
 import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
 
 export default function WriterLayout({
@@ -71,9 +72,7 @@ export default function WriterLayout({
                 aria-label="View homepage"
                 title="View homepage"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
+                <ExternalLinkIcon />
               </a>
               
               <ThemeToggle size="md" />

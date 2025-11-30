@@ -25,7 +25,7 @@
 | **Auth** | NextAuth.js v5 with Google OAuth |
 | **Styling** | Tailwind CSS |
 | **Theme** | next-themes (dark mode, class-based) |
-| **Markdown** | marked + sanitize-html |
+| **Editor** | Tiptap WYSIWYG (markdown via marked + turndown) |
 | **3D Graphics** | Canvas API (client-side polyhedra rendering) |
 | **Build** | standalone output mode |
 
@@ -53,7 +53,7 @@ blog/
 │   ├── e/[slug]/               # Public essay pages
 │   │   └── _components/        # Essay-specific components
 │   ├── writer/                 # Writer dashboard (protected)
-│   │   └── editor/[[...slug]]/ # Markdown editor
+│   │   └── editor/[[...slug]]/ # WYSIWYG editor
 │   ├── globals.css             # Global styles + typography variables
 │   ├── layout.tsx              # Root layout
 │   ├── not-found.tsx           # 404 page
@@ -61,11 +61,16 @@ blog/
 │   └── providers.tsx           # SessionProvider + ThemeProvider
 ├── components/                 # Shared UI components
 │   ├── admin/                  # Admin-specific components
+│   ├── editor/                 # Editor-specific components
+│   │   ├── EditorNavbar.tsx    # Editor top navigation
+│   │   ├── EditorToolbar.tsx   # Formatting toolbar
+│   │   └── FloatingEditorToolbar.tsx  # Bubble menu toolbar
 │   ├── Button.tsx              # Button with variants + loading
 │   ├── CenteredPage.tsx        # Loading/centered layout wrapper
 │   ├── DeleteButton.tsx        # Confirm-delete button
 │   ├── Dropdown.tsx            # Dropdown menu
 │   ├── EmailLink.tsx           # Anti-spam email link
+│   ├── Icons.tsx               # Centralized SVG icon components (DRY)
 │   ├── EssayLink.tsx           # Homepage essay row with polyhedra
 │   ├── EssayNav.tsx            # Prev/Next essay navigation
 │   ├── HomepageFooter.tsx      # Footer with social links
@@ -74,16 +79,21 @@ blog/
 │   ├── Spinner.tsx             # Loading spinner
 │   ├── StatusBadge.tsx         # Status pill component
 │   ├── TapLink.tsx             # iOS scroll-aware link
-│   └── ThemeToggle.tsx         # Dark mode toggle
+│   ├── ThemeToggle.tsx         # Dark mode toggle
+│   └── TiptapEditor.tsx        # WYSIWYG editor component
 ├── lib/                        # Utilities and configs
 │   ├── auth.ts                 # NextAuth config + isAdmin helper
 │   ├── db.ts                   # Prisma client singleton
+│   ├── editor/                 # Editor-specific utilities
+│   │   └── markdown-helpers.ts # Markdown toolbar helper functions
 │   ├── homepage.ts             # ✏️ Homepage content config (DRY)
 │   ├── keyboard/               # Keyboard navigation system
 │   │   ├── index.ts            # Exports
 │   │   ├── shortcuts.ts        # Shortcut definitions
 │   │   └── useKeyboard.ts      # useKeyboard hook
 │   ├── markdown.ts             # Markdown rendering + utils
+│   ├── posts.ts                # Shared post update logic (DRY)
+│   ├── turndown.ts             # HTML to markdown conversion
 │   ├── polyhedra/              # 3D polyhedra system
 │   │   ├── renderer.ts         # Canvas rendering logic
 │   │   ├── shapes.json         # Generated shape data
@@ -182,21 +192,20 @@ export const HOMEPAGE = {
   
   // Bio: Array of paragraphs, each paragraph is array of segments
   // Segments can have optional href for inline links
+  // (Example - actual content in lib/homepage.ts)
   bio: [
     [
       { text: 'I started as a ' },
       { text: 'Thiel Fellow', href: 'https://thielfellowship.org' },
-      { text: ', then founded ' },
-      { text: 'Ordo', href: 'https://ordo.com' },
-      { text: '.' },
+      { text: ' ... ' },
     ],
-    [{ text: "Ten years into building, I'm sharing my notes." }],
+    [{ text: "Ten years into building, I'm sharing my thoughts." }],
   ] as TextSegment[][],
   
   notes: {
-    title: 'Notes',
+    title: 'Recent Essays',
     maxItems: null,  // null = show all, number to limit
-    emptyMessage: 'No notes yet.',
+    emptyMessage: 'No essays yet.',
   },
   
   footerLinks: [
@@ -368,9 +377,9 @@ Set `WRITER_EMAIL` and `WRITER_NAME` in `.env.local`, then run `npm run db:setup
 - Quick actions: edit, publish, unpublish, delete
 - Keyboard shortcut: `n` for new essay
 
-### Markdown Editor (`app/writer/editor/[[...slug]]/page.tsx`)
+### WYSIWYG Editor (`app/writer/editor/[[...slug]]/page.tsx`)
 - Title + subtitle inputs with auto-generated slug
-- Markdown textarea with live preview toggle
+- Tiptap WYSIWYG editor with toggle to raw markdown mode
 - Auto-save drafts (3-second debounce)
 - Word count in status bar
 - Revision history (automatic on each save)
@@ -441,8 +450,9 @@ NEXT_PUBLIC_CONTACT_EMAIL="your-email@example.com"
 WRITER_EMAIL="your-email@example.com"
 WRITER_NAME="Your Name"
 
-# Ngrok for mobile testing (optional)
-# NGROK_AUTHTOKEN="<your-ngrok-authtoken>"
+# Ngrok for mobile testing (used by dev:tunnel / dev:mobile)
+NGROK_DOMAIN="your-subdomain.ngrok.dev"
+NGROK_OAUTH_EMAIL="additional-email@example.com"  # Optional additional allowed email
 ```
 
 ### Initial Setup
@@ -460,6 +470,7 @@ npm run db:setup             # Push schema + seed admin user
 |---------|-------------|
 | `npm run dev` | Start development server (localhost only) |
 | `npm run dev:tunnel` | Start dev server + ngrok tunnel with OAuth protection |
+| `npm run dev:mobile` | Alias for dev:tunnel |
 | `npm run build` | Build for production |
 | `npm start` | Start production server |
 | `npm run db:push` | Push Prisma schema to database |
@@ -477,18 +488,18 @@ The project includes a tunneling setup for testing on real mobile devices with O
 
 ### How It Works
 
-**`npm run dev:tunnel`** starts both Next.js and ngrok in one command:
+**`npm run dev:tunnel`** (or `dev:mobile`) starts both Next.js and ngrok in one command:
 
 ```bash
-export $(grep -v '^#' .env.local | xargs) && \
-NEXTAUTH_URL=https://<ngrok-domain> next dev & \
-ngrok http 3000 --domain=<ngrok-domain> --oauth=google --oauth-allow-email=$WRITER_EMAIL
+AUTH_URL=https://$NGROK_DOMAIN next dev & \
+ngrok http 3000 --domain=$NGROK_DOMAIN --oauth=google \
+  --oauth-allow-email=$NGROK_OAUTH_EMAIL --oauth-allow-email=$WRITER_EMAIL
 ```
 
 1. Loads environment variables from `.env.local`
-2. Sets `NEXTAUTH_URL` to the ngrok domain (overrides auto-detection)
+2. Sets `AUTH_URL` to the ngrok domain (required for OAuth callbacks)
 3. Starts Next.js dev server in background
-4. Starts ngrok with Google OAuth protection
+4. Starts ngrok with Google OAuth protection (allows both `NGROK_OAUTH_EMAIL` and `WRITER_EMAIL`)
 
 ### Two-Layer Authentication
 
