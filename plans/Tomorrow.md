@@ -33,6 +33,7 @@ Follow [buildfor.plan.md](buildfor.plan.md) for detailed steps:
 - [ ] Essay page date format: no date, or custom "written X / posted Y" format
 - [ ] Custom control over homepage "recent essays" order and selection
 - [ ] Subscription option: RSS feed + simple email (Buttondown/Mailchimp, low maintenance)
+- [ ] Essays should be in infinite loop (navigating past last essay wraps to first)
 
 ## 4. Go Live
 
