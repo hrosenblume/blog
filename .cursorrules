@@ -3,15 +3,17 @@
 > ⚠️ **This file is committed to git.** Do not add sensitive data (API keys, emails, secrets). Use environment variables instead.
 
 ## Project Overview
-Personal essay blog built with Next.js 13 (App Router), Prisma (SQLite), NextAuth.js (Google OAuth), and Tailwind CSS. Features animated 3D polyhedra, keyboard-first navigation, and DRY configuration patterns.
+Personal essay blog built with Next.js 15 (App Router), React 19, Prisma (SQLite), NextAuth.js v5 (Google OAuth), and Tailwind CSS. Features animated 3D polyhedra, keyboard-first navigation, and DRY configuration patterns. Requires Node.js 20+.
 
 ## Tech Stack
-- **Framework**: Next.js 13 with App Router
+- **Runtime**: Node.js 20+ (LTS)
+- **Framework**: Next.js 15 with App Router
 - **Database**: SQLite via Prisma
-- **Auth**: NextAuth.js with Google OAuth
+- **Auth**: NextAuth.js v5 with Google OAuth
 - **Styling**: Tailwind CSS with dark mode (class-based via next-themes)
 - **Markdown**: marked + sanitize-html
 - **3D Graphics**: Canvas API (client-side polyhedra rendering)
+- **UI**: React 19
 
 ## Code Style
 

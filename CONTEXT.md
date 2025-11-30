@@ -4,7 +4,7 @@
 
 ## Overview
 
-**Hunter Rosenblume's personal essay blog** — a clean, minimal writing platform built with Next.js 13 (App Router), Prisma (SQLite), NextAuth.js (Google OAuth), and Tailwind CSS. Features animated 3D polyhedra, keyboard-first navigation, and a DRY configuration system.
+**Hunter Rosenblume's personal essay blog** — a clean, minimal writing platform built with Next.js 15 (App Router), React 19, Prisma (SQLite), NextAuth.js v5 (Google OAuth), and Tailwind CSS. Features animated 3D polyhedra, keyboard-first navigation, and a DRY configuration system. Requires Node.js 20+.
 
 **Live URLs:**
 - Public site: `/`
@@ -18,9 +18,11 @@
 
 | Layer | Technology |
 |-------|------------|
-| **Framework** | Next.js 13 (App Router) |
+| **Runtime** | Node.js 20+ (LTS) |
+| **Framework** | Next.js 15 (App Router) |
+| **UI** | React 19 |
 | **Database** | SQLite via Prisma |
-| **Auth** | NextAuth.js with Google OAuth |
+| **Auth** | NextAuth.js v5 with Google OAuth |
 | **Styling** | Tailwind CSS |
 | **Theme** | next-themes (dark mode, class-based) |
 | **Markdown** | marked + sanitize-html |
