@@ -266,7 +266,7 @@ export const ESSAYS_PAGE = {
   recommendation: {
     intro: 'Not sure which to read? Try ',
     slug: 'p3-startups',
-    label: 'P^3 Startups',
+    label: 'P³ Startups',
   },
   emptyMessage: 'No essays published yet.',
 } as const

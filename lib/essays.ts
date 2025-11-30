@@ -11,9 +11,9 @@ export const ESSAYS_PAGE = {
 
   // Recommendation blurb at top of page
   recommendation: {
-    intro: 'Not sure which to read? Try ',
+    intro: 'Not sure what to read? Try ',
     slug: 'p3-startups',
-    label: 'P^3 Startups',
+    label: 'P³ Startups',
   },
 
   // Empty state when there are no published essays
