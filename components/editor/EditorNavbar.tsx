@@ -41,7 +41,7 @@ export function EditorNavbar({
         </button>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          <ThemeToggle size="md" />
+          <ThemeToggle />
 
           {status === 'draft' && (
             <Button

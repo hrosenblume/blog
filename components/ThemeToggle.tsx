@@ -6,14 +6,10 @@ import { cn } from '@/lib/utils/cn'
 import { SunIcon, MoonIcon } from '@/components/Icons'
 
 interface ThemeToggleProps {
-  size?: 'sm' | 'md'
   className?: string
 }
 
-const sizeClasses = { sm: 'p-1.5', md: 'p-2.5' }
-const iconSizes = { sm: 'w-4 h-4', md: 'w-5 h-5' }
-
-export function ThemeToggle({ size = 'sm', className }: ThemeToggleProps) {
+export function ThemeToggle({ className }: ThemeToggleProps) {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
@@ -23,21 +19,20 @@ export function ThemeToggle({ size = 'sm', className }: ThemeToggleProps) {
     <button
       onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
       className={cn(
-        sizeClasses[size],
-        'rounded-md border border-border',
+        'w-9 h-9 rounded-md border border-border',
         'hover:bg-accent',
         'text-muted-foreground',
-        'min-w-[44px] min-h-[44px] flex items-center justify-center',
+        'flex items-center justify-center',
         className
       )}
       aria-label="Toggle dark mode"
     >
       {!mounted ? (
-        <div className={iconSizes[size]} />
+        <div className="w-4 h-4" />
       ) : theme === 'dark' ? (
-        <SunIcon className={iconSizes[size]} />
+        <SunIcon className="w-4 h-4" />
       ) : (
-        <MoonIcon className={iconSizes[size]} />
+        <MoonIcon className="w-4 h-4" />
       )}
     </button>
   )

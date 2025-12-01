@@ -22,7 +22,7 @@ export function HomepageFooter() {
             )
           )}
         </nav>
-        <ThemeToggle size="md" />
+        <ThemeToggle />
       </div>
     </footer>
   )

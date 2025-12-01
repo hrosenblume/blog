@@ -69,14 +69,14 @@ export default function WriterLayout({
                 href="/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2.5 rounded-md border border-border hover:bg-accent text-muted-foreground"
+                className="w-9 h-9 rounded-md border border-border hover:bg-accent text-muted-foreground flex items-center justify-center"
                 aria-label="View homepage"
                 title="View homepage"
               >
-                <ExternalLinkIcon />
+                <ExternalLinkIcon className="w-4 h-4" />
               </a>
               
-              <ThemeToggle size="md" />
+              <ThemeToggle />
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
