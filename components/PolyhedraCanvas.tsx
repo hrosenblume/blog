@@ -17,8 +17,6 @@ interface PolyhedraCanvasProps {
   index?: number
   hovered?: boolean  // Speed up rotation on hover
   clicked?: boolean  // Even faster spin on click (before navigation)
-  acceleration?: number  // Override acceleration rate (default 0.004, higher = faster ramp)
-  alwaysAnimate?: boolean  // Skip visibility check (for loaders)
 }
 
 // Rotation speeds (radians per millisecond)
@@ -28,7 +26,7 @@ const HOVER_SPEED = (2 * Math.PI) / 375    // Full rotation in 0.375 seconds (~1
 const CLICK_SPEED = (2 * Math.PI) / 100    // Full rotation in 0.1 seconds (~40x base)
 const ACCELERATION = 0.003                  // How fast speed changes (lower = more gradual startup)
 
-export function PolyhedraCanvas({ shape, size = 60, className = '', index = 0, hovered = false, clicked = false, acceleration = ACCELERATION, alwaysAnimate = false }: PolyhedraCanvasProps) {
+export function PolyhedraCanvas({ shape, size = 60, className = '', index = 0, hovered = false, clicked = false }: PolyhedraCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationRef = useRef<number>(0)
   const angleRef = useRef<number>(0)        // Current rotation angle - starts at 0 to match PNG
@@ -97,7 +95,7 @@ export function PolyhedraCanvas({ shape, size = 60, className = '', index = 0, h
     setIsCanvasReady(true)
 
     // If reduced motion or not visible, stay at static frame
-    if ((!isVisible && !alwaysAnimate) || prefersReducedMotion) {
+    if (!isVisible || prefersReducedMotion) {
       return
     }
 
@@ -112,7 +110,7 @@ export function PolyhedraCanvas({ shape, size = 60, className = '', index = 0, h
       // Smoothly accelerate/decelerate towards target speed
       // Priority: clicked > hovered > base
       const targetSpeed = clicked ? CLICK_SPEED : hovered ? HOVER_SPEED : BASE_SPEED
-      speedRef.current += (targetSpeed - speedRef.current) * acceleration * deltaTime
+      speedRef.current += (targetSpeed - speedRef.current) * ACCELERATION * deltaTime
       
       // Update angle based on current interpolated speed
       angleRef.current += speedRef.current * deltaTime
@@ -133,7 +131,7 @@ export function PolyhedraCanvas({ shape, size = 60, className = '', index = 0, h
         cancelAnimationFrame(animationRef.current)
       }
     }
-  }, [shape, size, isVisible, prefersReducedMotion, hovered, clicked, acceleration, alwaysAnimate, shapeData])
+  }, [shape, size, isVisible, prefersReducedMotion, hovered, clicked, shapeData])
 
   return (
     <div className={`relative ${className}`} style={{ width: size, height: size }}>

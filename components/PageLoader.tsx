@@ -9,7 +9,6 @@ export function PageLoader() {
         shape="square_trapezohedron" 
         size={60}
         hovered
-        alwaysAnimate
       />
     </div>
   )

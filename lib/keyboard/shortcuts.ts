@@ -6,6 +6,3 @@ export const SHORTCUTS = {
   NEXT: { key: 'ArrowRight' },
   ESCAPE_BACK: { key: 'Escape', allowInInput: true },  // editor→writer
 } as const
-
-
-

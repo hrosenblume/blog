@@ -39,6 +39,3 @@ export function useKeyboard(shortcuts: Shortcut[]) {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, []) // Empty deps - only run once, ref keeps handlers fresh
 }
-
-
-
