@@ -1,14 +1,13 @@
 /**
- * Build Polyhedra Placeholders
+ * Build Static Polyhedra Placeholders
  * 
- * Generates transparent animated GIF placeholders for all polyhedra shapes.
- * These are used as instant placeholders before the Canvas animation loads.
+ * Generates transparent static PNG placeholders for all polyhedra shapes.
+ * These show instantly before JS hydrates, then canvas takes over from the same angle.
  * 
- * Usage: node scripts/polyhedra/build-placeholders.js
+ * Usage: node scripts/polyhedra/build-static-placeholders.js
  */
 
 const { createCanvas } = require('canvas')
-const GIFEncoder = require('gif-encoder-2')
 const fs = require('fs')
 const path = require('path')
 
@@ -19,11 +18,8 @@ const shapes = JSON.parse(fs.readFileSync(shapesPath, 'utf8'))
 // Output directory
 const outputDir = path.join(__dirname, '../../public/polyhedra/placeholders')
 
-// GIF settings
-const SIZE = 60            // Image size (matches default PolyhedraCanvas size)
-const FPS = 15             // Frames per second
-const DURATION = 4         // Full rotation in seconds (matches canvas BASE_SPEED)
-const TOTAL_FRAMES = FPS * DURATION  // 60 frames for one full rotation
+// Image size (matches default PolyhedraCanvas size)
+const SIZE = 60
 
 // Colors matching the client-side renderer
 const EDGE_COLORS = [
@@ -43,17 +39,14 @@ const EDGE_COLORS = [
 
 // Fixed tilt angles (matching PolyhedraCanvas)
 const ANGLE_X = 0.4
+const ANGLE_Y = 0  // Start at angle 0 - canvas will also start here
 const ANGLE_Z = 0.2
 
 // Vertex color matching renderer.ts
 const VERTEX_COLOR = '#2a2a2a'
 
-// Number of frames (for syncing with canvas)
-const FRAME_COUNT = TOTAL_FRAMES  // 60 frames
-
 /**
  * Normalize vertices: center at origin and scale by circumradius
- * Must match normalizeVertices in renderer.ts
  */
 function normalizeVertices(vertices) {
   const xs = vertices.map(v => v[0])
@@ -82,15 +75,12 @@ function normalizeVertices(vertices) {
 function rotatePoint(point, angleX, angleY, angleZ) {
   let [x, y, z] = point
   
-  // Rotate around X axis
   const cosX = Math.cos(angleX), sinX = Math.sin(angleX)
   ;[y, z] = [y * cosX - z * sinX, y * sinX + z * cosX]
   
-  // Rotate around Y axis
   const cosY = Math.cos(angleY), sinY = Math.sin(angleY)
   ;[x, z] = [x * cosY + z * sinY, -x * sinY + z * cosY]
   
-  // Rotate around Z axis
   const cosZ = Math.cos(angleZ), sinZ = Math.sin(angleZ)
   ;[x, y] = [x * cosZ - y * sinZ, x * sinZ + y * cosZ]
   
@@ -107,7 +97,7 @@ function projectPoint(point, size, scale = 0.38) {
 }
 
 /**
- * Generate a numeric hash from a string (for deterministic color shuffling)
+ * Generate a numeric hash from a string
  */
 function hashString(str) {
   let hash = 0
@@ -140,19 +130,18 @@ function seededShuffle(array, seed) {
 }
 
 /**
- * Draw a single frame of the polyhedron
+ * Render the polyhedron to canvas
  */
-function renderFrame(ctx, shapeName, shape, size, angleY) {
+function renderShape(ctx, shapeName, shape, size) {
   const { vertices: rawVertices, edges } = shape
   
-  // Normalize vertices (must match PolyhedraCanvas)
+  // Normalize vertices
   const vertices = normalizeVertices(rawVertices)
   
   // Clear canvas (transparent)
   ctx.clearRect(0, 0, size, size)
   
-  // Get deterministic edge colors based on shape name
-  // Must match PolyhedraCanvas logic: create array of N colors, then shuffle
+  // Get deterministic edge colors
   const seed = hashString(shapeName)
   const edgeColors = seededShuffle(
     edges.map((_, i) => EDGE_COLORS[i % EDGE_COLORS.length]),
@@ -160,13 +149,13 @@ function renderFrame(ctx, shapeName, shape, size, angleY) {
   )
   
   // Rotate all vertices
-  const rotated = vertices.map(v => rotatePoint(v, ANGLE_X, angleY, ANGLE_Z))
+  const rotated = vertices.map(v => rotatePoint(v, ANGLE_X, ANGLE_Y, ANGLE_Z))
   
   // Calculate edge thickness based on size
   const thickness = Math.max(2, Math.floor(size / 40))
   const vertexRadius = Math.max(2, Math.floor(size / 35))
   
-  // Sort edges by average z-depth for proper rendering (back to front)
+  // Sort edges by z-depth
   const edgeDepths = edges.map((edge, i) => {
     const avgZ = (rotated[edge[0]][2] + rotated[edge[1]][2]) / 2
     return { z: avgZ, index: i, v1: edge[0], v2: edge[1] }
@@ -181,7 +170,7 @@ function renderFrame(ctx, shapeName, shape, size, angleY) {
   const vertexDepths = rotated.map((v, i) => ({ z: v[2], index: i, vertex: v }))
   vertexDepths.sort((a, b) => a.z - b.z)
   
-  // Draw edges back to front
+  // Draw edges
   for (const edge of edgeDepths) {
     const p1 = projectPoint(rotated[edge.v1], size)
     const p2 = projectPoint(rotated[edge.v2], size)
@@ -196,7 +185,7 @@ function renderFrame(ctx, shapeName, shape, size, angleY) {
     ctx.stroke()
   }
   
-  // Draw vertices back to front (on top of all edges)
+  // Draw vertices
   for (const vertex of vertexDepths) {
     const p = projectPoint(vertex.vertex, size)
     
@@ -207,40 +196,10 @@ function renderFrame(ctx, shapeName, shape, size, angleY) {
   }
 }
 
-/**
- * Generate an animated GIF for a shape
- */
-function generateGif(shapeName, shape) {
-  const encoder = new GIFEncoder(SIZE, SIZE, 'neuquant', true)  // true = use optimizer
-  const outputPath = path.join(outputDir, `${shapeName}.gif`)
-  
-  encoder.start()
-  encoder.setRepeat(0)      // Loop forever
-  encoder.setDelay(1000 / FPS)  // Frame delay in ms
-  encoder.setQuality(10)    // Image quality (1-30, lower = better but slower)
-  encoder.setTransparent(0x000000)  // Black as transparent color
-  
-  const canvas = createCanvas(SIZE, SIZE)
-  const ctx = canvas.getContext('2d')
-  
-  // Render each frame
-  for (let frame = 0; frame < TOTAL_FRAMES; frame++) {
-    const angleY = (frame / TOTAL_FRAMES) * Math.PI * 2
-    renderFrame(ctx, shapeName, shape, SIZE, angleY)
-    encoder.addFrame(ctx)
-  }
-  
-  encoder.finish()
-  
-  // Write the buffer to file
-  const buffer = encoder.out.getData()
-  fs.writeFileSync(outputPath, buffer)
-}
-
 // Main build
 function main() {
-  console.log('Building polyhedra placeholders (animated GIFs)...\n')
-  console.log(`Settings: ${SIZE}px, ${FPS}fps, ${DURATION}s rotation, ${TOTAL_FRAMES} frames\n`)
+  console.log('Building static polyhedra placeholders (transparent PNGs)...\n')
+  console.log(`Settings: ${SIZE}px, angle Y = 0 (matches canvas start)\n`)
 
   // Ensure output directory exists
   if (!fs.existsSync(outputDir)) {
@@ -252,12 +211,21 @@ function main() {
 
   for (const shapeName of shapeNames) {
     const shape = shapes[shapeName]
-    generateGif(shapeName, shape)
+    
+    const canvas = createCanvas(SIZE, SIZE)
+    const ctx = canvas.getContext('2d')
+    
+    renderShape(ctx, shapeName, shape, SIZE)
+    
+    const outputPath = path.join(outputDir, `${shapeName}.png`)
+    const buffer = canvas.toBuffer('image/png')
+    fs.writeFileSync(outputPath, buffer)
+    
     count++
     process.stdout.write(`\rGenerated ${count}/${shapeNames.length}: ${shapeName}`)
   }
 
-  console.log(`\n\nGenerated ${count} animated GIFs in ${outputDir}`)
+  console.log(`\n\nGenerated ${count} static PNGs in ${outputDir}`)
 }
 
 main()

@@ -15,8 +15,7 @@
     "db:seed": "npx tsx --env-file=.env.local prisma/seed.ts",
     "db:setup": "npm run db:push && npm run db:seed",
     "build:thumbnails": "node scripts/polyhedra/build-thumbnails.js",
-    "build:placeholders": "node scripts/polyhedra/build-placeholders.js",
-    "build:static-placeholders": "node scripts/polyhedra/build-static-placeholders.js"
+    "build:placeholders": "node scripts/polyhedra/build-placeholders.js"
   },
   "dependencies": {
     "@prisma/client": "^4.16.2",
@@ -55,7 +54,6 @@
     "autoprefixer": "^10.4.0",
     "better-sqlite3": "^12.4.6",
     "canvas": "^3.2.0",
-    "gif-encoder-2": "^1.0.5",
     "ngrok": "^5.0.0-beta.2",
     "postcss": "^8.4.0",
     "prisma": "^4.16.2",
