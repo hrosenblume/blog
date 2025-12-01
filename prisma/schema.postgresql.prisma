@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL_PROD")
+}
+
+model Post {
+  id             String     @id @default(uuid())
+  title          String
+  slug           String     @unique
+  markdown       String
+  status         String     @default("draft")
+  polyhedraShape String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  publishedAt    DateTime?
+  subtitle       String?
+  revisions      Revision[]
+}
+
+model Revision {
+  id             String   @id @default(uuid())
+  postId         String
+  title          String?
+  subtitle       String?
+  markdown       String
+  polyhedraShape String?
+  createdAt      DateTime @default(now())
+  post           Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  role      String   @default("writer")
+  createdAt DateTime @default(now())
+}
+

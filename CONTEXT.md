@@ -21,7 +21,7 @@
 | **Runtime** | Node.js 20+ (LTS) |
 | **Framework** | Next.js 15 (App Router) |
 | **UI** | React 19 |
-| **Database** | SQLite via Prisma |
+| **Database** | SQLite (dev) / PostgreSQL (prod) via Prisma |
 | **Auth** | NextAuth.js v5 with Google OAuth |
 | **Styling** | Tailwind CSS |
 | **Theme** | next-themes (dark mode, class-based) |
@@ -112,19 +112,31 @@ blog/
 │       ├── confirm.ts          # Confirmation dialogs
 │       └── format.ts           # Date/number formatting
 ├── prisma/
-│   ├── schema.prisma           # Database schema
+│   ├── schema.prisma           # SQLite schema (development)
+│   ├── schema.postgresql.prisma # PostgreSQL schema (production)
 │   ├── seed.ts                 # Seed script
+│   ├── data/                   # Exported data for migration
+│   │   ├── users.json
+│   │   ├── posts.json
+│   │   └── revisions.json
 │   └── dev.db                  # SQLite database (gitignored)
 ├── public/
 │   ├── polyhedra/              # Fallback GIFs for no-JS
 │   └── uploads/                # User uploaded images (gitignored)
 ├── scripts/
 │   ├── assign-shapes.js        # Assign polyhedra to posts
+│   ├── export-data.ts          # Export SQLite data to JSON
+│   ├── import-data.ts          # Import JSON to PostgreSQL
 │   └── polyhedra/              # Polyhedra build system
 │       ├── build-shapes.js     # Generate shapes.json
 │       ├── data/               # Shape definitions (Platonic, etc.)
 │       ├── index.js            # GIF generation script
 │       └── off-parser.js       # OFF file parser
+├── .github/
+│   └── workflows/
+│       ├── deploy-production.yml  # Deploy on push to main
+│       └── deploy-staging.yml     # Deploy on push to dev
+├── ecosystem.config.js         # PM2 process configuration
 └── plans/                      # Project planning files
     ├── Tomorrow.md             # Immediate/short-term tasks
     ├── Future.md               # Long-term ideas and features
@@ -551,7 +563,8 @@ Set `WRITER_EMAIL` and `WRITER_NAME` in `.env.local`, then run `npm run db:setup
 
 ```env
 # Database
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="file:./dev.db"              # SQLite (development)
+DATABASE_URL_PROD="postgresql://..."      # PostgreSQL (production)
 
 # NextAuth
 NEXTAUTH_URL=                # Leave empty for auto-detection (dev:tunnel sets this automatically)
@@ -590,14 +603,85 @@ npm run db:setup             # Push schema + seed admin user
 | `npm run dev` | Start development server (localhost only) |
 | `npm run dev:tunnel` | Start dev server + ngrok tunnel with OAuth protection |
 | `npm run dev:mobile` | Alias for dev:tunnel |
-| `npm run build` | Build for production |
+| `npm run build` | Build for production (SQLite) |
+| `npm run build:prod` | Build for production (PostgreSQL) |
 | `npm start` | Start production server |
-| `npm run db:push` | Push Prisma schema to database |
-| `npm run db:studio` | Open Prisma Studio GUI |
+| `npm run db:push` | Push Prisma schema to SQLite |
+| `npm run db:push:prod` | Push Prisma schema to PostgreSQL |
+| `npm run db:studio` | Open Prisma Studio (SQLite) |
+| `npm run db:studio:prod` | Open Prisma Studio (PostgreSQL) |
 | `npm run db:seed` | Seed admin user + sample essays |
 | `npm run db:setup` | Run db:push + db:seed (first-time setup) |
+| `npm run db:setup:prod` | Setup PostgreSQL (push + seed) |
+| `npm run db:export` | Export SQLite data to JSON files |
+| `npm run db:import:prod` | Import JSON data to PostgreSQL |
 | `node scripts/polyhedra/build-shapes.js` | Regenerate shapes.json |
 | `node scripts/assign-shapes.js` | Assign shapes to posts |
+
+---
+
+## Production Deployment
+
+The project deploys to a DigitalOcean Droplet with GitHub Actions CI/CD.
+
+### Architecture
+
+- **Production**: `/var/www/blog` — Deploys from `main` branch, port 3000
+- **Staging**: `/var/www/blog-staging` — Deploys from `dev` branch, port 3001
+- **Database**: PostgreSQL (via `DATABASE_URL_PROD` env var)
+- **Process Manager**: PM2 (configured in `ecosystem.config.js`)
+
+### GitHub Actions Workflows
+
+**`.github/workflows/deploy-production.yml`** (triggers on push to `main`):
+1. SSH into Droplet
+2. `git reset --hard origin/main`
+3. `npm ci`
+4. `prisma generate --schema=prisma/schema.postgresql.prisma`
+5. `prisma db push --schema=prisma/schema.postgresql.prisma`
+6. `npm run build:prod`
+7. `pm2 restart blog`
+
+**`.github/workflows/deploy-staging.yml`** (triggers on push to `dev`):
+Same steps but for staging environment.
+
+### Required GitHub Secrets
+
+| Secret | Description |
+|--------|-------------|
+| `DO_HOST` | Droplet IP address |
+| `DO_USER` | SSH username |
+| `DO_SSH_KEY` | Private SSH key |
+
+### PM2 Configuration (`ecosystem.config.js`)
+
+```javascript
+module.exports = {
+  apps: [
+    { name: 'blog', cwd: '/var/www/blog', script: 'npm', args: 'start', env: { PORT: 3000 } },
+    { name: 'blog-staging', cwd: '/var/www/blog-staging', script: 'npm', args: 'start', env: { PORT: 3001 } },
+  ]
+}
+```
+
+### Data Migration (SQLite → PostgreSQL)
+
+To migrate data from local SQLite to production PostgreSQL:
+
+```bash
+# 1. Export local data to JSON files
+npm run db:export
+
+# 2. Set DATABASE_URL_PROD in .env.local
+
+# 3. Push schema to PostgreSQL
+npm run db:push:prod
+
+# 4. Import data
+npm run db:import:prod
+```
+
+Exported data lives in `prisma/data/*.json` (committed to git for backup).
 
 ---
 
