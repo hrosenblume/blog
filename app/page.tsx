@@ -34,10 +34,10 @@ export default async function Home() {
   return (
     <main className="max-w-2xl mx-auto px-6 py-16">
       <header className="mb-16">
-        <h1 className="text-title font-bold mb-6 dark:text-white">
+        <h1 className="text-title font-bold mb-6 dark:text-white animate-fade-in-up">
           <SecretNav>{HOMEPAGE.name}</SecretNav>
         </h1>
-        <div className="max-w-xl space-y-4">
+        <div className="max-w-xl space-y-4 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
           {HOMEPAGE.bio.map((paragraph, pIndex) => (
             <p key={pIndex} className="leading-relaxed text-body text-gray-600 dark:text-gray-400">
               {paragraph.map((segment, sIndex) =>
@@ -55,7 +55,7 @@ export default async function Home() {
       </header>
 
       <section>
-        <h2 className="text-h1 font-semibold mb-8 dark:text-white">{HOMEPAGE.notes.title}</h2>
+        <h2 className="text-h1 font-semibold mb-8 dark:text-white animate-fade-in-up" style={{ animationDelay: '200ms' }}>{HOMEPAGE.notes.title}</h2>
         
         {posts.length === 0 ? (
           <p className="text-muted-foreground">{HOMEPAGE.notes.emptyMessage}</p>

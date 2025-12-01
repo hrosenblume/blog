@@ -27,13 +27,15 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
       )}
       aria-label="Toggle dark mode"
     >
-      {!mounted ? (
-        <div className="w-4 h-4" />
-      ) : theme === 'dark' ? (
-        <SunIcon className="w-4 h-4" />
-      ) : (
-        <MoonIcon className="w-4 h-4" />
-      )}
+      <div className="w-4 h-4 transition-transform duration-200 active:scale-90">
+        {!mounted ? (
+          <div className="w-4 h-4" />
+        ) : theme === 'dark' ? (
+          <SunIcon className="w-4 h-4" />
+        ) : (
+          <MoonIcon className="w-4 h-4" />
+        )}
+      </div>
     </button>
   )
 }

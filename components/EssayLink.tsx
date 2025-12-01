@@ -41,7 +41,8 @@ export function EssayLink({ slug, title, subtitle, polyhedraShape, index }: Essa
       onMouseLeave={() => setHovered(false)}
       onFocus={() => setHovered(true)}
       onBlur={() => setHovered(false)}
-      className="group block w-full text-left border-b border-border transition-colors can-hover:hover:bg-accent px-6 py-5"
+      className="group block w-full text-left border-b border-border transition-all duration-200 can-hover:hover:bg-accent can-hover:hover:shadow-sm can-hover:hover:-translate-y-0.5 px-6 py-5 animate-fade-in-up"
+      style={{ animationDelay: `${200 + index * 75}ms` }}
     >
       <div className="flex items-center gap-4">
         <div className="flex-shrink-0 w-[60px] h-[60px] rounded overflow-hidden">
