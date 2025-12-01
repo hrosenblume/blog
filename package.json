@@ -14,7 +14,9 @@
     "db:studio": "export $(grep -v '^#' .env.local | xargs) && prisma studio",
     "db:seed": "npx tsx --env-file=.env.local prisma/seed.ts",
     "db:setup": "npm run db:push && npm run db:seed",
-    "build:thumbnails": "node scripts/polyhedra/build-thumbnails.js"
+    "build:thumbnails": "node scripts/polyhedra/build-thumbnails.js",
+    "build:placeholders": "node scripts/polyhedra/build-placeholders.js",
+    "build:static-placeholders": "node scripts/polyhedra/build-static-placeholders.js"
   },
   "dependencies": {
     "@prisma/client": "^4.16.2",

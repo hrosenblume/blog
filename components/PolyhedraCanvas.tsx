@@ -14,33 +14,32 @@ interface PolyhedraCanvasProps {
   shape: string
   size?: number
   className?: string
-  index?: number  // Used to cycle through fallback GIFs (0-5)
+  index?: number
   hovered?: boolean  // Speed up rotation on hover
   clicked?: boolean  // Even faster spin on click (before navigation)
   acceleration?: number  // Override acceleration rate (default 0.004, higher = faster ramp)
   alwaysAnimate?: boolean  // Skip visibility check (for loaders)
 }
 
-// 6 fallback GIFs for when JavaScript is disabled
-const FALLBACK_COUNT = 6
-
 // Rotation speeds (radians per millisecond)
-const BASE_SPEED = (2 * Math.PI) / 4000    // Full rotation in 4 seconds
+const ROTATION_PERIOD_MS = 4000  // 4 seconds for one full rotation
+const BASE_SPEED = (2 * Math.PI) / ROTATION_PERIOD_MS
 const HOVER_SPEED = (2 * Math.PI) / 375    // Full rotation in 0.375 seconds (~10x base)
 const CLICK_SPEED = (2 * Math.PI) / 100    // Full rotation in 0.1 seconds (~40x base)
-const ACCELERATION = 0.004                  // How fast speed changes (higher = snappier)
+const ACCELERATION = 0.003                  // How fast speed changes (lower = more gradual startup)
 
 export function PolyhedraCanvas({ shape, size = 60, className = '', index = 0, hovered = false, clicked = false, acceleration = ACCELERATION, alwaysAnimate = false }: PolyhedraCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationRef = useRef<number>(0)
-  const angleRef = useRef<number>(0)        // Current rotation angle
-  const speedRef = useRef<number>(BASE_SPEED)  // Current speed (smoothly interpolated)
+  const angleRef = useRef<number>(0)        // Current rotation angle - starts at 0 to match PNG
+  const speedRef = useRef<number>(0)        // Start at 0, smoothly accelerate to BASE_SPEED
   const lastTimeRef = useRef<number | null>(null)
   const [isVisible, setIsVisible] = useState(true)
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
-  
-  // Cycle through fallbacks so adjacent posts have different shapes
-  const fallbackIndex = index % FALLBACK_COUNT
+  const [isCanvasReady, setIsCanvasReady] = useState(false)
+
+  // Get shape data (static import - no async loading)
+  const shapeData = SHAPES[shape] || SHAPES.cube
 
   // Check for reduced motion preference
   useEffect(() => {
@@ -74,9 +73,6 @@ export function PolyhedraCanvas({ shape, size = 60, className = '', index = 0, h
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    // Get shape data, fallback to cube if not found
-    const shapeData = SHAPES[shape] || SHAPES.cube
-
     // Normalize vertices
     const vertices = normalizeVertices(shapeData.vertices)
     const edges = shapeData.edges
@@ -92,15 +88,16 @@ export function PolyhedraCanvas({ shape, size = 60, className = '', index = 0, h
     const angleX = 0.4
     const angleZ = 0.2
 
-    // Render static frame if reduced motion or not visible
-    const renderStatic = () => {
-      ctx.clearRect(0, 0, size, size)
-      renderFrame(ctx, vertices, edges, edgeColors, size, angleX, 0, angleZ)
-    }
+    // Start at angle 0 - matches the static PNG placeholder exactly
+    angleRef.current = 0
 
-    // Animate if visible and motion allowed
+    // Render first frame at angle 0 and mark canvas as ready
+    ctx.clearRect(0, 0, size, size)
+    renderFrame(ctx, vertices, edges, edgeColors, size, angleX, 0, angleZ)
+    setIsCanvasReady(true)
+
+    // If reduced motion or not visible, stay at static frame
     if ((!isVisible && !alwaysAnimate) || prefersReducedMotion) {
-      renderStatic()
       return
     }
 
@@ -136,26 +133,42 @@ export function PolyhedraCanvas({ shape, size = 60, className = '', index = 0, h
         cancelAnimationFrame(animationRef.current)
       }
     }
-  }, [shape, size, isVisible, prefersReducedMotion, hovered, clicked, acceleration, alwaysAnimate])
+  }, [shape, size, isVisible, prefersReducedMotion, hovered, clicked, acceleration, alwaysAnimate, shapeData])
 
   return (
     <div className={`relative ${className}`} style={{ width: size, height: size }}>
-      {/* Fallback GIF for when JavaScript is disabled */}
+      {/* Static PNG placeholder - shows before JS hydrates, matches canvas frame 0 exactly */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img 
+        src={`/polyhedra/placeholders/${shape}.png`}
+        alt=""
+        width={size}
+        height={size}
+        className={`absolute inset-0 ${isCanvasReady ? 'hidden' : 'block'}`}
+        style={{ objectFit: 'contain' }}
+        onError={(e) => {
+          e.currentTarget.src = '/polyhedra/placeholders/cube.png'
+        }}
+      />
+      
+      {/* Fallback for when JavaScript is disabled */}
       <noscript>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img 
-          src={`/polyhedra/fallback-${fallbackIndex}.gif`}
-          alt={`Animated polyhedron`}
+          src={`/polyhedra/placeholders/${shape}.png`}
+          alt="Polyhedron"
           width={size}
           height={size}
         />
       </noscript>
       
-      {/* Canvas */}
+      {/* Canvas - instant switch, same frame as PNG */}
       <canvas
         ref={canvasRef}
         width={size}
         height={size}
         aria-label={`Animated ${shape} polyhedron`}
+        className={`absolute inset-0 ${isCanvasReady ? 'block' : 'hidden'}`}
       />
     </div>
   )
