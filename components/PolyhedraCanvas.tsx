@@ -36,7 +36,7 @@ export function PolyhedraCanvas({ shape, size = 60, className = '', index = 0, h
   const angleRef = useRef<number>(0)        // Current rotation angle
   const speedRef = useRef<number>(BASE_SPEED)  // Current speed (smoothly interpolated)
   const lastTimeRef = useRef<number | null>(null)
-  const [isVisible, setIsVisible] = useState(false)
+  const [isVisible, setIsVisible] = useState(true)
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
   
   // Cycle through fallbacks so adjacent posts have different shapes

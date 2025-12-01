@@ -1,7 +1,5 @@
 'use client'
 
-import { useEffect } from 'react'
-import { usePathname } from 'next/navigation'
 import { SessionProvider } from 'next-auth/react'
 import { ThemeProvider, useTheme } from 'next-themes'
 import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
@@ -17,11 +15,11 @@ function ThemeShortcut() {
 }
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname()
-
-  useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [pathname])
+  // Commented out: Next.js App Router handles scroll-to-top on navigation by default
+  // const pathname = usePathname()
+  // useEffect(() => {
+  //   window.scrollTo(0, 0)
+  // }, [pathname])
 
   return (
     <SessionProvider>
