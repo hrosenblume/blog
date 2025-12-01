@@ -301,6 +301,31 @@ Example (editor page with fixed footer):
 
 This prevents iOS Safari from "freezing" scroll when touch starts on a fixed element.
 
+### Sticky Hover Fix (iOS Safari)
+iOS Safari has a bug where hover states "stick" after navigation if an element is in the same position as where you tapped. For navigation links and large interactive elements, use the `can-hover:` variant instead of raw `hover:`:
+
+```tsx
+// BAD: hover sticks on touch devices after navigation
+className="hover:bg-accent"
+
+// GOOD: only applies hover on devices that support it (mouse/trackpad)
+className="can-hover:hover:bg-accent"
+
+// Works with group-hover too
+className="can-hover:group-hover:text-foreground"
+```
+
+The `can-hover:` variant is defined in `tailwind.config.js` and uses `@media (hover: hover)`.
+
+**When to use `can-hover:`:**
+- Navigation links that take up significant screen space (EssayNav, EssayLink)
+- Any element that might be in the same position after page navigation
+
+**When regular `hover:` is fine:**
+- Small buttons (theme toggle, dropdown triggers)
+- Elements in shadcn/ui components
+- Elements that won't be in the same position after navigation
+
 ## Terminal Commands
 
 ### Check Before Running

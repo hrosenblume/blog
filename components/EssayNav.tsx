@@ -10,7 +10,7 @@ interface EssayNavProps {
   isLast?: boolean   // At last essay, "Next" wraps to first
 }
 
-const navLinkClass = 'flex-1 flex flex-col justify-center px-6 overflow-hidden transition-colors text-muted-foreground hover:bg-accent hover:text-foreground active:bg-accent/80'
+const navLinkClass = 'flex-1 flex flex-col justify-center px-6 overflow-hidden transition-colors text-muted-foreground can-hover:hover:bg-accent can-hover:hover:text-foreground active:bg-accent/80'
 
 export function EssayNav({ prev, next, isFirst = false, isLast = false }: EssayNavProps) {
   if (!prev && !next) return null

@@ -1,17 +1,16 @@
 'use client'
 
 import { PolyhedraCanvas } from '@/components/PolyhedraCanvas'
-import { CenteredPage } from '@/components/CenteredPage'
 
 export function PageLoader() {
   return (
-    <CenteredPage>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background">
       <PolyhedraCanvas 
         shape="square_trapezohedron" 
         size={60}
         hovered
         alwaysAnimate
       />
-    </CenteredPage>
+    </div>
   )
 }

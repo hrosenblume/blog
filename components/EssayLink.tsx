@@ -41,7 +41,7 @@ export function EssayLink({ slug, title, subtitle, polyhedraShape, index }: Essa
       onMouseLeave={() => setHovered(false)}
       onFocus={() => setHovered(true)}
       onBlur={() => setHovered(false)}
-      className="group block w-full text-left border-b border-border transition-colors hover:bg-accent px-6 py-5"
+      className="group block w-full text-left border-b border-border transition-colors can-hover:hover:bg-accent px-6 py-5"
     >
       <div className="flex items-center gap-4">
         <div className="flex-shrink-0 w-[60px] h-[60px] rounded overflow-hidden">
@@ -55,7 +55,7 @@ export function EssayLink({ slug, title, subtitle, polyhedraShape, index }: Essa
         </div>
         
         <div className="flex-1 min-w-0">
-          <h3 className="text-section font-medium mb-1 transition-colors group-hover:text-muted-foreground">
+          <h3 className="text-section font-medium mb-1 transition-colors can-hover:group-hover:text-muted-foreground">
             {title}
           </h3>
           {subtitle && (
@@ -65,7 +65,7 @@ export function EssayLink({ slug, title, subtitle, polyhedraShape, index }: Essa
           )}
         </div>
         
-        <ChevronRightIcon className="w-5 h-5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all flex-shrink-0" />
+        <ChevronRightIcon className="w-5 h-5 text-muted-foreground can-hover:group-hover:text-foreground can-hover:group-hover:translate-x-1 transition-all flex-shrink-0" />
       </div>
     </Link>
   )

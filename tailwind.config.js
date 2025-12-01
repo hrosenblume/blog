@@ -57,5 +57,12 @@ module.exports = {
       },
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [
+    require('tailwindcss-animate'),
+    // Only apply hover styles on devices that support hover (not touch)
+    // Usage: can-hover:hover:bg-accent instead of hover:bg-accent
+    function({ addVariant }) {
+      addVariant('can-hover', '@media (hover: hover)')
+    },
+  ],
 }
