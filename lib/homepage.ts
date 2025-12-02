@@ -1,6 +1,5 @@
 // ============================================
 // ✏️  EDIT YOUR HOMEPAGE CONTENT HERE
-// Last deploy test: Dec 2, 2025
 // ============================================
 
 export type TextSegment = { text: string; href?: string }
