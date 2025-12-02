@@ -16,8 +16,8 @@ module.exports = {
     {
       name: 'blog',
       cwd: '/var/www/blog',
-      script: 'npm',
-      args: 'start',
+      script: 'node',
+      args: '.next/standalone/server.js',
       env: {
         PORT: 3000,
         NODE_ENV: 'production'
@@ -34,8 +34,8 @@ module.exports = {
     {
       name: 'blog-staging',
       cwd: '/var/www/blog-staging',
-      script: 'npm',
-      args: 'start',
+      script: 'node',
+      args: '.next/standalone/server.js',
       env: {
         PORT: 3001,
         NODE_ENV: 'production'
