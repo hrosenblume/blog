@@ -32,7 +32,7 @@ jobs:
             
             # Install dependencies
             echo "📦 Installing dependencies..."
-            npm ci --production=false
+            npm install
             
             # Generate Prisma client for PostgreSQL
             echo "🔧 Generating Prisma client..."

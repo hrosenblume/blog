@@ -14,7 +14,7 @@ export const HOMEPAGE = {
     [
       { text: 'I started as a ' },
       { text: 'Thiel Fellow', href: 'https://thielfellowship.org' },
-      { text: ' / software engineer. '},],[{text:'More recently, I am the co-founder and CEO of ' },
+      { text: ' and engineer. '},],[{text:'More recently, I am the co-founder and CEO of ' },
       { text: 'Ordo', href: 'https://ordo.com' },
       { text: ', a school lunch company. This year we\'re serving 3 million meals in 15 states.' },
     ],
@@ -22,10 +22,6 @@ export const HOMEPAGE = {
     [
       /*KEEP COMMENTS BELOW FOR FUTURE USE !IMPORTANT*/
       /*{ text: 'After a decade of building, I\'m writing about it.' },*/
-      /*{ text: 'Ten years into building. Writing about it now.' },*/
-      /*{ text: 'A decade into building, I'm writing about it.' },*/
-      /*{ text: 'Ten years into building, I\'m writing about it too.' },*/
-      /*{ text: 'Ten years into building, I\'m sharing my Notes app.' },*/
       { text: "Ten years into building, I'm sharing my thoughts." },
     ],
     // Paragraph 3
