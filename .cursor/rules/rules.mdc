@@ -98,6 +98,15 @@ Use CSS variables from `globals.css`:
 No documentation updates — save that for production.
 
 ### When user types "g" (production commit)
+**CRITICAL: "g" ALWAYS commits and pushes to `main`, regardless of current branch.**
+
+If on `dev` or another branch:
+1. `git stash` (if uncommitted changes)
+2. `git checkout main`
+3. `git merge dev` (or current branch)
+4. Continue with steps below, then `git checkout dev` to return
+
+Steps:
 1. `git add -A && git status -sb && git diff --staged --stat`
 2. Read modified files for context
 3. Review chat history
@@ -106,7 +115,8 @@ No documentation updates — save that for production.
    - `context.mdc` — New systems, architecture, file structure
    - No sensitive data (URLs, emails, secrets) — use env var references
 5. Commit with comprehensive message
-6. Push to `main` branch (triggers production deploy)
+6. `git push origin main` (triggers production deploy)
+7. If started on another branch: `git checkout dev && git stash pop`
 
 ### When user types "m" (merge dev → prod)
 1. `git fetch origin && git log --oneline main..dev` to see what's being promoted
@@ -122,13 +132,16 @@ No documentation updates — save that for production.
 8. Return to dev branch: `git checkout dev`
 
 ### When user types "p" (pull current branch)
-Run `git pull origin $(git branch --show-current)`
+1. `git stash` — save local changes
+2. `git pull origin $(git branch --show-current)`
+3. `git stash pop` — restore local changes
 
 ### When user types "pf" (force reset to main)
-1. `git fetch origin main`
-2. `git reset --hard origin/main`
+1. `git stash` — save local changes
+2. `git fetch origin main`
+3. `git reset --hard origin/main`
 
-⚠️ **Caution:** Discards all local changes and makes current branch identical to `origin/main`
+Changes are preserved in stash (`git stash list` to see, `git stash pop` to restore)
 
 ## Planning Files
 
