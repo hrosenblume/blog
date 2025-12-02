@@ -121,8 +121,14 @@ No documentation updates — save that for production.
 7. Push to `main` (triggers production deploy)
 8. Return to dev branch: `git checkout dev`
 
-### When user types "p"
-Run `git pull origin main`
+### When user types "p" (pull current branch)
+Run `git pull origin $(git branch --show-current)`
+
+### When user types "pf" (force reset to main)
+1. `git fetch origin main`
+2. `git reset --hard origin/main`
+
+⚠️ **Caution:** Discards all local changes and makes current branch identical to `origin/main`
 
 ## Planning Files
 

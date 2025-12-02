@@ -1,80 +1,57 @@
-# Personal Essay Blog
+# hunter.blog
 
-A clean, minimal blog with a writer dashboard. Built with Next.js, Prisma, and NextAuth.
+A personal essay site with a writer's dashboard. [Live site →](https://hunterrosenblume.com)
 
-## Features
+---
 
-- Markdown editor with live preview
-- Google OAuth authentication (single user)
-- Admin dashboard for user/post management
-- Dark mode support
-- Static site generation for public pages
-- Image uploads
+## What You Get
+
+- Rich text editor with markdown support
+- Post revisions and image uploads
+- Writer dashboard + admin panel
+- Keyboard shortcuts throughout
+- Dark/light mode, static generation
+
+## Stack
+
+- Next.js 15 / React 19
+- Prisma (SQLite dev, PostgreSQL prod)
+- NextAuth v5 (Google OAuth)
+- Tiptap editor
+- Tailwind CSS
 
 ## Quick Start
 
 ```bash
-npm install
-cp .env.example .env.local   # Edit with your credentials
-npx prisma db push
-npm run dev
+git clone https://github.com/hrosenblume/blog
+cd blog
+cp .env.example .env.local  # fill in your values
+npm install && npm run db:setup && npm run dev
 ```
 
-- Public site: http://localhost:3000
-- Writer dashboard: http://localhost:3000/writer
-- Admin panel: http://localhost:3000/admin
+Open [http://localhost:3000](http://localhost:3000).
 
-## Environment Variables
+## Environment
 
 ```env
 DATABASE_URL="file:./dev.db"
 NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="your-secret-key"
-AUTH_TRUST_HOST=true
+NEXTAUTH_SECRET="your-secret"
 GOOGLE_CLIENT_ID="your-google-client-id"
 GOOGLE_CLIENT_SECRET="your-google-client-secret"
-WRITER_EMAIL="your-email@gmail.com"
-# NGROK_AUTHTOKEN="your-ngrok-authtoken"  # Optional, for mobile testing
+WRITER_EMAIL="you@example.com"
 ```
 
-## Commands
+## Routes
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server |
-| `npm run build` | Build for production |
-| `npm start` | Start production server |
-| `npm run db:push` | Push schema to database |
-| `npm run db:studio` | Open Prisma Studio |
-| `npm run db:seed` | Seed the database |
+| Path | Description |
+|------|-------------|
+| `/` | Homepage |
+| `/essays` | All essays |
+| `/e/[slug]` | Single essay |
+| `/writer` | Writer dashboard |
+| `/admin` | Admin panel |
 
-## Project Structure
+---
 
-```
-blog/
-├── app/
-│   ├── api/          # API routes
-│   ├── admin/        # Admin dashboard (protected)
-│   ├── auth/         # Auth pages
-│   ├── e/[slug]/     # Essay pages (SSG)
-│   ├── writer/       # Writer dashboard (protected)
-│   └── page.tsx      # Homepage (SSG)
-├── components/       # Shared UI components
-├── lib/
-│   ├── auth.ts       # NextAuth config
-│   ├── db.ts         # Prisma client
-│   ├── markdown.ts   # Markdown utils
-│   └── utils/        # Utility functions
-├── prisma/
-│   ├── schema.prisma # Database schema
-│   └── seed.ts       # Seed script
-├── public/
-│   └── uploads/      # Uploaded images
-```
-
-## Tech Stack
-
-- **Framework**: Next.js 13 (App Router)
-- **Database**: SQLite + Prisma
-- **Auth**: NextAuth.js (Google)
-- **Styling**: Tailwind CSS
+Fork it, make it yours.
