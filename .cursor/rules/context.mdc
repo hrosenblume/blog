@@ -63,6 +63,9 @@ blog/
 │   ├── schema.prisma           # SQLite (dev)
 │   ├── schema.postgresql.prisma # PostgreSQL (prod)
 │   └── data/                   # Exported migration data
+├── plans/                      # Project planning
+│   ├── Tomorrow.md             # Immediate tasks
+│   └── Future.md               # Long-term ideas
 ├── .cursor/rules/              # Cursor AI rules
 ├── .github/workflows/          # GitHub Actions CI/CD
 └── ecosystem.config.js         # PM2 configuration
@@ -214,6 +217,8 @@ AUTH_TRUST_HOST=true
 GOOGLE_CLIENT_ID="<id>"
 GOOGLE_CLIENT_SECRET="<secret>"
 NEXT_PUBLIC_CONTACT_EMAIL="<email>"
+NEXT_PUBLIC_SITE_URL="<url>"              # Production URL
+NEXT_PUBLIC_STAGING_URL="<url>"           # Staging URL
 WRITER_EMAIL="<email>"                    # For db:seed
 WRITER_NAME="<name>"
 NGROK_DOMAIN="<domain>"                   # For dev:tunnel

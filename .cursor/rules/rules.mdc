@@ -124,6 +124,33 @@ No documentation updates — save that for production.
 ### When user types "p"
 Run `git pull origin main`
 
+## Planning Files
+
+Project planning lives in `plans/`:
+
+| File | Purpose |
+|------|---------|
+| `Tomorrow.md` | **Immediate tasks** — Launch checklist, minor polish, things to do next |
+| `Future.md` | **Long-term ideas** — Features, enhancements, someday/maybe list |
+| `tmp/` | Working drafts and brainstorming (gitignored) |
+
+### Tomorrow.md Format
+- Use markdown checklists (`- [ ]` / `- [x]`)
+- Group by priority or category
+- Keep actionable and specific
+- Move completed items to Future.md or delete
+
+### Future.md Format
+- Use `---` dividers between ideas
+- Each idea gets a heading and description
+- Include "Design considerations" for UI features
+- No deadlines — this is the someday/maybe list
+
+### Rules
+- Check `Tomorrow.md` at start of session to see priorities
+- Add new ideas to `Future.md`, not inline in code comments
+- Use `plans/tmp/` for messy drafts (gitignored)
+
 ## Terminal Commands
 Before running dev servers or long-running processes:
 1. Check terminals folder if already running

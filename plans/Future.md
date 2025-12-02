@@ -41,7 +41,7 @@ Allow readers to subscribe to new essays:
 Transform the plaintext bio section on the homepage into something more visually engaging.
 
 **Ideas:**
-- Nothing concrete at this time
+- None at this time
 
 **Design considerations:**
 - Keep the minimal aesthetic — enhance, don't overwhelm
