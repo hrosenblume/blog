@@ -5,7 +5,7 @@ globs: ["**/*"]
 
 # Project Context
 
-> ⚠️ **No sensitive data.** Use environment variables for API keys, emails, secrets.
+> ⚠️ **THIS FILE IS COMMITTED TO GIT.** Do not add sensitive data: no emails, URLs, passwords, API keys, or secrets. Use environment variable references instead (e.g., `WRITER_EMAIL` not the actual email).
 
 ## Overview
 
