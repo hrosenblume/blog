@@ -12,8 +12,8 @@ globs: ["**/*"]
 **Hunter Rosenblume's personal essay blog** — a clean, minimal writing platform built with Next.js 15 (App Router), React 19, Prisma, NextAuth.js v5 (Google OAuth), and Tailwind CSS. Features animated 3D polyhedra, keyboard-first navigation, and DRY configuration patterns.
 
 **URLs:**
-- Production: `https://hunterrosenblume.com`
-- Staging: `https://staging.hunterrosenblume.com` (Cloudflare Access protected)
+- Production: `$NEXT_PUBLIC_SITE_URL`
+- Staging: `$NEXT_PUBLIC_STAGING_URL` (Cloudflare Access protected)
 - Writer dashboard: `/writer` (protected)
 - Admin panel: `/admin` (admin only)
 
@@ -186,7 +186,7 @@ Workflow steps:
 
 ### Cloudflare Tunnel
 Staging protected via `cloudflared` service:
-- Exposes port 3001 to `staging.hunterrosenblume.com`
+- Exposes port 3001 to `$NEXT_PUBLIC_STAGING_URL`
 - Google OAuth required for access
 - Managed in Cloudflare Zero Trust dashboard
 

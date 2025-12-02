@@ -15,7 +15,7 @@ A clean, minimal blog with a writer dashboard. Built with Next.js, Prisma, and N
 
 ```bash
 npm install
-cp .env.example .env   # Edit with your credentials
+cp .env.example .env.local   # Edit with your credentials
 npx prisma db push
 npm run dev
 ```

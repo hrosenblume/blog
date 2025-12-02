@@ -62,5 +62,8 @@ blog-js/
 
 certificates
 
-# Private plans
-plans/tmp/private/
+# Private plans and working drafts
+plans/tmp/
+
+# Exported data (contains emails)
+prisma/data/
