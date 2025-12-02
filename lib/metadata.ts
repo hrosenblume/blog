@@ -7,12 +7,12 @@ import { headers } from 'next/headers'
 
 /**
  * Hybrid base URL detection:
- * - Production: Uses NEXT_PUBLIC_BASE_URL env var
+ * - Production: Uses NEXT_PUBLIC_SITE_URL env var
  * - Dev/Testing: Auto-detects from request headers (ngrok, localhost, etc.)
  */
 export async function getBaseUrl(): Promise<string> {
-  if (process.env.NEXT_PUBLIC_BASE_URL) {
-    return process.env.NEXT_PUBLIC_BASE_URL
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    return process.env.NEXT_PUBLIC_SITE_URL
   }
   const headersList = await headers()
   const host = headersList.get('host') || 'localhost:3000'

@@ -42,7 +42,7 @@ GOOGLE_CLIENT_ID="your-google-client-id"
 GOOGLE_CLIENT_SECRET="your-google-client-secret"
 WRITER_EMAIL="you@example.com"
 WRITER_NAME="Your Name"
-NEXT_PUBLIC_BASE_URL="https://yourdomain.com"
+NEXT_PUBLIC_SITE_URL="https://yourdomain.com"
 ```
 
 ## Routes
