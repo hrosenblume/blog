@@ -88,7 +88,16 @@ Use CSS variables from `globals.css`:
 
 ## Git Workflow
 
-### When user types "g"
+### When user types "d" (dev commit)
+1. `git add -A && git status -sb && git diff --staged --stat`
+2. Read modified files for context
+3. Review chat history
+4. Commit with descriptive message summarizing changes
+5. Push to `dev` branch
+
+No documentation updates — save that for production.
+
+### When user types "g" (production commit)
 1. `git add -A && git status -sb && git diff --staged --stat`
 2. Read modified files for context
 3. Review chat history
@@ -97,7 +106,7 @@ Use CSS variables from `globals.css`:
    - `context.mdc` — New systems, architecture, file structure
    - No sensitive data (URLs, emails, secrets) — use env var references
 5. Commit with comprehensive message
-6. Push to appropriate branch
+6. Push to `main` branch (triggers production deploy)
 
 ### When user types "p"
 Run `git pull origin main`
