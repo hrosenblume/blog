@@ -1,0 +1,106 @@
+---
+description: Coding conventions and rules for Hunter's Blog
+globs: ["**/*"]
+---
+
+# Coding Rules
+
+> ⚠️ **No sensitive data.** Use environment variables for API keys, emails, secrets.
+
+## Code Style
+
+### TypeScript
+- Use strict mode
+- Prefer explicit types over `any`
+- Use path aliases: `@/lib/*`, `@/components/*`, `@/app/*`
+
+### React/Next.js
+- Use Server Components by default
+- Add `'use client'` only when hooks/interactivity are needed
+- Use `useCallback` and `useMemo` for performance in client components
+- Prefer async Server Components for data fetching
+
+### Components
+- Functional components only
+- Props interfaces defined inline or in same file
+- Use `cn()` utility from `@/lib/utils/cn` for conditional classes
+- Components in `/components` are shared; page-specific stay in route `_components/` folders
+- **Before creating UI components**, check `components/ui/` (shadcn) first
+
+### Styling
+- Use Tailwind CSS exclusively
+- Dark mode: Use `dark:` prefix
+- **NEVER** use raw Tailwind font sizes (`text-sm`, `text-lg`) — use custom scale (`text-title`, `text-body`, etc.)
+- Use `can-hover:` variant for navigation links (prevents iOS sticky hover)
+
+## DRY Patterns (Critical)
+
+### Typography
+Use CSS variables from `globals.css`:
+- `text-title` (24px) — Page titles
+- `text-h1` (22px) — Section headers
+- `text-section` (18px) — Essay titles in lists
+- `text-body` (16px) — Body text
+
+### Centralized Configs
+| Need | Location |
+|------|----------|
+| Homepage content | `lib/homepage.ts` |
+| Shared styles | `lib/styles.ts` |
+| Keyboard shortcuts | `lib/keyboard/shortcuts.ts` |
+| Post CRUD logic | `lib/posts.ts` |
+| SVG icons | `components/Icons.tsx` |
+
+**NEVER** hardcode author name, email, or bio — use `lib/homepage.ts`
+
+## API Routes
+- Return JSON responses
+- Use `withSession()` or `withAdmin()` HOC from `@/lib/auth`
+- Use proper HTTP status codes (401, 403, 404, 400)
+
+## Database
+- Use singleton Prisma client from `@/lib/db`
+- Keep queries in Server Components or API routes
+- Always handle edge cases (not found, already exists)
+
+## Touch/Mobile
+- Use `TapLink` for nav links (iOS scroll detection)
+- Add `overscroll-contain` to scrollable containers
+- Add `touch-none` to fixed elements
+- Support `prefers-reduced-motion`
+
+## Don't
+- Don't use inline styles
+- Don't put business logic in components (use lib/)
+- Don't hardcode author name/bio
+- Don't commit `.env.local` files
+- Don't use raw Tailwind font sizes
+- Don't duplicate values — abstract them
+- Don't define shortcuts inline — use `shortcuts.ts`
+- Don't create UI components when shadcn has one
+
+## Do
+- Keep components small and focused
+- Use semantic HTML
+- Handle loading and error states
+- Check existing abstractions before creating new ones
+- Update `.env.example` when adding env vars
+
+## Git Workflow
+
+### When user types "g"
+1. `git add -A && git status -sb && git diff --staged --stat`
+2. Read modified files for context
+3. Review chat history
+4. Update docs if needed (`.cursor/rules/`, no sensitive data)
+5. Commit with comprehensive message
+6. Push to appropriate branch
+
+### When user types "p"
+Run `git pull origin main`
+
+## Terminal Commands
+Before running dev servers or long-running processes:
+1. Check terminals folder if already running
+2. Let user manage existing terminals
+3. Don't start conflicting sandboxed commands

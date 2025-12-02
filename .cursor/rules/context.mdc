@@ -1,0 +1,227 @@
+---
+description: Project architecture and systems reference
+globs: ["**/*"]
+---
+
+# Project Context
+
+> ⚠️ **No sensitive data.** Use environment variables for API keys, emails, secrets.
+
+## Overview
+
+**Hunter Rosenblume's personal essay blog** — a clean, minimal writing platform built with Next.js 15 (App Router), React 19, Prisma, NextAuth.js v5 (Google OAuth), and Tailwind CSS. Features animated 3D polyhedra, keyboard-first navigation, and DRY configuration patterns.
+
+**URLs:**
+- Production: `https://hunterrosenblume.com`
+- Staging: `https://staging.hunterrosenblume.com` (Cloudflare Access protected)
+- Writer dashboard: `/writer` (protected)
+- Admin panel: `/admin` (admin only)
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Runtime | Node.js 20+ (LTS) |
+| Framework | Next.js 15 (App Router) |
+| UI | React 19 |
+| Database | SQLite (dev) / PostgreSQL (prod) via Prisma |
+| Auth | NextAuth.js v5 with Google OAuth |
+| Styling | Tailwind CSS |
+| Theme | next-themes (dark mode, class-based) |
+| Editor | Tiptap WYSIWYG (markdown via marked + turndown) |
+| 3D Graphics | Canvas API (client-side polyhedra rendering) |
+
+## Project Structure
+
+```
+blog/
+├── app/                        # Next.js App Router
+│   ├── api/                    # API routes
+│   │   ├── admin/              # Admin-only APIs (users, revisions)
+│   │   ├── auth/[...nextauth]/ # NextAuth handler
+│   │   └── posts/              # Posts CRUD
+│   ├── admin/                  # Admin dashboard
+│   ├── auth/                   # Auth pages
+│   ├── e/[slug]/               # Public essay pages
+│   ├── writer/                 # Writer dashboard
+│   │   └── editor/[[...slug]]/ # WYSIWYG editor
+│   ├── globals.css             # Typography variables
+│   └── layout.tsx              # Root layout
+├── components/                 # Shared UI components
+│   ├── admin/                  # AdminTable, Pagination
+│   ├── editor/                 # EditorToolbar, PostMetadataFooter
+│   └── ui/                     # shadcn/ui components
+├── lib/                        # Utilities and configs
+│   ├── auth.ts                 # NextAuth config
+│   ├── db.ts                   # Prisma client singleton
+│   ├── homepage.ts             # ✏️ Homepage content (DRY)
+│   ├── keyboard/               # Keyboard navigation
+│   ├── polyhedra/              # 3D rendering system
+│   ├── posts.ts                # Post CRUD logic (DRY)
+│   └── styles.ts               # Shared Tailwind classes (DRY)
+├── prisma/
+│   ├── schema.prisma           # SQLite (dev)
+│   ├── schema.postgresql.prisma # PostgreSQL (prod)
+│   └── data/                   # Exported migration data
+├── .cursor/rules/              # Cursor AI rules
+├── .github/workflows/          # GitHub Actions CI/CD
+└── ecosystem.config.js         # PM2 configuration
+```
+
+## Database Schema
+
+```prisma
+model Post {
+  id             String     @id @default(uuid())
+  title          String
+  subtitle       String?
+  slug           String     @unique
+  markdown       String
+  status         String     @default("draft")  // "draft" or "published"
+  polyhedraShape String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  publishedAt    DateTime?
+  revisions      Revision[]
+}
+
+model Revision {
+  id             String   @id @default(uuid())
+  postId         String
+  title          String?
+  subtitle       String?
+  markdown       String
+  polyhedraShape String?
+  createdAt      DateTime @default(now())
+  post           Post     @relation(...)
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  role      String   @default("writer")  // "admin" or "writer"
+  createdAt DateTime @default(now())
+}
+```
+
+## Key Systems
+
+### Typography System
+CSS variables in `globals.css`, exposed as Tailwind utilities:
+- `text-title` (24px) — Page titles
+- `text-h1` (22px) — Section headers  
+- `text-section` (18px) — Essay titles in lists
+- `text-body` (16px) — Body text
+
+### Homepage Configuration
+All content in `lib/homepage.ts`: name, bio, email, footer links.
+Used by: homepage, essay pages, writer dashboard, footer.
+
+### Polyhedra System
+50+ animated 3D wireframe shapes:
+- Build: `scripts/polyhedra/build-shapes.js` → `lib/polyhedra/shapes.json`
+- Render: `components/PolyhedraCanvas.tsx`
+- Assignment: `scripts/assign-shapes.js`
+
+### Keyboard Navigation
+Defined in `lib/keyboard/shortcuts.ts`:
+- `Cmd + .` — Toggle theme
+- `Cmd + /` — Toggle view (essay↔editor)
+- `←`/`→` — Prev/Next essay
+- `n` — New article
+- `Escape` — Back to dashboard
+
+### Editor System
+`lib/editor/usePostEditor.ts` encapsulates all editor state:
+- Auto-save (3s debounce)
+- Revision history
+- Slug generation
+- Unsaved changes warning
+
+## Authentication
+
+- **Google OAuth** via NextAuth.js
+- **Allowlist model**: Only users in `User` table can sign in
+- **Roles**: `admin` (full access) or `writer` (/writer only)
+- **Setup**: Set `WRITER_EMAIL` in `.env.local`, run `npm run db:setup`
+
+## API Routes
+
+| Endpoint | Description |
+|----------|-------------|
+| `/api/posts` | List/create posts |
+| `/api/posts/[id]` | CRUD single post |
+| `/api/admin/users` | User management (admin) |
+| `/api/admin/revisions` | Revision management (admin) |
+| `/api/upload` | Image upload |
+
+## Production Deployment
+
+### Architecture
+- **Production**: `/var/www/blog` — `main` branch → port 3000
+- **Staging**: `/var/www/blog-staging` — `dev` branch → port 3001
+- **Database**: DigitalOcean Managed PostgreSQL
+  - Production: `defaultdb`
+  - Staging: `staging`
+- **Process Manager**: PM2 (`ecosystem.config.js`)
+- **Staging Protection**: Cloudflare Tunnel + Access (Google OAuth)
+
+### GitHub Actions
+Push to `main` → deploys production
+Push to `dev` → deploys staging
+
+Workflow steps:
+1. SSH into Droplet
+2. `git reset --hard origin/<branch>`
+3. `npm install`
+4. `prisma generate + db push`
+5. `npm run build:prod`
+6. `pm2 restart`
+
+### GitHub Secrets
+- `DO_HOST` — Droplet IP
+- `DO_USER` — SSH username
+- `DO_SSH_KEY` — Private key
+
+### Cloudflare Tunnel
+Staging protected via `cloudflared` service:
+- Exposes port 3001 to `staging.hunterrosenblume.com`
+- Google OAuth required for access
+- Managed in Cloudflare Zero Trust dashboard
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Development server |
+| `npm run dev:tunnel` | Dev + ngrok tunnel (mobile testing) |
+| `npm run build:prod` | Production build (PostgreSQL) |
+| `npm run db:push` | Push schema (SQLite) |
+| `npm run db:push:prod` | Push schema (PostgreSQL) |
+| `npm run db:studio` | Prisma Studio (SQLite) |
+| `npm run db:studio:prod` | Prisma Studio (PostgreSQL) |
+| `npm run db:export` | Export SQLite → JSON |
+| `npm run db:import:prod` | Import JSON → PostgreSQL |
+
+## Environment Variables
+
+```env
+DATABASE_URL="file:./dev.db"              # SQLite (dev)
+DATABASE_URL_PROD="postgresql://..."      # PostgreSQL (prod)
+NEXTAUTH_SECRET="<random>"
+AUTH_TRUST_HOST=true
+GOOGLE_CLIENT_ID="<id>"
+GOOGLE_CLIENT_SECRET="<secret>"
+NEXT_PUBLIC_CONTACT_EMAIL="<email>"
+WRITER_EMAIL="<email>"                    # For db:seed
+WRITER_NAME="<name>"
+NGROK_DOMAIN="<domain>"                   # For dev:tunnel
+```
+
+## ngrok Tunnel (Mobile Testing)
+
+`npm run dev:tunnel` starts Next.js + ngrok with OAuth protection:
+- Two-layer auth: ngrok OAuth + app NextAuth
+- Add both callback URLs to Google Cloud Console
+- Middleware forwards `x-forwarded-host` header
