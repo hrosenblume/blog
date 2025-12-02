@@ -108,6 +108,19 @@ No documentation updates — save that for production.
 5. Commit with comprehensive message
 6. Push to `main` branch (triggers production deploy)
 
+### When user types "m" (merge dev → prod)
+1. `git fetch origin && git log --oneline main..dev` to see what's being promoted
+2. Review the diff: `git diff main..dev --stat`
+3. Review chat history for context on what was built/changed
+4. **Update `.cursor/rules/` if significant changes were made:**
+   - `rules.mdc` — New conventions, patterns, do's/don'ts
+   - `context.mdc` — New systems, architecture, file structure
+   - No sensitive data (URLs, emails, secrets) — use env var references
+5. If docs updated: commit on `dev` first, push to `dev`
+6. Merge dev into main: `git checkout main && git merge dev`
+7. Push to `main` (triggers production deploy)
+8. Return to dev branch: `git checkout dev`
+
 ### When user types "p"
 Run `git pull origin main`
 
