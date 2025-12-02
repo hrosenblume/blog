@@ -1,4 +1,4 @@
-# hunter.blog
+# My Personal Website
 
 A personal essay site with a writer's dashboard. [Live site →](https://hunterrosenblume.com)
 
