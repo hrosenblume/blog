@@ -229,4 +229,4 @@ NGROK_DOMAIN="<domain>"                   # For dev:tunnel
 `npm run dev:tunnel` starts Next.js + ngrok with OAuth protection:
 - Two-layer auth: ngrok OAuth + app NextAuth
 - Add both callback URLs to Google Cloud Console
-- Middleware forwards `x-forwarded-host` header
+- `trustHost: true` in auth config handles proxy headers
