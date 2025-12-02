@@ -20,6 +20,7 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
             npm install --production=false
+            set -a; source .env.local; set +a
             npx prisma generate --schema=prisma/schema.postgresql.prisma
             npx prisma db push --schema=prisma/schema.postgresql.prisma --skip-generate
             npm run build:prod
@@ -37,6 +38,7 @@ jobs:
             git fetch origin dev
             git reset --hard origin/dev
             npm install --production=false
+            set -a; source .env.local; set +a
             npx prisma generate --schema=prisma/schema.postgresql.prisma
             npx prisma db push --schema=prisma/schema.postgresql.prisma --skip-generate
             npm run build:prod
