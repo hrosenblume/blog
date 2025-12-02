@@ -88,6 +88,8 @@ Use CSS variables from `globals.css`:
 
 ## Git Workflow
 
+> ⚠️ **NEVER push to `main` automatically.** Only push to main when the user EXPLICITLY types "g". After making changes or fixes, commit to `dev` only and WAIT for the user to type "g" before touching main.
+
 ### When user types "d" (dev commit)
 1. `git add -A && git status -sb && git diff --staged --stat`
 2. Read modified files for context
@@ -98,7 +100,7 @@ Use CSS variables from `globals.css`:
 No documentation updates — save that for production.
 
 ### When user types "g" (production commit)
-**CRITICAL: "g" ALWAYS commits and pushes to `main`, regardless of current branch.**
+**ONLY run this when the user EXPLICITLY types "g".** Never auto-push to main after making fixes.
 
 If on `dev` or another branch:
 1. `git stash` (if uncommitted changes)
