@@ -627,16 +627,21 @@ The project deploys to a DigitalOcean Droplet with GitHub Actions CI/CD.
 ### Architecture
 
 - **Production**: `/var/www/blog` — Deploys from `main` branch, port 3000
+  - URL: `https://hunterrosenblume.com`
 - **Staging**: `/var/www/blog-staging` — Deploys from `dev` branch, port 3001
-- **Database**: PostgreSQL (via `DATABASE_URL_PROD` env var)
+  - URL: `https://staging.hunterrosenblume.com` (protected via Cloudflare Access)
+- **Database**: DigitalOcean Managed PostgreSQL
+  - Production: `defaultdb` database
+  - Staging: `staging` database
 - **Process Manager**: PM2 (configured in `ecosystem.config.js`)
+- **Staging Protection**: Cloudflare Tunnel + Access (Google OAuth)
 
 ### GitHub Actions Workflows
 
 **`.github/workflows/deploy-production.yml`** (triggers on push to `main`):
 1. SSH into Droplet
 2. `git reset --hard origin/main`
-3. `npm ci`
+3. `npm install`
 4. `prisma generate --schema=prisma/schema.postgresql.prisma`
 5. `prisma db push --schema=prisma/schema.postgresql.prisma`
 6. `npm run build:prod`
@@ -644,6 +649,27 @@ The project deploys to a DigitalOcean Droplet with GitHub Actions CI/CD.
 
 **`.github/workflows/deploy-staging.yml`** (triggers on push to `dev`):
 Same steps but for staging environment.
+
+### Staging Protection (Cloudflare Access)
+
+Staging is protected via Cloudflare Tunnel + Access:
+
+- **Tunnel**: `cloudflared` service runs on the Droplet, exposing port 3001 to `staging.hunterrosenblume.com`
+- **Access Policy**: Google OAuth authentication required — only allowed emails can access
+- **Port 3001 blocked**: Direct IP access is firewalled; only the tunnel can reach staging
+
+**Tunnel config** (`~/.cloudflared/config.yml` on Droplet):
+```yaml
+tunnel: <tunnel-id>
+credentials-file: /root/.cloudflared/<tunnel-id>.json
+
+ingress:
+  - hostname: staging.hunterrosenblume.com
+    service: http://localhost:3001
+  - service: http_status:404
+```
+
+**Managing Access**: Cloudflare Zero Trust dashboard → Access → Applications
 
 ### Required GitHub Secrets
 
