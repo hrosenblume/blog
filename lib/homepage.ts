@@ -16,7 +16,7 @@ export const HOMEPAGE = {
       { text: 'Thiel Fellow', href: 'https://thielfellowship.org' },
       { text: ' and engineer. '},],[{text:'More recently, I am the co-founder and CEO of ' },
       { text: 'Ordo', href: 'https://ordo.com' },
-      { text: ', a school lunch company. This year we\'re serving 3 million meals in 15 states.' },
+      { text: ', a school lunch company. This year we\'re serving 3 million meals in 15+ states.' },
     ],
     // Paragraph 2
     [
