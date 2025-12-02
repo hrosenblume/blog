@@ -92,7 +92,10 @@ Use CSS variables from `globals.css`:
 1. `git add -A && git status -sb && git diff --staged --stat`
 2. Read modified files for context
 3. Review chat history
-4. Update docs if needed (`.cursor/rules/`, no sensitive data)
+4. **Update `.cursor/rules/` if significant changes were made:**
+   - `rules.mdc` — New conventions, patterns, do's/don'ts
+   - `context.mdc` — New systems, architecture, file structure
+   - No sensitive data (URLs, emails, secrets) — use env var references
 5. Commit with comprehensive message
 6. Push to appropriate branch
 
