@@ -33,13 +33,16 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Environment
 
+See `.env.example` for all options. Key variables:
+
 ```env
 DATABASE_URL="file:./dev.db"
-NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="your-secret"
 GOOGLE_CLIENT_ID="your-google-client-id"
 GOOGLE_CLIENT_SECRET="your-google-client-secret"
 WRITER_EMAIL="you@example.com"
+WRITER_NAME="Your Name"
+NEXT_PUBLIC_BASE_URL="https://yourdomain.com"
 ```
 
 ## Routes
