@@ -1,6 +1,5 @@
 // ============================================
 // ✏️  EDIT YOUR HOMEPAGE CONTENT HERE
-// ADDING TO TEST DO NOT TOUCH
 // ============================================
 
 export type TextSegment = { text: string; href?: string }
