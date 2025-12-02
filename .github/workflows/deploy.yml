@@ -17,6 +17,7 @@ jobs:
           key: ${{ secrets.DO_SSH_KEY }}
           script: |
             cd /var/www/blog
+            git remote prune origin
             git fetch origin main
             git reset --hard origin/main
             npm install --production=false
@@ -35,6 +36,7 @@ jobs:
           key: ${{ secrets.DO_SSH_KEY }}
           script: |
             cd /var/www/blog-staging
+            git remote prune origin
             git fetch origin dev
             git reset --hard origin/dev
             npm install --production=false
