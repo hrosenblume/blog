@@ -68,7 +68,8 @@ blog/
 │   └── Future.md               # Long-term ideas
 ├── .cursor/rules/              # Cursor AI rules
 ├── .github/workflows/          # GitHub Actions CI/CD
-└── ecosystem.config.js         # PM2 configuration
+├── ecosystem.config.js         # PM2 configuration
+└── start.sh                    # PM2 wrapper (loads .env.local)
 ```
 
 ## Database Schema
@@ -167,8 +168,17 @@ Defined in `lib/keyboard/shortcuts.ts`:
 - **Database**: DigitalOcean Managed PostgreSQL
   - Production: `defaultdb`
   - Staging: `staging`
-- **Process Manager**: PM2 (`ecosystem.config.js`)
+- **Reverse Proxy**: Nginx (port 80 → 3000)
+- **Process Manager**: PM2 with `start.sh` wrapper
+- **SSL**: Cloudflare (Flexible mode)
 - **Staging Protection**: Cloudflare Tunnel + Access (Google OAuth)
+
+### PM2 Environment Loading
+PM2 doesn't load `.env.local` directly. The `start.sh` wrapper script:
+1. Sources `.env.local` (loads env vars)
+2. Runs `npm start`
+
+This is required because Prisma needs `DATABASE_URL_PROD` at runtime.
 
 ### GitHub Actions
 Push to `main` → deploys production

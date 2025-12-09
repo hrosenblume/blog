@@ -1,14 +1,14 @@
 /**
  * PM2 Ecosystem Configuration
  * 
- * Manages both production and staging environments on the Droplet.
+ * Uses a wrapper script (start.sh) to load environment variables from .env.local
+ * before starting the Next.js application.
  * 
  * Usage:
- *   pm2 start ecosystem.config.js        # Start all apps
- *   pm2 restart blog-prod                # Restart production
- *   pm2 restart blog-staging             # Restart staging
- *   pm2 logs blog-prod                   # View production logs
- *   pm2 save                             # Save current process list
+ *   pm2 start ecosystem.config.js --only blog   # Start production
+ *   pm2 restart blog                            # Restart
+ *   pm2 logs blog                               # View logs
+ *   pm2 save                                    # Save process list
  */
 
 module.exports = {
@@ -16,8 +16,8 @@ module.exports = {
     {
       name: 'blog',
       cwd: '/var/www/blog',
-      script: 'node',
-      args: '.next/standalone/server.js',
+      script: './start.sh',
+      interpreter: '/bin/bash',
       env: {
         PORT: 3000,
         NODE_ENV: 'production'
@@ -34,8 +34,8 @@ module.exports = {
     {
       name: 'blog-staging',
       cwd: '/var/www/blog-staging',
-      script: 'node',
-      args: '.next/standalone/server.js',
+      script: './start.sh',
+      interpreter: '/bin/bash',
       env: {
         PORT: 3001,
         NODE_ENV: 'production'
@@ -47,4 +47,3 @@ module.exports = {
     }
   ]
 }
-

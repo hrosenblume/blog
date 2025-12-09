@@ -20,6 +20,7 @@ jobs:
             git remote prune origin
             git fetch origin main
             git reset --hard origin/main
+            chmod +x start.sh
             npm install --production=false
             export $(grep -v '^#' .env.local | xargs)
             npx prisma generate --schema=prisma/schema.postgresql.prisma
@@ -39,6 +40,7 @@ jobs:
             git remote prune origin
             git fetch origin dev
             git reset --hard origin/dev
+            chmod +x start.sh
             npm install --production=false
             export $(grep -v '^#' .env.local | xargs)
             npx prisma generate --schema=prisma/schema.postgresql.prisma
