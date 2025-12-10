@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     const company = payload['Company Name'] || undefined
     const companyUrl = payload['Website'] || undefined
     const industry = payload['Industry'] || undefined
-    const employees = payload['Employee Count'] || undefined
+    const employees = payload['Employee Count']?.toString() || undefined
     const pageUrl = payload['Captured URL']
     const referrer = payload['Referrer']
 
