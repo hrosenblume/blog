@@ -4,6 +4,7 @@ import { Providers } from './providers'
 import { Metadata } from 'next'
 import { HOMEPAGE } from '@/lib/homepage'
 import { getBaseUrl, SITE_DESCRIPTION, SITE_KEYWORDS, TWITTER_HANDLE, OG_STYLE, OG_SIZE_SQUARE } from '@/lib/metadata'
+import { RB2BScript } from '@/components/RB2BScript'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -59,6 +60,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <Providers>{children}</Providers>
+        <RB2BScript />
       </body>
     </html>
   )

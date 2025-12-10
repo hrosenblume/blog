@@ -107,6 +107,34 @@ model User {
   role      String   @default("writer")  // "admin" or "writer"
   createdAt DateTime @default(now())
 }
+
+model Lead {
+  id         String      @id @default(uuid())
+  email      String?     @unique
+  firstName  String?
+  lastName   String?
+  linkedIn   String?
+  title      String?
+  company    String?
+  companyUrl String?
+  industry   String?
+  employees  String?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  visits     LeadVisit[]
+}
+
+model LeadVisit {
+  id         String   @id @default(uuid())
+  leadId     String
+  lead       Lead     @relation(...)
+  ip         String
+  userAgent  String?
+  pageUrl    String?
+  referrer   String?
+  rawPayload String?
+  visitedAt  DateTime @default(now())
+}
 ```
 
 ## Key Systems
@@ -143,6 +171,14 @@ Defined in `lib/keyboard/shortcuts.ts`:
 - Slug generation
 - Unsaved changes warning
 
+### RB2B Lead Tracking
+Visitor identification via RB2B integration:
+- **Tracking script**: `components/RB2BScript.tsx` — loads RB2B client-side script
+- **Webhook**: `/api/webhooks/rb2b` — receives identified visitor data
+- **Admin pages**: `/admin/leads` (unique contacts), `/admin/leads/visits` (all visits)
+- **Data flow**: RB2B script → RB2B servers identify visitor → webhook POST → Lead/LeadVisit created
+- **Env var**: `NEXT_PUBLIC_RB2B_API_KEY` — tracking key from RB2B dashboard
+
 ## Authentication
 
 - **Google OAuth** via NextAuth.js
@@ -158,6 +194,8 @@ Defined in `lib/keyboard/shortcuts.ts`:
 | `/api/posts/[id]` | CRUD single post |
 | `/api/admin/users` | User management (admin) |
 | `/api/admin/revisions` | Revision management (admin) |
+| `/api/admin/leads/[id]` | Lead management (admin) |
+| `/api/webhooks/rb2b` | RB2B webhook receiver |
 | `/api/upload` | Image upload |
 
 ## Production Deployment
@@ -232,6 +270,7 @@ NEXT_PUBLIC_STAGING_URL="<url>"           # Staging URL
 WRITER_EMAIL="<email>"                    # For db:seed
 WRITER_NAME="<name>"
 NGROK_DOMAIN="<domain>"                   # For dev:tunnel
+NEXT_PUBLIC_RB2B_API_KEY="<key>"         # RB2B tracking key
 ```
 
 ## ngrok Tunnel (Mobile Testing)

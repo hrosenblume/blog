@@ -20,6 +20,8 @@ const navLinks = [
   ['Users', '/admin/users'],
   ['Posts', '/admin/posts'],
   ['Revisions', '/admin/revisions'],
+  ['Leads', '/admin/leads'],
+  ['Visits', '/admin/leads/visits'],
 ]
 
 export default function AdminLayout({

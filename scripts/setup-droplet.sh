@@ -108,7 +108,7 @@ fi
 # 7. INSTALL DEPENDENCIES
 # ============================================================
 echo "📦 Installing npm dependencies..."
-npm install
+npm ci
 
 # ============================================================
 # 8. ENVIRONMENT VARIABLES

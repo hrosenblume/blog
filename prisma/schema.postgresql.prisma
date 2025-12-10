@@ -40,3 +40,36 @@ model User {
   createdAt DateTime @default(now())
 }
 
+model Lead {
+  id         String      @id @default(uuid())
+  email      String?     @unique
+  firstName  String?
+  lastName   String?
+  linkedIn   String?
+  title      String?
+  company    String?
+  companyUrl String?
+  industry   String?
+  employees  String?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  visits     LeadVisit[]
+
+  @@index([company])
+}
+
+model LeadVisit {
+  id         String   @id @default(uuid())
+  leadId     String
+  lead       Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  ip         String
+  userAgent  String?
+  pageUrl    String?
+  referrer   String?
+  rawPayload String?
+  visitedAt  DateTime @default(now())
+
+  @@index([leadId])
+  @@index([visitedAt])
+}
+
