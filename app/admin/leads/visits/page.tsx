@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db'
+import { getLeadDisplayName } from '@/lib/leads'
 import Link from 'next/link'
 import { Pagination } from '@/components/admin/Pagination'
 import { AdminTable, AdminTableRow } from '@/components/admin/AdminTable'
@@ -38,9 +39,7 @@ export default async function LeadVisitsPage({ searchParams }: PageProps) {
   ]
 
   const rows: AdminTableRow[] = visits.map((visit) => {
-    const contactName = visit.lead.firstName
-      ? `${visit.lead.firstName} ${visit.lead.lastName}`
-      : visit.lead.email || 'Anonymous'
+    const contactName = getLeadDisplayName(visit.lead)
 
     return {
       key: visit.id,

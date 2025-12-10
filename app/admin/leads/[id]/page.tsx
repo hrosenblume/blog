@@ -1,7 +1,9 @@
 import { prisma } from '@/lib/db'
+import { getLeadDisplayName } from '@/lib/leads'
 import { notFound } from 'next/navigation'
 import { BackLink } from '@/components/BackLink'
 import { AdminTable, AdminTableRow } from '@/components/admin/AdminTable'
+import { Field } from '@/components/admin/Field'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,9 +24,7 @@ export default async function LeadDetailPage({
 
   if (!lead) return notFound()
 
-  const displayName = lead.firstName
-    ? `${lead.firstName} ${lead.lastName}`
-    : lead.email || 'Anonymous Lead'
+  const displayName = getLeadDisplayName(lead)
 
   // Visits table
   const visitColumns = [
@@ -95,38 +95,6 @@ export default async function LeadDetailPage({
             {JSON.stringify(JSON.parse(lead.visits[0].rawPayload), null, 2)}
           </pre>
         </details>
-      )}
-    </div>
-  )
-}
-
-function Field({
-  label,
-  value,
-  link,
-}: {
-  label: string
-  value?: string | null
-  link?: boolean
-}) {
-  return (
-    <div>
-      <div className="text-sm text-muted-foreground">{label}</div>
-      {value ? (
-        link ? (
-          <a
-            href={value.startsWith('http') ? value : `https://${value}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-500 hover:underline break-all"
-          >
-            {value}
-          </a>
-        ) : (
-          <div className="break-all">{value}</div>
-        )
-      ) : (
-        <div className="text-muted-foreground">—</div>
       )}
     </div>
   )

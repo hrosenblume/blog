@@ -37,7 +37,7 @@ jobs:
             npm ci
             export $(grep -v '^#' .env.local | xargs)
             npx prisma generate --schema=prisma/schema.postgresql.prisma
-            npx prisma db push --schema=prisma/schema.postgresql.prisma --skip-generate
+            npx prisma db push --schema=prisma/schema.postgresql.prisma --skip-generate --accept-data-loss
             npm run build:prod
             pm2 restart blog
 
@@ -57,6 +57,6 @@ jobs:
             npm ci
             export $(grep -v '^#' .env.local | xargs)
             npx prisma generate --schema=prisma/schema.postgresql.prisma
-            npx prisma db push --schema=prisma/schema.postgresql.prisma --skip-generate
+            npx prisma db push --schema=prisma/schema.postgresql.prisma --skip-generate --accept-data-loss
             npm run build:prod
             pm2 restart blog-staging

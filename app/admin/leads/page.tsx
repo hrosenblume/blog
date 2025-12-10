@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db'
+import { getLeadDisplayName } from '@/lib/leads'
 import { Pagination } from '@/components/admin/Pagination'
 import { AdminTable, AdminTableRow } from '@/components/admin/AdminTable'
 import { AdminActionsMenu } from '@/components/admin/AdminActionsMenu'
@@ -38,44 +39,43 @@ export default async function LeadsPage({ searchParams }: PageProps) {
     { header: 'First Seen' },
   ]
 
-  const rows: AdminTableRow[] = leads.map((lead) => ({
-    key: lead.id,
-    cells: [
-      <div key="contact">
-        <div className="font-medium">
-          {lead.firstName && lead.lastName
-            ? `${lead.firstName} ${lead.lastName}`
-            : lead.email || 'Anonymous'}
-        </div>
-        {lead.email && (
-          <div className="text-sm text-muted-foreground truncate">{lead.email}</div>
-        )}
-      </div>,
-      <span key="company" className="text-muted-foreground">{lead.company || '—'}</span>,
-      <span key="title" className="text-muted-foreground">{lead.title || '—'}</span>,
-      <span key="visits" className="text-muted-foreground">{lead._count.visits}</span>,
-      <span key="date" className="text-muted-foreground">
-        {new Date(lead.createdAt).toLocaleDateString()}
-      </span>,
-    ],
-    actions: (
-      <AdminActionsMenu
-        editHref={`/admin/leads/${lead.id}`}
-        deleteEndpoint={`/api/admin/leads/${lead.id}`}
-        deleteConfirmMessage={`Delete lead "${lead.email || 'Anonymous'}" and all their visits?`}
-      />
-    ),
-    mobileTitle: lead.firstName ? `${lead.firstName} ${lead.lastName}` : (lead.email || 'Anonymous'),
-    mobileSubtitle: lead.company || lead.email,
-    mobileMeta: `${lead._count.visits} visit${lead._count.visits === 1 ? '' : 's'} • First seen ${new Date(lead.createdAt).toLocaleDateString()}`,
-    mobileActions: (
-      <AdminActionsMenu
-        editHref={`/admin/leads/${lead.id}`}
-        deleteEndpoint={`/api/admin/leads/${lead.id}`}
-        deleteConfirmMessage={`Delete lead "${lead.email || 'Anonymous'}" and all their visits?`}
-      />
-    ),
-  }))
+  const rows: AdminTableRow[] = leads.map((lead) => {
+    const displayName = getLeadDisplayName(lead)
+    return {
+      key: lead.id,
+      cells: [
+        <div key="contact">
+          <div className="font-medium">{displayName}</div>
+          {lead.email && (
+            <div className="text-sm text-muted-foreground truncate">{lead.email}</div>
+          )}
+        </div>,
+        <span key="company" className="text-muted-foreground">{lead.company || '—'}</span>,
+        <span key="title" className="text-muted-foreground">{lead.title || '—'}</span>,
+        <span key="visits" className="text-muted-foreground">{lead._count.visits}</span>,
+        <span key="date" className="text-muted-foreground">
+          {new Date(lead.createdAt).toLocaleDateString()}
+        </span>,
+      ],
+      actions: (
+        <AdminActionsMenu
+          editHref={`/admin/leads/${lead.id}`}
+          deleteEndpoint={`/api/admin/leads/${lead.id}`}
+          deleteConfirmMessage={`Delete lead "${displayName}" and all their visits?`}
+        />
+      ),
+      mobileTitle: displayName,
+      mobileSubtitle: lead.company || lead.email,
+      mobileMeta: `${lead._count.visits} visit${lead._count.visits === 1 ? '' : 's'} • First seen ${new Date(lead.createdAt).toLocaleDateString()}`,
+      mobileActions: (
+        <AdminActionsMenu
+          editHref={`/admin/leads/${lead.id}`}
+          deleteEndpoint={`/api/admin/leads/${lead.id}`}
+          deleteConfirmMessage={`Delete lead "${displayName}" and all their visits?`}
+        />
+      ),
+    }
+  })
 
   return (
     <div>
