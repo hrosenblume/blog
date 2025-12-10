@@ -173,7 +173,7 @@ Defined in `lib/keyboard/shortcuts.ts`:
 
 ### RB2B Lead Tracking
 Visitor identification via RB2B integration:
-- **Tracking script**: `components/RB2BScript.tsx` — loads RB2B client-side script (public pages only, excludes /admin and /writer)
+- **Tracking script**: `components/RB2BScript.tsx` — loads RB2B client-side script (public pages only, excludes /admin, /writer, /auth)
 - **Webhook**: `/api/webhooks/rb2b` — receives identified visitor data
 - **Admin pages**:
   - `/admin/leads` — unique contacts
