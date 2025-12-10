@@ -63,7 +63,6 @@ model LeadVisit {
   id         String   @id @default(uuid())
   leadId     String
   lead       Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  ip         String
   userAgent  String?
   pageUrl    String?
   referrer   String?

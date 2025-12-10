@@ -35,7 +35,6 @@ export default async function LeadVisitsPage({ searchParams }: PageProps) {
     { header: 'Contact', maxWidth: 'max-w-[150px]' },
     { header: 'Company', maxWidth: 'max-w-[120px]' },
     { header: 'Page', maxWidth: 'max-w-[200px]' },
-    { header: 'IP' },
   ]
 
   const rows: AdminTableRow[] = visits.map((visit) => {
@@ -61,9 +60,6 @@ export default async function LeadVisitsPage({ searchParams }: PageProps) {
         </span>,
         <span key="page" className="text-muted-foreground truncate block">
           {visit.pageUrl || '—'}
-        </span>,
-        <span key="ip" className="font-mono text-sm text-muted-foreground">
-          {visit.ip}
         </span>,
       ],
       mobileTitle: new Date(visit.visitedAt).toLocaleString(),

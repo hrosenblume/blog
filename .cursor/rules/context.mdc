@@ -128,7 +128,6 @@ model LeadVisit {
   id         String   @id @default(uuid())
   leadId     String
   lead       Lead     @relation(...)
-  ip         String
   userAgent  String?
   pageUrl    String?
   referrer   String?

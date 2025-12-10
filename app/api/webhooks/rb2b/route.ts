@@ -97,7 +97,6 @@ export async function POST(request: NextRequest) {
     const visit = await prisma.leadVisit.create({
       data: {
         leadId: lead.id,
-        ip: 'unknown', // RB2B doesn't send IP in this format
         pageUrl,
         referrer,
         rawPayload: JSON.stringify(payload),

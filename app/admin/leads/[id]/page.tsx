@@ -30,7 +30,6 @@ export default async function LeadDetailPage({
   const visitColumns = [
     { header: 'Date' },
     { header: 'Page', maxWidth: 'max-w-[250px]' },
-    { header: 'IP' },
     { header: 'Referrer', maxWidth: 'max-w-[200px]' },
   ]
 
@@ -43,16 +42,12 @@ export default async function LeadDetailPage({
       <span key="page" className="text-muted-foreground truncate block">
         {visit.pageUrl || '—'}
       </span>,
-      <span key="ip" className="text-muted-foreground font-mono text-sm">
-        {visit.ip}
-      </span>,
       <span key="referrer" className="text-muted-foreground truncate block">
         {visit.referrer || '—'}
       </span>,
     ],
     mobileTitle: new Date(visit.visitedAt).toLocaleString(),
     mobileSubtitle: visit.pageUrl || 'Unknown page',
-    mobileMeta: `IP: ${visit.ip}`,
   }))
 
   return (
