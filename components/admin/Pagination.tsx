@@ -10,8 +10,9 @@ interface PaginationProps {
 }
 
 export function Pagination({ currentPage, totalPages, baseUrl, position = 'top' }: PaginationProps) {
+  if (totalPages <= 1) return null
+
   const spacingClass = position === 'top' ? 'mb-4' : 'mt-4'
-  const showNav = totalPages > 1
 
   const getPageUrl = (page: number) => `${baseUrl}?page=${page}`
 
@@ -52,50 +53,48 @@ export function Pagination({ currentPage, totalPages, baseUrl, position = 'top' 
   return (
     <div className={cn("flex items-center justify-between px-4 py-3 bg-card rounded-lg shadow", spacingClass)}>
       <div className="text-sm text-muted-foreground">
-        Page {currentPage} of {totalPages || 1}
+        Page {currentPage} of {totalPages}
       </div>
       
-      {showNav && (
-        <nav className="flex items-center gap-1">
-          {/* Previous button */}
-          {currentPage > 1 ? (
-            <Button variant="ghost" size="sm" asChild>
-              <Link href={getPageUrl(currentPage - 1)}>← Prev</Link>
-            </Button>
+      <nav className="flex items-center gap-1">
+        {/* Previous button */}
+        {currentPage > 1 ? (
+          <Button variant="ghost" size="sm" asChild>
+            <Link href={getPageUrl(currentPage - 1)}>← Prev</Link>
+          </Button>
+        ) : (
+          <Button variant="ghost" size="sm" disabled>← Prev</Button>
+        )}
+        
+        {/* Page numbers */}
+        {getPageNumbers().map((page, i) => 
+          page === 'ellipsis' ? (
+            <span key={`ellipsis-${i}`} className="px-2 text-muted-foreground">…</span>
           ) : (
-            <Button variant="ghost" size="sm" disabled>← Prev</Button>
-          )}
-          
-          {/* Page numbers */}
-          {getPageNumbers().map((page, i) => 
-            page === 'ellipsis' ? (
-              <span key={`ellipsis-${i}`} className="px-2 text-muted-foreground">…</span>
-            ) : (
-              <Button
-                key={page}
-                variant={page === currentPage ? 'default' : 'ghost'}
-                size="sm"
-                asChild={page !== currentPage}
-              >
-                {page === currentPage ? (
-                  <span>{page}</span>
-                ) : (
-                  <Link href={getPageUrl(page)}>{page}</Link>
-                )}
-              </Button>
-            )
-          )}
-          
-          {/* Next button */}
-          {currentPage < totalPages ? (
-            <Button variant="ghost" size="sm" asChild>
-              <Link href={getPageUrl(currentPage + 1)}>Next →</Link>
+            <Button
+              key={page}
+              variant={page === currentPage ? 'default' : 'ghost'}
+              size="sm"
+              asChild={page !== currentPage}
+            >
+              {page === currentPage ? (
+                <span>{page}</span>
+              ) : (
+                <Link href={getPageUrl(page)}>{page}</Link>
+              )}
             </Button>
-          ) : (
-            <Button variant="ghost" size="sm" disabled>Next →</Button>
-          )}
-        </nav>
-      )}
+          )
+        )}
+        
+        {/* Next button */}
+        {currentPage < totalPages ? (
+          <Button variant="ghost" size="sm" asChild>
+            <Link href={getPageUrl(currentPage + 1)}>Next →</Link>
+          </Button>
+        ) : (
+          <Button variant="ghost" size="sm" disabled>Next →</Button>
+        )}
+      </nav>
     </div>
   )
 }
