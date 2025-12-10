@@ -5,22 +5,18 @@ export async function POST(request: NextRequest) {
   try {
     const payload = await request.json()
 
-    // RB2B webhook payload structure (adjust field names based on actual payload)
-    const {
-      email,
-      first_name,
-      last_name,
-      linkedin_url,
-      title,
-      company_name,
-      company_website,
-      industry,
-      employee_count,
-      ip_address,
-      user_agent,
-      page_url,
-      referrer,
-    } = payload
+    // RB2B webhook payload - uses Title Case field names with spaces
+    const email = payload['Business Email']
+    const firstName = payload['First Name']
+    const lastName = payload['Last Name']
+    const linkedIn = payload['LinkedIn URL']
+    const title = payload['Title']
+    const company = payload['Company Name']
+    const companyUrl = payload['Website']
+    const industry = payload['Industry']
+    const employees = payload['Employee Count']
+    const pageUrl = payload['Captured URL']
+    const referrer = payload['Referrer']
 
     // Find or create Lead by email
     let lead
@@ -29,39 +25,39 @@ export async function POST(request: NextRequest) {
         where: { email },
         update: {
           // Update enriched data if we have newer info
-          firstName: first_name || undefined,
-          lastName: last_name || undefined,
-          linkedIn: linkedin_url || undefined,
+          firstName: firstName || undefined,
+          lastName: lastName || undefined,
+          linkedIn: linkedIn || undefined,
           title: title || undefined,
-          company: company_name || undefined,
-          companyUrl: company_website || undefined,
+          company: company || undefined,
+          companyUrl: companyUrl || undefined,
           industry: industry || undefined,
-          employees: employee_count || undefined,
+          employees: employees || undefined,
         },
         create: {
           email,
-          firstName: first_name,
-          lastName: last_name,
-          linkedIn: linkedin_url,
-          title: title,
-          company: company_name,
-          companyUrl: company_website,
-          industry: industry,
-          employees: employee_count,
+          firstName,
+          lastName,
+          linkedIn,
+          title,
+          company,
+          companyUrl,
+          industry,
+          employees,
         },
       })
     } else {
       // No email - create anonymous lead
       lead = await prisma.lead.create({
         data: {
-          firstName: first_name,
-          lastName: last_name,
-          linkedIn: linkedin_url,
-          title: title,
-          company: company_name,
-          companyUrl: company_website,
-          industry: industry,
-          employees: employee_count,
+          firstName,
+          lastName,
+          linkedIn,
+          title,
+          company,
+          companyUrl,
+          industry,
+          employees,
         },
       })
     }
@@ -70,10 +66,9 @@ export async function POST(request: NextRequest) {
     const visit = await prisma.leadVisit.create({
       data: {
         leadId: lead.id,
-        ip: ip_address || 'unknown',
-        userAgent: user_agent,
-        pageUrl: page_url,
-        referrer: referrer,
+        ip: 'unknown', // RB2B doesn't send IP in this format
+        pageUrl,
+        referrer,
         rawPayload: JSON.stringify(payload),
       },
     })
