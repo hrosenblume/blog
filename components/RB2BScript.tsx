@@ -1,12 +1,16 @@
 'use client'
 
+import { usePathname } from 'next/navigation'
 import Script from 'next/script'
 
 export function RB2BScript() {
+  const pathname = usePathname()
   const apiKey = process.env.NEXT_PUBLIC_RB2B_API_KEY
 
-  // Don't render if no key configured
-  if (!apiKey) return null
+  // Only track public-facing pages (not admin/writer dashboards)
+  if (!apiKey || pathname?.startsWith('/admin') || pathname?.startsWith('/writer')) {
+    return null
+  }
 
   return (
     <Script
