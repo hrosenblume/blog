@@ -75,14 +75,14 @@ export default function AdminLayout({
             </Link>
             
             {/* Desktop nav */}
-            <nav className="hidden md:flex items-center gap-4">
+            <nav className="hidden md:flex items-center">
               {/* Direct links */}
               {directLinks.map((link) => (
                 <Link 
                   key={link.href} 
                   href={link.href}
                   className={cn(
-                    "text-muted-foreground hover:text-foreground",
+                    "px-3 text-muted-foreground hover:text-foreground",
                     pathname === link.href && "text-foreground font-medium"
                   )}
                 >
@@ -97,7 +97,7 @@ export default function AdminLayout({
                     <Button 
                       variant="ghost" 
                       className={cn(
-                        "gap-1 px-2 h-auto py-0 text-muted-foreground hover:text-foreground hover:bg-transparent",
+                        "px-3 gap-1 h-auto py-0 text-muted-foreground hover:text-foreground hover:bg-transparent",
                         group.items.some(item => pathname === item.href || pathname.startsWith(item.href + '/')) && "text-foreground font-medium"
                       )}
                     >

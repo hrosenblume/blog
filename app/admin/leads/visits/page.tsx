@@ -1,17 +1,34 @@
 import { prisma } from '@/lib/db'
 import Link from 'next/link'
+import { Pagination } from '@/components/admin/Pagination'
 import { AdminTable, AdminTableRow } from '@/components/admin/AdminTable'
 
 export const dynamic = 'force-dynamic'
 
-export default async function LeadVisitsPage() {
-  const visits = await prisma.leadVisit.findMany({
-    orderBy: { visitedAt: 'desc' },
-    take: 100,
-    include: {
-      lead: true,
-    },
-  })
+const ITEMS_PER_PAGE = 25
+
+interface PageProps {
+  searchParams: Promise<{ page?: string }>
+}
+
+export default async function LeadVisitsPage({ searchParams }: PageProps) {
+  const params = await searchParams
+  const currentPage = Math.max(1, parseInt(params.page || '1', 10))
+  const skip = (currentPage - 1) * ITEMS_PER_PAGE
+
+  const [visits, totalCount] = await Promise.all([
+    prisma.leadVisit.findMany({
+      orderBy: { visitedAt: 'desc' },
+      skip,
+      take: ITEMS_PER_PAGE,
+      include: {
+        lead: true,
+      },
+    }),
+    prisma.leadVisit.count(),
+  ])
+
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)
 
   const columns = [
     { header: 'Time' },
@@ -57,10 +74,16 @@ export default async function LeadVisitsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6 md:mb-8">
-        <h1 className="text-section font-bold">Recent Visits</h1>
-        <span className="text-muted-foreground">{visits.length} visit{visits.length === 1 ? '' : 's'}</span>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-section font-bold">Visits</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {totalCount} total visit{totalCount !== 1 ? 's' : ''}
+          </p>
+        </div>
       </div>
+
+      <Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/admin/leads/visits" position="top" />
 
       <AdminTable
         columns={columns}
@@ -68,6 +91,8 @@ export default async function LeadVisitsPage() {
         emptyMessage="No visits recorded yet. Configure RB2B to start tracking."
         showActions={false}
       />
+
+      <Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/admin/leads/visits" position="bottom" />
     </div>
   )
 }
