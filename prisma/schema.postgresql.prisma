@@ -56,6 +56,7 @@ model Lead {
   visits     LeadVisit[]
 
   @@index([company])
+  @@index([linkedIn])
 }
 
 model LeadVisit {
