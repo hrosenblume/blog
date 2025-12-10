@@ -48,7 +48,7 @@ blog/
 │   ├── globals.css             # Typography variables
 │   └── layout.tsx              # Root layout
 ├── components/                 # Shared UI components
-│   ├── admin/                  # AdminTable, Pagination
+│   ├── admin/                  # AdminTable, Pagination, Field
 │   ├── editor/                 # EditorToolbar, PostMetadataFooter
 │   └── ui/                     # shadcn/ui components
 ├── lib/                        # Utilities and configs
@@ -56,6 +56,7 @@ blog/
 │   ├── db.ts                   # Prisma client singleton
 │   ├── homepage.ts             # ✏️ Homepage content (DRY)
 │   ├── keyboard/               # Keyboard navigation
+│   ├── leads.ts                # Lead utilities (getLeadDisplayName)
 │   ├── polyhedra/              # 3D rendering system
 │   ├── posts.ts                # Post CRUD logic (DRY)
 │   └── styles.ts               # Shared Tailwind classes (DRY)
@@ -172,9 +173,13 @@ Defined in `lib/keyboard/shortcuts.ts`:
 
 ### RB2B Lead Tracking
 Visitor identification via RB2B integration:
-- **Tracking script**: `components/RB2BScript.tsx` — loads RB2B client-side script
+- **Tracking script**: `components/RB2BScript.tsx` — loads RB2B client-side script (public pages only, excludes /admin and /writer)
 - **Webhook**: `/api/webhooks/rb2b` — receives identified visitor data
-- **Admin pages**: `/admin/leads` (unique contacts), `/admin/leads/visits` (all visits)
+- **Admin pages**:
+  - `/admin/leads` — unique contacts
+  - `/admin/leads/visits` — all visits
+  - `/admin/visitors/companies` — aggregated by company
+  - `/admin/visitors/persons` — identified individuals
 - **Data flow**: RB2B script → RB2B servers identify visitor → webhook POST → Lead/LeadVisit created
 - **Env var**: `NEXT_PUBLIC_RB2B_API_KEY` — tracking key from RB2B dashboard
 
@@ -225,7 +230,7 @@ Workflow steps:
 1. SSH into Droplet
 2. `git reset --hard origin/<branch>`
 3. `npm install`
-4. `prisma generate + db push`
+4. `prisma generate + db push --accept-data-loss`
 5. `npm run build:prod`
 6. `pm2 restart`
 
