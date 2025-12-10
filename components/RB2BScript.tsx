@@ -7,8 +7,8 @@ export function RB2BScript() {
   const pathname = usePathname()
   const apiKey = process.env.NEXT_PUBLIC_RB2B_API_KEY
 
-  // Only track public-facing pages (not admin/writer dashboards)
-  if (!apiKey || pathname?.startsWith('/admin') || pathname?.startsWith('/writer')) {
+  // Only track public-facing pages (not admin/writer/auth)
+  if (!apiKey || pathname?.startsWith('/admin') || pathname?.startsWith('/writer') || pathname?.startsWith('/auth')) {
     return null
   }
 
