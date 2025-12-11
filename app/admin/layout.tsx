@@ -33,7 +33,6 @@ const navGroups = [
   {
     label: 'Analytics',
     items: [
-      { label: 'Leads', href: '/admin/leads' },
       { label: 'Visits', href: '/admin/leads/visits' },
       { label: 'Companies', href: '/admin/visitors/companies' },
       { label: 'Persons', href: '/admin/visitors/persons' },

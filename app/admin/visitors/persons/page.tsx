@@ -1,5 +1,4 @@
 import { prisma } from '@/lib/db'
-import Link from 'next/link'
 import { getLeadDisplayName } from '@/lib/leads'
 import { Pagination } from '@/components/admin/Pagination'
 import { AdminTable, AdminTableRow } from '@/components/admin/AdminTable'
@@ -51,10 +50,9 @@ export default async function PersonVisitorsPage({ searchParams }: PageProps) {
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)
 
   const columns = [
-    { header: 'Name', maxWidth: 'max-w-[180px]' },
-    { header: 'Title', maxWidth: 'max-w-[150px]' },
-    { header: 'Company', maxWidth: 'max-w-[150px]' },
-    { header: 'Email', maxWidth: 'max-w-[180px]' },
+    { header: 'Name' },
+    { header: 'Company' },
+    { header: 'Email' },
     { header: 'Pages' },
     { header: 'Last Seen' },
   ]
@@ -66,15 +64,8 @@ export default async function PersonVisitorsPage({ searchParams }: PageProps) {
     return {
       key: lead.id,
       cells: [
-        <Link
-          key="name"
-          href={`/admin/leads/${lead.id}`}
-          className="font-medium hover:underline"
-        >
+        <span key="name" className="font-medium">
           {displayName}
-        </Link>,
-        <span key="title" className="text-muted-foreground">
-          {lead.title || '—'}
         </span>,
         <span key="company" className="text-muted-foreground">
           {lead.company || '—'}
@@ -83,7 +74,7 @@ export default async function PersonVisitorsPage({ searchParams }: PageProps) {
           <a
             key="email"
             href={`mailto:${lead.email}`}
-            className="text-blue-500 hover:underline truncate block"
+            className="text-blue-500 hover:underline"
           >
             {lead.email}
           </a>

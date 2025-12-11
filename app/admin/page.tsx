@@ -4,20 +4,26 @@ import Link from 'next/link'
 export const dynamic = 'force-dynamic'
 
 export default async function AdminDashboard() {
-  const [userCount, postCount, revisionCount, leadCount, visitCount] = await Promise.all([
+  const [userCount, postCount, revisionCount, leadCount, companies] = await Promise.all([
     prisma.user.count(),
     prisma.post.count(),
     prisma.revision.count(),
     prisma.lead.count(),
-    prisma.leadVisit.count(),
+    prisma.lead.findMany({
+      where: { company: { not: null } },
+      select: { company: true },
+      distinct: ['company'],
+    }),
   ])
+
+  const companyCount = companies.length
 
   const stats = [
     { name: 'Users', count: userCount, href: '/admin/users', color: 'bg-blue-500' },
     { name: 'Posts', count: postCount, href: '/admin/posts', color: 'bg-green-500' },
     { name: 'Revisions', count: revisionCount, href: '/admin/revisions', color: 'bg-purple-500' },
-    { name: 'Leads', count: leadCount, href: '/admin/leads', color: 'bg-orange-500' },
-    { name: 'Visits', count: visitCount, href: '/admin/leads/visits', color: 'bg-yellow-500' },
+    { name: 'Visitors', count: leadCount, href: '/admin/visitors/persons', color: 'bg-orange-500' },
+    { name: 'Companies', count: companyCount, href: '/admin/visitors/companies', color: 'bg-yellow-500' },
   ]
 
   return (

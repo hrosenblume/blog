@@ -30,8 +30,8 @@ export function EditorNavbar({
   }
 
   return (
-    <header className="border-b border-border px-4 sm:px-6 py-3 sm:py-4">
-      <div className="flex items-center justify-between">
+    <header className="border-b border-border px-4 sm:px-6 py-3 sm:py-4 touch-none">
+      <div className="flex items-center justify-between pointer-events-auto">
         <button
           onClick={handleBack}
           className="inline-flex items-center gap-1.5 sm:gap-2 text-muted-foreground hover:text-foreground min-h-[44px] px-2 -mx-2 rounded-lg hover:bg-accent transition-colors"

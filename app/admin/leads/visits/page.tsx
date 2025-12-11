@@ -1,6 +1,5 @@
 import { prisma } from '@/lib/db'
 import { getLeadDisplayName } from '@/lib/leads'
-import Link from 'next/link'
 import { Pagination } from '@/components/admin/Pagination'
 import { AdminTable, AdminTableRow } from '@/components/admin/AdminTable'
 
@@ -47,13 +46,9 @@ export default async function LeadVisitsPage({ searchParams }: PageProps) {
         <span key="time" className="whitespace-nowrap">
           {new Date(visit.visitedAt).toLocaleString()}
         </span>,
-        <Link
-          key="contact"
-          href={`/admin/leads/${visit.lead.id}`}
-          className="hover:underline"
-        >
+        <span key="contact">
           {contactName}
-        </Link>,
+        </span>,
         <span key="company" className="text-muted-foreground">
           {visit.lead.company || '—'}
         </span>,

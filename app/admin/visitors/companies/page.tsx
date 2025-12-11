@@ -1,5 +1,4 @@
 import { prisma } from '@/lib/db'
-import Link from 'next/link'
 import { Pagination } from '@/components/admin/Pagination'
 import { AdminTable, AdminTableRow } from '@/components/admin/AdminTable'
 
@@ -93,13 +92,9 @@ export default async function CompanyVisitorsPage({ searchParams }: PageProps) {
   const rows: AdminTableRow[] = companies.map((company) => ({
     key: company.company,
     cells: [
-      <Link
-        key="company"
-        href={`/admin/leads?company=${encodeURIComponent(company.company)}`}
-        className="font-medium hover:underline"
-      >
+      <span key="company" className="font-medium">
         {company.company}
-      </Link>,
+      </span>,
       <span key="industry" className="text-muted-foreground">
         {company.industry || '—'}
       </span>,
