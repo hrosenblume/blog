@@ -1,6 +1,7 @@
 ---
-description: Project architecture and systems reference
+description: "Project architecture, tech stack, and systems reference"
 globs: ["**/*"]
+alwaysApply: true
 ---
 
 # Project Context

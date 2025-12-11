@@ -1,9 +1,12 @@
 ---
-description: Coding conventions and rules for Hunter's Blog
+description: "⚠️ ALWAYS READ THIS FILE FIRST — Contains critical git commands (g/d/m/p/pf) and coding conventions"
 globs: ["**/*"]
+alwaysApply: true
 ---
 
 # Coding Rules
+
+> 🚨 **READ THIS ENTIRE FILE AT THE START OF EVERY CONVERSATION.** This contains single-letter git commands (`g`, `d`, `m`, `p`, `pf`) that must be executed immediately when typed.
 
 > ⚠️ **THIS FILE IS COMMITTED TO GIT.** Do not add sensitive data: no emails, URLs, passwords, API keys, or secrets. Use environment variable references instead (e.g., `WRITER_EMAIL` not the actual email).
 
@@ -47,7 +50,6 @@ Use CSS variables from `globals.css`:
 |------|----------|
 | Homepage content | `lib/homepage.ts` |
 | Admin nav items | `lib/admin-nav.ts` |
-| Shared styles | `lib/styles.ts` |
 | Keyboard shortcuts | `lib/keyboard/shortcuts.ts` |
 | Post CRUD logic | `lib/posts.ts` |
 | SVG icons | `components/Icons.tsx` |
@@ -89,11 +91,22 @@ Use CSS variables from `globals.css`:
 
 ## Git Workflow
 
+> ⚠️ **CRITICAL: Single-letter commands are git workflow triggers.** When the user types just `g`, `d`, `m`, `p`, or `pf` — that IS a command. Execute immediately. Don't interpret as casual chat.
+
+| Command | Action |
+|---------|--------|
+| `g` | Production commit → push to `main` |
+| `d` | Dev commit → push to `dev` |
+| `m` | Merge `dev` → `main` |
+| `p` | Pull current branch |
+| `pf` | Force reset to `origin/main` |
+
 > ⚠️ **NEVER push to `main` automatically.** Only push to main when the user EXPLICITLY types "g". After making changes or fixes, commit to `dev` only and WAIT for the user to type "g" before touching main.
 
 ### When user types "d" (dev commit)
-1. `git add -A && git status -sb && git diff --staged --stat`
-2. Read modified files for context
+1. `git status -sb` first — review untracked files (`??`), never auto-add `.env*`, `*.save`, `*.bak`
+2. `git add -u` (tracked files only) or selectively add, then `git diff --staged --stat`
+3. Read modified files for context
 3. Review chat history
 4. Commit with descriptive message summarizing changes
 5. Push to `dev` branch
@@ -110,8 +123,9 @@ If on `dev` or another branch:
 4. Continue with steps below, then `git checkout dev` to return
 
 Steps:
-1. `git add -A && git status -sb && git diff --staged --stat`
-2. Read modified files for context
+1. `git status -sb` first — review untracked files (`??`), never auto-add `.env*`, `*.save`, `*.bak`
+2. `git add -u` (tracked files only) or selectively add, then `git diff --staged --stat`
+3. Read modified files for context
 3. Review chat history
 4. **Update `.cursor/rules/` if significant changes were made:**
    - `rules.mdc` — New conventions, patterns, do's/don'ts
