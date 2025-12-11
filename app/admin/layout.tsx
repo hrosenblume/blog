@@ -55,7 +55,7 @@ export default function AdminLayout({
       <header className="flex-shrink-0 bg-card shadow">
         <div className="max-w-5xl mx-auto px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
           <div className="flex items-center gap-4 md:gap-6">
-            <Link href="/admin" className="text-lg md:text-xl font-bold">
+            <Link href="/admin" className="text-section font-bold">
               Admin
             </Link>
             

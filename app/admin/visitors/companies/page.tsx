@@ -117,6 +117,16 @@ export default async function CompanyVisitorsPage({ searchParams }: PageProps) {
         {company.lastVisit.getTime() > 0 ? company.lastVisit.toLocaleDateString() : '—'}
       </span>,
     ],
+    actions: company.companyUrl ? (
+      <a
+        href={company.companyUrl.startsWith('http') ? company.companyUrl : `https://${company.companyUrl}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-blue-500 hover:text-blue-600 text-table"
+      >
+        Website
+      </a>
+    ) : undefined,
     mobileLabel: company.company,
     mobileMeta: `${company.industry ? company.industry + ' · ' : ''}${company.visitorCount} visitor${company.visitorCount !== 1 ? 's' : ''} · ${company.totalVisits} view${company.totalVisits !== 1 ? 's' : ''}`,
   }))

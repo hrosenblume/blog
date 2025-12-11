@@ -31,7 +31,7 @@ interface AdminTableProps {
 }
 
 /** Mobile list item template */
-function MobileItem({ row, showActions }: { row: AdminTableRow; showActions: boolean }) {
+function MobileItem({ row }: { row: AdminTableRow }) {
   return (
     <div className="flex items-center justify-between gap-4 px-4 py-5">
       <div className="min-w-0 flex-1 space-y-1.5">
@@ -43,7 +43,7 @@ function MobileItem({ row, showActions }: { row: AdminTableRow; showActions: boo
           <p className="text-sm text-muted-foreground truncate">{row.mobileMeta}</p>
         )}
       </div>
-      {showActions && row.actions}
+      {row.actions}
     </div>
   )
 }
@@ -115,19 +115,19 @@ export function AdminTable({
   return (
     <>
       {/* Desktop */}
-      <div className="hidden md:block rounded-md border">
+      <div className="hidden md:block rounded-md border overflow-hidden">
         <DataTable columns={columns} rows={rows} showActions={showActions} withTruncation />
       </div>
 
       {/* Mobile */}
       {hasMobileLayout ? (
-        <div className="md:hidden divide-y rounded-md border bg-background">
+        <div className="md:hidden divide-y rounded-md border overflow-hidden bg-background">
           {rows.map((row) => (
-            <MobileItem key={row.key} row={row} showActions={showActions} />
+            <MobileItem key={row.key} row={row} />
           ))}
         </div>
       ) : (
-        <div className="md:hidden rounded-md border overflow-x-auto">
+        <div className="md:hidden rounded-md border overflow-hidden overflow-x-auto">
           <DataTable columns={columns} rows={rows} showActions={showActions} />
         </div>
       )}

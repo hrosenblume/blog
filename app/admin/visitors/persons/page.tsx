@@ -71,6 +71,30 @@ export default async function PersonVisitorsPage({ searchParams }: PageProps) {
     const displayName = getLeadDisplayName(lead)
     const lastSeen = lead.visits[0]?.visitedAt
 
+    // Mobile actions: email + LinkedIn links
+    const mobileActions = (
+      <div className="flex items-center gap-3">
+        {lead.email && (
+          <a
+            href={`mailto:${lead.email}`}
+            className="text-blue-500 hover:text-blue-600 text-table"
+          >
+            Email
+          </a>
+        )}
+        {lead.linkedIn && (
+          <a
+            href={lead.linkedIn}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-500 hover:text-blue-600"
+          >
+            <LinkedInIcon />
+          </a>
+        )}
+      </div>
+    )
+
     return {
       key: lead.id,
       cells: [
@@ -110,6 +134,7 @@ export default async function PersonVisitorsPage({ searchParams }: PageProps) {
           {lastSeen ? lastSeen.toLocaleDateString() : '—'}
         </span>,
       ],
+      actions: mobileActions,
       mobileLabel: displayName,
       mobileMeta: `${lead.company || 'Unknown'} · ${lead._count.visits} page${lead._count.visits !== 1 ? 's' : ''} · ${lastSeen?.toLocaleDateString() || 'never'}`,
     }

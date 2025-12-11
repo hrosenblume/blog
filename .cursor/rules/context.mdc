@@ -144,9 +144,10 @@ model LeadVisit {
 ### Typography System
 CSS variables in `globals.css`, exposed as Tailwind utilities:
 - `text-title` (24px) — Page titles
-- `text-h1` (22px) — Section headers  
+- `text-h1` (22px) — Section headers
 - `text-section` (18px) — Essay titles in lists
 - `text-body` (16px) — Body text
+- `text-table` (14px) — Table cells, dense data
 
 ### Homepage Configuration
 All content in `lib/homepage.ts`: name, bio, email, footer links.

@@ -44,6 +44,7 @@ Use CSS variables from `globals.css`:
 - `text-h1` (22px) — Section headers
 - `text-section` (18px) — Essay titles in lists
 - `text-body` (16px) — Body text
+- `text-table` (14px) — Table cells, dense data
 
 ### Centralized Configs
 | Need | Location |

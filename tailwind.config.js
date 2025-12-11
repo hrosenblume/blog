@@ -49,6 +49,7 @@ module.exports = {
         h1: 'var(--font-h1)',
         section: 'var(--font-section)',
         body: 'var(--font-body)',
+        table: 'var(--font-table)',
       },
       borderRadius: {
         lg: 'var(--radius)',
