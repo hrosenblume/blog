@@ -58,10 +58,8 @@ export default async function LeadVisitsPage({ searchParams }: PageProps) {
         </span>,
       ],
       actions: <ViewPayloadButton payload={visit.rawPayload} />,
-      mobileTitle: new Date(visit.visitedAt).toLocaleString(),
-      mobileSubtitle: contactName,
-      mobileMeta: `${visit.lead.company || 'Unknown company'} • ${visit.pageUrl || 'Unknown page'}`,
-      mobileActions: visit.rawPayload ? <ViewPayloadButton payload={visit.rawPayload} /> : undefined,
+      mobileLabel: contactName,
+      mobileMeta: `${visit.lead.company || 'Unknown'} · ${visit.pageUrl || 'Unknown page'} · ${new Date(visit.visitedAt).toLocaleDateString()}`,
     }
   })
 

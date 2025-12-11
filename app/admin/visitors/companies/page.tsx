@@ -117,9 +117,8 @@ export default async function CompanyVisitorsPage({ searchParams }: PageProps) {
         {company.lastVisit.getTime() > 0 ? company.lastVisit.toLocaleDateString() : '—'}
       </span>,
     ],
-    mobileTitle: company.company,
-    mobileSubtitle: company.industry || undefined,
-    mobileMeta: `${company.visitorCount} visitor${company.visitorCount !== 1 ? 's' : ''} • ${company.totalVisits} page view${company.totalVisits !== 1 ? 's' : ''}`,
+    mobileLabel: company.company,
+    mobileMeta: `${company.industry ? company.industry + ' · ' : ''}${company.visitorCount} visitor${company.visitorCount !== 1 ? 's' : ''} · ${company.totalVisits} view${company.totalVisits !== 1 ? 's' : ''}`,
   }))
 
   return (

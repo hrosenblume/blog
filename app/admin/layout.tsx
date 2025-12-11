@@ -63,16 +63,15 @@ export default function AdminLayout({
             <nav className="hidden md:flex items-center gap-1">
               {/* Direct links */}
               {directLinks.map((link) => (
-                <Link 
-                  key={link.href} 
-                  href={link.href}
-                  className={cn(
-                    "inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
-                    pathname === link.href ? "bg-accent" : "text-muted-foreground"
-                  )}
+                <Button
+                  key={link.href}
+                  variant="ghost"
+                  size="sm"
+                  asChild
+                  className={cn(pathname === link.href && "bg-accent")}
                 >
-                  {link.label}
-                </Link>
+                  <Link href={link.href}>{link.label}</Link>
+                </Button>
               ))}
               
               {/* Dropdown groups */}
@@ -80,22 +79,20 @@ export default function AdminLayout({
                 const isActive = group.items.some(item => pathname === item.href || pathname.startsWith(item.href + '/'))
                 return (
                   <DropdownMenu key={group.label}>
-                    <DropdownMenuTrigger 
-                      className={cn(
-                        "inline-flex items-center justify-center gap-1 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none",
-                        isActive ? "bg-accent" : "text-muted-foreground"
-                      )}
-                    >
-                      {group.label}
-                      <ChevronDownIcon className="h-4 w-4" />
+                    <DropdownMenuTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className={cn(isActive && "bg-accent")}
+                      >
+                        {group.label}
+                        <ChevronDownIcon className="ml-1 h-4 w-4" />
+                      </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start">
                       {group.items.map((item) => (
                         <DropdownMenuItem key={item.href} asChild>
-                          <Link 
-                            href={item.href}
-                            className={cn(pathname === item.href && "font-medium")}
-                          >
+                          <Link href={item.href}>
                             {item.label}
                           </Link>
                         </DropdownMenuItem>
@@ -120,9 +117,11 @@ export default function AdminLayout({
 
             {/* User dropdown - hidden on mobile */}
             <DropdownMenu>
-              <DropdownMenuTrigger className="hidden md:inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none">
-                <span>{session.user?.email}</span>
-                <ChevronDownIcon className="h-4 w-4" />
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="hidden md:inline-flex">
+                  {session.user?.email}
+                  <ChevronDownIcon className="ml-1 h-4 w-4" />
+                </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild>

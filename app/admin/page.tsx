@@ -47,7 +47,7 @@ export default async function AdminDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {adminNavItems.map((item) => (
           <Link key={item.href} href={item.href}>
-            <Card className="hover:shadow-lg transition-shadow">
+            <Card>
               <CardHeader>
                 <CardTitle>{item.label}</CardTitle>
               </CardHeader>

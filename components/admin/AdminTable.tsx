@@ -1,17 +1,16 @@
 import { ReactNode } from 'react'
 import {
-  tableHeaderClass,
-  tableCellClass,
-  tableRowHoverClass,
-  cardClass,
-  emptyStateClass,
-  mobileCardClass,
-} from '@/lib/styles'
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 
 export interface AdminTableColumn {
   header: string
   className?: string
-  /** Max width for truncation (e.g., 'max-w-[200px]') */
   maxWidth?: string
 }
 
@@ -19,12 +18,9 @@ export interface AdminTableRow {
   key: string
   cells: ReactNode[]
   actions?: ReactNode
-  // Mobile card data
-  mobileTitle?: ReactNode
-  mobileSubtitle?: ReactNode
+  mobileLabel?: ReactNode
+  mobileMeta?: string
   mobileBadge?: ReactNode
-  mobileMeta?: ReactNode
-  mobileActions?: ReactNode
 }
 
 interface AdminTableProps {
@@ -34,10 +30,74 @@ interface AdminTableProps {
   showActions?: boolean
 }
 
-/**
- * A reusable admin table component that works with Server Components.
- * Pass pre-rendered ReactNode content instead of render functions.
- */
+/** Mobile list item template */
+function MobileItem({ row, showActions }: { row: AdminTableRow; showActions: boolean }) {
+  return (
+    <div className="flex items-center justify-between gap-4 px-4 py-5">
+      <div className="min-w-0 flex-1 space-y-1.5">
+        <div className="flex items-center gap-2">
+          <span className="font-medium truncate">{row.mobileLabel}</span>
+          {row.mobileBadge}
+        </div>
+        {row.mobileMeta && (
+          <p className="text-sm text-muted-foreground truncate">{row.mobileMeta}</p>
+        )}
+      </div>
+      {showActions && row.actions}
+    </div>
+  )
+}
+
+/** Desktop/fallback table template */
+function DataTable({
+  columns,
+  rows,
+  showActions,
+  withTruncation = false,
+}: {
+  columns: AdminTableColumn[]
+  rows: AdminTableRow[]
+  showActions: boolean
+  withTruncation?: boolean
+}) {
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          {columns.map((col) => (
+            <TableHead key={col.header} className={col.className}>
+              {col.header}
+            </TableHead>
+          ))}
+          {showActions && <TableHead className="text-right">Actions</TableHead>}
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {rows.map((row) => (
+          <TableRow key={row.key}>
+            {row.cells.map((cell, i) => {
+              const col = columns[i]
+              const needsTruncate = withTruncation && col?.maxWidth
+              return (
+                <TableCell key={i} className={col?.className}>
+                  {needsTruncate ? (
+                    <span className={`block truncate ${col.maxWidth}`}>{cell}</span>
+                  ) : (
+                    cell
+                  )}
+                </TableCell>
+              )
+            })}
+            {showActions && row.actions && (
+              <TableCell className="text-right">{row.actions}</TableCell>
+            )}
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  )
+}
+
 export function AdminTable({
   columns,
   rows,
@@ -45,115 +105,30 @@ export function AdminTable({
   showActions = true,
 }: AdminTableProps) {
   if (rows.length === 0) {
-    return <div className={emptyStateClass}>{emptyMessage}</div>
+    return (
+      <div className="py-8 text-center text-muted-foreground">{emptyMessage}</div>
+    )
   }
 
-  const hasMobileCards = rows.some(row => row.mobileTitle !== undefined)
+  const hasMobileLayout = rows.some((row) => row.mobileLabel !== undefined)
 
   return (
     <>
-      {/* Desktop table */}
-      <div className={`hidden md:block ${cardClass} overflow-hidden`}>
-        <table className="min-w-full divide-y divide-border">
-          <thead className="bg-muted">
-            <tr>
-              {columns.map((col) => (
-                <th key={col.header} className={`${tableHeaderClass} ${col.className || ''}`}>
-                  {col.header}
-                </th>
-              ))}
-              {showActions && (
-                <th className={`${tableHeaderClass} text-right`}>Actions</th>
-              )}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {rows.map((row) => (
-              <tr key={row.key} className={tableRowHoverClass}>
-                {row.cells.map((cell, i) => {
-                  const col = columns[i]
-                  const maxWidthClass = col?.maxWidth || ''
-                  return (
-                    <td key={i} className={`${tableCellClass} ${col?.className || ''}`}>
-                      {maxWidthClass ? (
-                        <span className={`block truncate ${maxWidthClass}`}>{cell}</span>
-                      ) : (
-                        cell
-                      )}
-                    </td>
-                  )
-                })}
-                {showActions && row.actions && (
-                  <td className={`${tableCellClass} text-right space-x-2`}>
-                    {row.actions}
-                  </td>
-                )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* Desktop */}
+      <div className="hidden md:block rounded-md border">
+        <DataTable columns={columns} rows={rows} showActions={showActions} withTruncation />
       </div>
 
-      {/* Mobile cards */}
-      {hasMobileCards ? (
-        <div className="md:hidden space-y-4">
+      {/* Mobile */}
+      {hasMobileLayout ? (
+        <div className="md:hidden divide-y rounded-md border bg-background">
           {rows.map((row) => (
-            <div key={row.key} className={mobileCardClass}>
-              <div className="flex items-start justify-between mb-2">
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium truncate">{row.mobileTitle}</p>
-                  {row.mobileSubtitle && (
-                    <p className="text-sm text-muted-foreground font-mono truncate">
-                      {row.mobileSubtitle}
-                    </p>
-                  )}
-                </div>
-                {row.mobileBadge}
-              </div>
-              {row.mobileMeta && (
-                <p className="text-xs text-muted-foreground mb-3">
-                  {row.mobileMeta}
-                </p>
-              )}
-              {row.mobileActions && (
-                <div className="flex gap-2 flex-wrap">{row.mobileActions}</div>
-              )}
-            </div>
+            <MobileItem key={row.key} row={row} showActions={showActions} />
           ))}
         </div>
       ) : (
-        /* Fallback: simplified table on mobile */
-        <div className={`md:hidden ${cardClass} overflow-hidden overflow-x-auto`}>
-          <table className="min-w-full divide-y divide-border">
-            <thead className="bg-muted">
-              <tr>
-                {columns.map((col) => (
-                  <th key={col.header} className={tableHeaderClass}>
-                    {col.header}
-                  </th>
-                ))}
-                {showActions && (
-                  <th className={`${tableHeaderClass} text-right`}>Actions</th>
-                )}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {rows.map((row) => (
-                <tr key={row.key} className={tableRowHoverClass}>
-                  {row.cells.map((cell, i) => (
-                    <td key={i} className={tableCellClass}>
-                      {cell}
-                    </td>
-                  ))}
-                  {showActions && row.actions && (
-                    <td className={`${tableCellClass} text-right space-x-2`}>
-                      {row.actions}
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="md:hidden rounded-md border overflow-x-auto">
+          <DataTable columns={columns} rows={rows} showActions={showActions} />
         </div>
       )}
     </>

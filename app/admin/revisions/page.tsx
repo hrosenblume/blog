@@ -49,19 +49,16 @@ export default async function RevisionsPage({ searchParams }: PageProps) {
           {revision.markdown.slice(0, 80)}{revision.markdown.length > 80 ? '...' : ''}
         </span>,
         <span key="created" className="text-muted-foreground">{new Date(revision.createdAt).toLocaleString()}</span>,
-        isCurrent ? (
-          <Badge key="status" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-green-200 dark:border-green-800">
-            Current
-          </Badge>
-        ) : (
-          <Badge key="status" variant="secondary">Past</Badge>
-        ),
+        <Badge key="status" variant={isCurrent ? 'default' : 'secondary'}>{isCurrent ? 'current' : 'past'}</Badge>,
       ],
       actions: (
         <Button variant="ghost" size="sm" asChild>
           <Link href={`/admin/revisions/${revision.id}`}>View</Link>
         </Button>
       ),
+      mobileLabel: revision.post.title || 'Untitled',
+      mobileBadge: <Badge variant={isCurrent ? 'default' : 'secondary'}>{isCurrent ? 'current' : 'past'}</Badge>,
+      mobileMeta: `${revision.markdown.slice(0, 40)}${revision.markdown.length > 40 ? '...' : ''} · ${new Date(revision.createdAt).toLocaleDateString()}`,
     }
   })
 

@@ -110,9 +110,8 @@ export default async function PersonVisitorsPage({ searchParams }: PageProps) {
           {lastSeen ? lastSeen.toLocaleDateString() : '—'}
         </span>,
       ],
-      mobileTitle: displayName,
-      mobileSubtitle: lead.title ? `${lead.title} at ${lead.company || 'Unknown'}` : lead.company,
-      mobileMeta: `${lead._count.visits} page${lead._count.visits !== 1 ? 's' : ''} • Last seen ${lastSeen?.toLocaleDateString() || 'never'}${lead.linkedIn ? ' • LinkedIn' : ''}`,
+      mobileLabel: displayName,
+      mobileMeta: `${lead.company || 'Unknown'} · ${lead._count.visits} page${lead._count.visits !== 1 ? 's' : ''} · ${lastSeen?.toLocaleDateString() || 'never'}`,
     }
   })
 

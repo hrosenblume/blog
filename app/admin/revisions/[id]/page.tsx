@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { Badge } from '@/components/ui/badge'
 
 interface Revision {
   id: string
@@ -102,9 +103,7 @@ export default function RevisionDetailPage() {
         
         <div className="flex items-center gap-3">
           {isCurrentVersion ? (
-            <span className="px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-lg text-sm">
-              Current Version
-            </span>
+            <Badge>current</Badge>
           ) : (
             <button
               onClick={handleRestore}
