@@ -182,6 +182,11 @@ Defined in `lib/keyboard/shortcuts.ts`:
 - Slug generation
 - Unsaved changes warning
 
+### Google Analytics
+Page view tracking via Google Analytics 4:
+- **Script**: `components/GoogleAnalytics.tsx` — loads gtag.js (public pages only, excludes /admin, /writer, /auth)
+- **Env var**: `NEXT_PUBLIC_GA_MEASUREMENT_ID` — GA4 measurement ID (e.g., G-XXXXXXXXXX)
+
 ### RB2B Lead Tracking
 Visitor identification via RB2B integration:
 - **Tracking script**: `components/RB2BScript.tsx` — loads RB2B client-side script (public pages only, excludes /admin, /writer, /auth)
@@ -285,6 +290,7 @@ WRITER_EMAIL="<email>"                    # For db:seed
 WRITER_NAME="<name>"
 NGROK_DOMAIN="<domain>"                   # For dev:tunnel
 NEXT_PUBLIC_RB2B_API_KEY="<key>"         # RB2B tracking key
+NEXT_PUBLIC_GA_MEASUREMENT_ID="<id>"     # Google Analytics 4 measurement ID
 ```
 
 ## ngrok Tunnel (Mobile Testing)
