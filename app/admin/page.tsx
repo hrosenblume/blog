@@ -4,11 +4,19 @@ import Link from 'next/link'
 export const dynamic = 'force-dynamic'
 
 export default async function AdminDashboard() {
-  const [userCount, postCount, revisionCount, leadCount, companies] = await Promise.all([
+  const [userCount, postCount, revisionCount, visitorCount, companies] = await Promise.all([
     prisma.user.count(),
     prisma.post.count(),
     prisma.revision.count(),
-    prisma.lead.count(),
+    // Count only identified visitors (have email or name)
+    prisma.lead.count({
+      where: {
+        OR: [
+          { email: { not: null } },
+          { firstName: { not: null } },
+        ],
+      },
+    }),
     prisma.lead.findMany({
       where: { company: { not: null } },
       select: { company: true },
@@ -22,7 +30,7 @@ export default async function AdminDashboard() {
     { name: 'Users', count: userCount, href: '/admin/users', color: 'bg-blue-500' },
     { name: 'Posts', count: postCount, href: '/admin/posts', color: 'bg-green-500' },
     { name: 'Revisions', count: revisionCount, href: '/admin/revisions', color: 'bg-purple-500' },
-    { name: 'Visitors', count: leadCount, href: '/admin/visitors/persons', color: 'bg-orange-500' },
+    { name: 'Visitors', count: visitorCount, href: '/admin/visitors/persons', color: 'bg-orange-500' },
     { name: 'Companies', count: companyCount, href: '/admin/visitors/companies', color: 'bg-yellow-500' },
   ]
 
