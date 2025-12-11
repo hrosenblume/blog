@@ -9,7 +9,6 @@ import Image from '@tiptap/extension-image'
 import { markdownToHtml } from '@/lib/markdown'
 import { htmlToMarkdown } from '@/lib/turndown'
 import { EditorToolbar } from '@/components/editor/EditorToolbar'
-import { FloatingEditorToolbar } from '@/components/editor/FloatingEditorToolbar'
 
 interface TiptapEditorProps {
   content: string // markdown
@@ -77,12 +76,7 @@ export function TiptapEditor({ content, onChange, placeholder = 'Write your stor
     }
   }, [editor, content])
 
-  return (
-    <>
-      <FloatingEditorToolbar editor={editor} />
-      <EditorContent editor={editor} />
-    </>
-  )
+  return <EditorContent editor={editor} />
 }
 
 // Export EditorToolbar separately so it can be rendered in different position

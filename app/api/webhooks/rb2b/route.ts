@@ -74,7 +74,6 @@ export async function POST(request: NextRequest) {
           employees: employees || lead.employees,
         },
       })
-      console.log(`[RB2B] Existing lead matched: ${lead.id}`)
     } else {
       // No match found - create new lead
       lead = await prisma.lead.create({
@@ -90,7 +89,6 @@ export async function POST(request: NextRequest) {
           employees,
         },
       })
-      console.log(`[RB2B] New lead created: ${lead.id}`)
     }
 
     // Create visit record
@@ -102,8 +100,6 @@ export async function POST(request: NextRequest) {
         rawPayload: JSON.stringify(payload),
       },
     })
-
-    console.log(`[RB2B] Lead captured: ${email || lead.id}, visit: ${visit.id}`)
 
     return NextResponse.json({ success: true, leadId: lead.id, visitId: visit.id })
   } catch (error) {

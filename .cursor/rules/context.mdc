@@ -52,6 +52,7 @@ blog/
 │   ├── editor/                 # EditorToolbar, PostMetadataFooter
 │   └── ui/                     # shadcn/ui components
 ├── lib/                        # Utilities and configs
+│   ├── admin-nav.ts            # ✏️ Admin nav config (DRY)
 │   ├── auth.ts                 # NextAuth config
 │   ├── db.ts                   # Prisma client singleton
 │   ├── homepage.ts             # ✏️ Homepage content (DRY)
@@ -150,6 +151,14 @@ CSS variables in `globals.css`, exposed as Tailwind utilities:
 All content in `lib/homepage.ts`: name, bio, email, footer links.
 Used by: homepage, essay pages, writer dashboard, footer.
 
+### Admin Nav Configuration
+All admin navigation in `lib/admin-nav.ts`:
+- `adminNavItems` — All items with label, href, countKey
+- `adminNavGroups` — Which items appear in dropdown groups
+- `adminDirectLinks` — Items shown as direct links
+Used by: admin layout (navbar) and admin dashboard (cards).
+Adding an item to the config automatically shows it in both places.
+
 ### Polyhedra System
 50+ animated 3D wireframe shapes:
 - Build: `scripts/polyhedra/build-shapes.js` → `lib/polyhedra/shapes.json`
@@ -198,7 +207,6 @@ Visitor identification via RB2B integration:
 | `/api/posts/[id]` | CRUD single post |
 | `/api/admin/users` | User management (admin) |
 | `/api/admin/revisions` | Revision management (admin) |
-| `/api/admin/leads/[id]` | Lead management (admin) |
 | `/api/webhooks/rb2b` | RB2B webhook receiver |
 | `/api/upload` | Image upload |
 

@@ -2,6 +2,7 @@ import { prisma } from '@/lib/db'
 import { getLeadDisplayName } from '@/lib/leads'
 import { Pagination } from '@/components/admin/Pagination'
 import { AdminTable, AdminTableRow } from '@/components/admin/AdminTable'
+import { ViewPayloadButton } from '@/components/admin/ViewPayloadButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -56,9 +57,11 @@ export default async function LeadVisitsPage({ searchParams }: PageProps) {
           {visit.pageUrl || '—'}
         </span>,
       ],
+      actions: <ViewPayloadButton payload={visit.rawPayload} />,
       mobileTitle: new Date(visit.visitedAt).toLocaleString(),
       mobileSubtitle: contactName,
       mobileMeta: `${visit.lead.company || 'Unknown company'} • ${visit.pageUrl || 'Unknown page'}`,
+      mobileActions: visit.rawPayload ? <ViewPayloadButton payload={visit.rawPayload} /> : undefined,
     }
   })
 
@@ -79,7 +82,7 @@ export default async function LeadVisitsPage({ searchParams }: PageProps) {
         columns={columns}
         rows={rows}
         emptyMessage="No visits recorded yet. Configure RB2B to start tracking."
-        showActions={false}
+        showActions={true}
       />
 
       <Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/admin/leads/visits" position="bottom" />

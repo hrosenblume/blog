@@ -46,6 +46,7 @@ Use CSS variables from `globals.css`:
 | Need | Location |
 |------|----------|
 | Homepage content | `lib/homepage.ts` |
+| Admin nav items | `lib/admin-nav.ts` |
 | Shared styles | `lib/styles.ts` |
 | Keyboard shortcuts | `lib/keyboard/shortcuts.ts` |
 | Post CRUD logic | `lib/posts.ts` |

@@ -15,30 +15,14 @@ import {
 import { Button } from '@/components/ui/button'
 import { ChevronDownIcon, MenuIcon } from '@/components/Icons'
 import { cn } from '@/lib/utils/cn'
+import { adminNavGroups, getDirectLinkItems, getGroupItems } from '@/lib/admin-nav'
 
-// Direct links (no dropdown)
-const directLinks = [
-  { label: 'Users', href: '/admin/users' },
-]
-
-// Grouped items (become dropdowns)
-const navGroups = [
-  {
-    label: 'Content',
-    items: [
-      { label: 'Posts', href: '/admin/posts' },
-      { label: 'Revisions', href: '/admin/revisions' },
-    ],
-  },
-  {
-    label: 'Analytics',
-    items: [
-      { label: 'Visits', href: '/admin/leads/visits' },
-      { label: 'Companies', href: '/admin/visitors/companies' },
-      { label: 'Persons', href: '/admin/visitors/persons' },
-    ],
-  },
-]
+// Derive nav data from shared config
+const directLinks = getDirectLinkItems()
+const navGroups = adminNavGroups.map(group => ({
+  label: group.label,
+  items: getGroupItems(group.label),
+}))
 
 export default function AdminLayout({
   children,
@@ -76,15 +60,15 @@ export default function AdminLayout({
             </Link>
             
             {/* Desktop nav */}
-            <nav className="hidden md:flex items-center">
+            <nav className="hidden md:flex items-center gap-1">
               {/* Direct links */}
               {directLinks.map((link) => (
                 <Link 
                   key={link.href} 
                   href={link.href}
                   className={cn(
-                    "px-3 text-muted-foreground hover:text-foreground",
-                    pathname === link.href && "text-foreground font-medium"
+                    "inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
+                    pathname === link.href ? "bg-accent" : "text-muted-foreground"
                   )}
                 >
                   {link.label}
@@ -92,36 +76,34 @@ export default function AdminLayout({
               ))}
               
               {/* Dropdown groups */}
-              {navGroups.map((group) => (
-                <DropdownMenu key={group.label}>
-                  <DropdownMenuTrigger asChild>
-                    <Button 
-                      variant="ghost" 
+              {navGroups.map((group) => {
+                const isActive = group.items.some(item => pathname === item.href || pathname.startsWith(item.href + '/'))
+                return (
+                  <DropdownMenu key={group.label}>
+                    <DropdownMenuTrigger 
                       className={cn(
-                        "px-3 gap-1 h-auto py-0 text-muted-foreground hover:text-foreground hover:bg-transparent",
-                        group.items.some(item => pathname === item.href || pathname.startsWith(item.href + '/')) && "text-foreground font-medium"
+                        "inline-flex items-center justify-center gap-1 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none",
+                        isActive ? "bg-accent" : "text-muted-foreground"
                       )}
                     >
                       {group.label}
                       <ChevronDownIcon className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    {group.items.map((item) => (
-                      <DropdownMenuItem key={item.href} asChild>
-                        <Link 
-                          href={item.href}
-                          className={cn(
-                            pathname === item.href && "font-medium"
-                          )}
-                        >
-                          {item.label}
-                        </Link>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ))}
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      {group.items.map((item) => (
+                        <DropdownMenuItem key={item.href} asChild>
+                          <Link 
+                            href={item.href}
+                            className={cn(pathname === item.href && "font-medium")}
+                          >
+                            {item.label}
+                          </Link>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )
+              })}
             </nav>
           </div>
 
@@ -138,11 +120,9 @@ export default function AdminLayout({
 
             {/* User dropdown - hidden on mobile */}
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="gap-2 hidden md:flex">
-                  <span className="text-sm">{session.user?.email}</span>
-                  <ChevronDownIcon />
-                </Button>
+              <DropdownMenuTrigger className="hidden md:inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none">
+                <span>{session.user?.email}</span>
+                <ChevronDownIcon className="h-4 w-4" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild>

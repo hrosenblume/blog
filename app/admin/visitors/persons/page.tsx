@@ -2,6 +2,7 @@ import { prisma } from '@/lib/db'
 import { getLeadDisplayName } from '@/lib/leads'
 import { Pagination } from '@/components/admin/Pagination'
 import { AdminTable, AdminTableRow } from '@/components/admin/AdminTable'
+import { LinkedInIcon } from '@/components/Icons'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,10 +15,10 @@ interface PageProps {
 export default async function PersonVisitorsPage({ searchParams }: PageProps) {
   const params = await searchParams
   const currentPage = Math.max(1, parseInt(params.page || '1', 10))
-  const skip = (currentPage - 1) * ITEMS_PER_PAGE
 
   // Get identified persons (have email or name)
-  const [leads, totalCount] = await Promise.all([
+  // Fetch all to sort by last visit, then paginate
+  const [allLeads, totalCount] = await Promise.all([
     prisma.lead.findMany({
       where: {
         OR: [
@@ -25,9 +26,6 @@ export default async function PersonVisitorsPage({ searchParams }: PageProps) {
           { firstName: { not: null } },
         ],
       },
-      orderBy: { updatedAt: 'desc' },
-      skip,
-      take: ITEMS_PER_PAGE,
       include: {
         _count: { select: { visits: true } },
         visits: {
@@ -47,13 +45,25 @@ export default async function PersonVisitorsPage({ searchParams }: PageProps) {
     }),
   ])
 
+  // Sort by last seen (most recent first)
+  const sortedLeads = allLeads.sort((a, b) => {
+    const aLastSeen = a.visits[0]?.visitedAt?.getTime() || 0
+    const bLastSeen = b.visits[0]?.visitedAt?.getTime() || 0
+    return bLastSeen - aLastSeen
+  })
+
+  // Paginate after sorting
+  const skip = (currentPage - 1) * ITEMS_PER_PAGE
+  const leads = sortedLeads.slice(skip, skip + ITEMS_PER_PAGE)
+
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)
 
   const columns = [
     { header: 'Name' },
     { header: 'Company' },
-    { header: 'Email' },
-    { header: 'Pages' },
+    { header: 'Email', maxWidth: 'max-w-[180px]' },
+    { header: 'LI', className: 'w-10' },
+    { header: 'Pages', className: 'w-16' },
     { header: 'Last Seen' },
   ]
 
@@ -74,12 +84,26 @@ export default async function PersonVisitorsPage({ searchParams }: PageProps) {
           <a
             key="email"
             href={`mailto:${lead.email}`}
-            className="text-blue-500 hover:underline"
+            className="text-blue-500 hover:underline truncate block"
           >
             {lead.email}
           </a>
         ) : (
           <span key="email" className="text-muted-foreground">—</span>
+        ),
+        lead.linkedIn ? (
+          <a
+            key="linkedin"
+            href={lead.linkedIn}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-500 hover:text-blue-600"
+            title={lead.linkedIn}
+          >
+            <LinkedInIcon />
+          </a>
+        ) : (
+          <span key="linkedin" className="text-muted-foreground">—</span>
         ),
         <span key="pages" className="text-muted-foreground">{lead._count.visits}</span>,
         <span key="lastSeen" className="text-muted-foreground whitespace-nowrap">
@@ -88,7 +112,7 @@ export default async function PersonVisitorsPage({ searchParams }: PageProps) {
       ],
       mobileTitle: displayName,
       mobileSubtitle: lead.title ? `${lead.title} at ${lead.company || 'Unknown'}` : lead.company,
-      mobileMeta: `${lead._count.visits} page${lead._count.visits !== 1 ? 's' : ''} • Last seen ${lastSeen?.toLocaleDateString() || 'never'}`,
+      mobileMeta: `${lead._count.visits} page${lead._count.visits !== 1 ? 's' : ''} • Last seen ${lastSeen?.toLocaleDateString() || 'never'}${lead.linkedIn ? ' • LinkedIn' : ''}`,
     }
   })
 

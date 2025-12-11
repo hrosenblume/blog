@@ -1,14 +1,22 @@
 import { prisma } from '@/lib/db'
 import Link from 'next/link'
+import { adminNavItems } from '@/lib/admin-nav'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 
 export const dynamic = 'force-dynamic'
 
-export default async function AdminDashboard() {
-  const [userCount, postCount, revisionCount, visitorCount, companies] = await Promise.all([
+// Fetch counts for each nav item based on countKey
+async function getCounts(): Promise<Record<string, number>> {
+  const [userCount, postCount, revisionCount, visitCount, companies, personCount] = await Promise.all([
     prisma.user.count(),
     prisma.post.count(),
     prisma.revision.count(),
-    // Count only identified visitors (have email or name)
+    prisma.lead.count(),
+    prisma.lead.findMany({
+      where: { company: { not: null } },
+      select: { company: true },
+      distinct: ['company'],
+    }),
     prisma.lead.count({
       where: {
         OR: [
@@ -17,53 +25,39 @@ export default async function AdminDashboard() {
         ],
       },
     }),
-    prisma.lead.findMany({
-      where: { company: { not: null } },
-      select: { company: true },
-      distinct: ['company'],
-    }),
   ])
 
-  const companyCount = companies.length
+  return {
+    users: userCount,
+    posts: postCount,
+    revisions: revisionCount,
+    visits: visitCount,
+    companies: companies.length,
+    persons: personCount,
+  }
+}
 
-  const stats = [
-    { name: 'Users', count: userCount, href: '/admin/users', color: 'bg-blue-500' },
-    { name: 'Posts', count: postCount, href: '/admin/posts', color: 'bg-green-500' },
-    { name: 'Revisions', count: revisionCount, href: '/admin/revisions', color: 'bg-purple-500' },
-    { name: 'Visitors', count: visitorCount, href: '/admin/visitors/persons', color: 'bg-orange-500' },
-    { name: 'Companies', count: companyCount, href: '/admin/visitors/companies', color: 'bg-yellow-500' },
-  ]
+export default async function AdminDashboard() {
+  const counts = await getCounts()
 
   return (
     <div>
-      <h1 className="text-section font-bold text-gray-900 dark:text-white mb-8">
-        Admin Dashboard
-      </h1>
+      <h1 className="text-2xl font-bold mb-8">Admin Dashboard</h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {stats.map((stat) => (
-          <Link
-            key={stat.name}
-            href={stat.href}
-            className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 hover:shadow-lg transition-shadow"
-          >
-            <div className="flex items-center gap-4">
-              <div className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center`}>
-                <span className="text-white text-xl font-bold">{stat.count}</span>
-              </div>
-              <div>
-                <h2 className="text-section font-semibold text-gray-900 dark:text-white">
-                  {stat.name}
-                </h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Manage {stat.name.toLowerCase()}
-                </p>
-              </div>
-            </div>
+        {adminNavItems.map((item) => (
+          <Link key={item.href} href={item.href}>
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle>{item.label}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold">{counts[item.countKey] ?? 0}</p>
+              </CardContent>
+            </Card>
           </Link>
         ))}
       </div>
     </div>
   )
 }
-
