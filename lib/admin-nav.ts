@@ -40,3 +40,4 @@ export function getDirectLinkItems(): AdminNavItem[] {
     .map(label => adminNavItems.find(item => item.label === label))
     .filter((item): item is AdminNavItem => item !== undefined)
 }
+

@@ -81,10 +81,18 @@ export async function requireAdmin() {
 }
 
 // Higher-order auth wrappers for API routes
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type ApiHandler = (request: NextRequest, context?: any) => Promise<Response>
+type RouteContext<T extends Record<string, string> = Record<string, string>> = {
+  params: Promise<T>
+}
 
-export function withSession(handler: ApiHandler): ApiHandler {
+type ApiHandler<T extends Record<string, string> = Record<string, string>> = (
+  request: NextRequest,
+  context: RouteContext<T>
+) => Promise<Response>
+
+export function withSession<T extends Record<string, string> = Record<string, string>>(
+  handler: ApiHandler<T>
+): ApiHandler<T> {
   return async (request, context) => {
     const session = await requireSession()
     if (!session) return unauthorized()
@@ -92,7 +100,9 @@ export function withSession(handler: ApiHandler): ApiHandler {
   }
 }
 
-export function withAdmin(handler: ApiHandler): ApiHandler {
+export function withAdmin<T extends Record<string, string> = Record<string, string>>(
+  handler: ApiHandler<T>
+): ApiHandler<T> {
   return async (request, context) => {
     const session = await requireAdmin()
     if (!session) return unauthorized()

@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db'
+import { ITEMS_PER_PAGE, parsePaginationParams } from '@/lib/admin'
 import { getLeadDisplayName } from '@/lib/leads'
 import { Pagination } from '@/components/admin/Pagination'
 import { AdminTable, AdminTableRow } from '@/components/admin/AdminTable'
@@ -6,15 +7,12 @@ import { LinkedInIcon } from '@/components/Icons'
 
 export const dynamic = 'force-dynamic'
 
-const ITEMS_PER_PAGE = 25
-
 interface PageProps {
   searchParams: Promise<{ page?: string }>
 }
 
 export default async function PersonVisitorsPage({ searchParams }: PageProps) {
-  const params = await searchParams
-  const currentPage = Math.max(1, parseInt(params.page || '1', 10))
+  const { currentPage, skip } = await parsePaginationParams(searchParams)
 
   // Get identified persons (have email or name)
   // Fetch all to sort by last visit, then paginate
@@ -53,7 +51,6 @@ export default async function PersonVisitorsPage({ searchParams }: PageProps) {
   })
 
   // Paginate after sorting
-  const skip = (currentPage - 1) * ITEMS_PER_PAGE
   const leads = sortedLeads.slice(skip, skip + ITEMS_PER_PAGE)
 
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)

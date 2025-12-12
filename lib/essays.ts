@@ -19,5 +19,3 @@ export const ESSAYS_PAGE = {
   // Empty state when there are no published essays
   emptyMessage: 'No essays published yet.',
 } as const
-
-

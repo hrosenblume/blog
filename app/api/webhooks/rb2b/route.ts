@@ -3,6 +3,18 @@ import { prisma } from '@/lib/db'
 import type { Lead } from '@prisma/client'
 
 /**
+ * Verify webhook request authenticity.
+ * If RB2B_WEBHOOK_SECRET is set, requests must include matching X-Webhook-Secret header.
+ */
+function verifyWebhookSecret(request: NextRequest): boolean {
+  const secret = process.env.RB2B_WEBHOOK_SECRET
+  if (!secret) return true // No secret configured, allow all requests
+  
+  const headerSecret = request.headers.get('x-webhook-secret')
+  return headerSecret === secret
+}
+
+/**
  * Find an existing lead using ONLY truly unique identifiers.
  * 
  * We only dedupe on:
@@ -38,6 +50,11 @@ async function findExistingLead(data: {
 }
 
 export async function POST(request: NextRequest) {
+  // Verify webhook secret if configured
+  if (!verifyWebhookSecret(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const payload = await request.json()
 

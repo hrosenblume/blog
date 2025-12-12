@@ -44,4 +44,3 @@ export const HOMEPAGE = {
     { label: 'Email', type: 'email' },
   ] as FooterLink[],
 }
-

@@ -64,4 +64,3 @@ export function AdminActionsMenu({
     </DropdownMenu>
   )
 }
-

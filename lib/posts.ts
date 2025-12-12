@@ -26,14 +26,11 @@ type PostResult =
   | { success: true; post: Post }
   | { success: false; error: string }
 
-// Keep old type alias for backwards compatibility
-type UpdatePostResult = PostResult
-
 /**
  * Shared post update logic used by both /api/posts/[id] and /api/posts/by-slug/[slug]
  * Handles validation, slug uniqueness, revision creation, shape assignment, and cache revalidation
  */
-export async function updatePost(post: Post, data: UpdatePostData): Promise<UpdatePostResult> {
+export async function updatePost(post: Post, data: UpdatePostData): Promise<PostResult> {
   const updates: Record<string, unknown> = {}
 
   // Validate and set title
@@ -184,10 +181,6 @@ export async function deletePost(postOrId: Post | string): Promise<PostResult> {
 
   return { success: true, post: updated }
 }
-
-
-
-
 
 
 

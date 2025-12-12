@@ -15,5 +15,3 @@ turndown.addRule('lineBreaks', {
 export function htmlToMarkdown(html: string): string {
   return turndown.turndown(html)
 }
-
-

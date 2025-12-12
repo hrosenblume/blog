@@ -45,4 +45,3 @@ export function generateSlug(title: string): string {
     .replace(/-+/g, '-')
     .substring(0, 60)
 }
-

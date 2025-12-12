@@ -1,10 +1,9 @@
 import { prisma } from '@/lib/db'
+import { ITEMS_PER_PAGE, parsePaginationParams } from '@/lib/admin'
 import { Pagination } from '@/components/admin/Pagination'
 import { AdminTable, AdminTableRow } from '@/components/admin/AdminTable'
 
 export const dynamic = 'force-dynamic'
-
-const ITEMS_PER_PAGE = 25
 
 interface PageProps {
   searchParams: Promise<{ page?: string }>
@@ -20,8 +19,7 @@ interface CompanyData {
 }
 
 export default async function CompanyVisitorsPage({ searchParams }: PageProps) {
-  const params = await searchParams
-  const currentPage = Math.max(1, parseInt(params.page || '1', 10))
+  const { currentPage } = await parsePaginationParams(searchParams)
 
   // Get all leads with company info, grouped by company
   const leadsWithCompany = await prisma.lead.findMany({

@@ -53,15 +53,15 @@ blog/
 │   ├── editor/                 # EditorToolbar, PostMetadataFooter
 │   └── ui/                     # shadcn/ui components
 ├── lib/                        # Utilities and configs
+│   ├── admin/                  # Admin utilities (pagination, constants)
 │   ├── admin-nav.ts            # ✏️ Admin nav config (DRY)
-│   ├── auth.ts                 # NextAuth config
+│   ├── auth.ts                 # NextAuth config + route protection
 │   ├── db.ts                   # Prisma client singleton
 │   ├── homepage.ts             # ✏️ Homepage content (DRY)
 │   ├── keyboard/               # Keyboard navigation
 │   ├── leads.ts                # Lead utilities (getLeadDisplayName)
 │   ├── polyhedra/              # 3D rendering system
-│   ├── posts.ts                # Post CRUD logic (DRY)
-│   └── styles.ts               # Shared Tailwind classes (DRY)
+│   └── posts.ts                # Post CRUD logic (DRY)
 ├── prisma/
 │   ├── schema.prisma           # SQLite (dev)
 │   ├── schema.postgresql.prisma # PostgreSQL (prod)
@@ -142,12 +142,20 @@ model LeadVisit {
 ## Key Systems
 
 ### Typography System
-CSS variables in `globals.css`, exposed as Tailwind utilities:
+Defined directly in `tailwind.config.js` with line heights:
 - `text-title` (24px) — Page titles
-- `text-h1` (22px) — Section headers
-- `text-section` (18px) — Essay titles in lists
+- `text-h1` (22px) — Article H1
+- `text-h2` (18px) — H2 headings
+- `text-h3` (16px) — H3 headings
+- `text-section` (18px) — Section headers
 - `text-body` (16px) — Body text
 - `text-table` (14px) — Table cells, dense data
+
+### Admin Pagination
+Shared utilities in `lib/admin/`:
+- `ITEMS_PER_PAGE` — Default pagination size (25)
+- `getPaginatedData()` — Async helper that handles params, fetching, counting
+- `parsePaginationParams()` — Simple params parser for complex queries
 
 ### Homepage Configuration
 All content in `lib/homepage.ts`: name, bio, email, footer links.
@@ -190,14 +198,22 @@ Page view tracking via Google Analytics 4:
 ### RB2B Lead Tracking
 Visitor identification via RB2B integration:
 - **Tracking script**: `components/RB2BScript.tsx` — loads RB2B client-side script (public pages only, excludes /admin, /writer, /auth)
-- **Webhook**: `/api/webhooks/rb2b` — receives identified visitor data
+- **Webhook**: `/api/webhooks/rb2b` — receives identified visitor data (optionally secured with `RB2B_WEBHOOK_SECRET`)
 - **Admin pages**:
   - `/admin/leads` — unique contacts
   - `/admin/leads/visits` — all visits
   - `/admin/visitors/companies` — aggregated by company
   - `/admin/visitors/persons` — identified individuals
 - **Data flow**: RB2B script → RB2B servers identify visitor → webhook POST → Lead/LeadVisit created
-- **Env var**: `NEXT_PUBLIC_RB2B_API_KEY` — tracking key from RB2B dashboard
+- **Env vars**: 
+  - `NEXT_PUBLIC_RB2B_API_KEY` — tracking key from RB2B dashboard
+  - `RB2B_WEBHOOK_SECRET` — (optional) secret for webhook authentication
+
+### Route Protection
+Auth checks happen in layout components (client-side):
+- `/writer/*` — `useSession()` hook redirects unauthenticated users to signin
+- `/admin/*` — checks `session.user.role === 'admin'`, redirects non-admins to writer
+This approach avoids Edge runtime limitations with Prisma.
 
 ## Authentication
 
@@ -290,6 +306,7 @@ WRITER_EMAIL="<email>"                    # For db:seed
 WRITER_NAME="<name>"
 NGROK_DOMAIN="<domain>"                   # For dev:tunnel
 NEXT_PUBLIC_RB2B_API_KEY="<key>"         # RB2B tracking key
+RB2B_WEBHOOK_SECRET="<secret>"           # Optional: secure RB2B webhook
 NEXT_PUBLIC_GA_MEASUREMENT_ID="<id>"     # Google Analytics 4 measurement ID
 ```
 

@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db'
+import { getPaginatedData } from '@/lib/admin'
 import Link from 'next/link'
 import { Pagination } from '@/components/admin/Pagination'
 import { AdminTable, AdminTableRow } from '@/components/admin/AdminTable'
@@ -7,28 +8,21 @@ import { Button } from '@/components/ui/button'
 
 export const dynamic = 'force-dynamic'
 
-const ITEMS_PER_PAGE = 25
-
 interface PageProps {
   searchParams: Promise<{ page?: string }>
 }
 
 export default async function RevisionsPage({ searchParams }: PageProps) {
-  const params = await searchParams
-  const currentPage = Math.max(1, parseInt(params.page || '1', 10))
-  const skip = (currentPage - 1) * ITEMS_PER_PAGE
-
-  const [revisions, totalCount] = await Promise.all([
-    prisma.revision.findMany({
+  const { data: revisions, total: totalCount, currentPage, totalPages } = await getPaginatedData(
+    searchParams,
+    (skip, take) => prisma.revision.findMany({
       orderBy: { createdAt: 'desc' },
       skip,
-      take: ITEMS_PER_PAGE,
+      take,
       include: { post: { select: { title: true, slug: true, markdown: true } } },
     }),
-    prisma.revision.count(),
-  ])
-
-  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)
+    () => prisma.revision.count()
+  )
 
   const columns = [
     { header: 'Post', maxWidth: 'max-w-[200px]' },

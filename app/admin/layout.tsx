@@ -141,58 +141,51 @@ export default function AdminLayout({
 
         {/* Mobile nav menu */}
         {mobileNavOpen && (
-          <nav className="md:hidden border-t border-border bg-card px-4 py-2">
-            {/* Direct links */}
-            {directLinks.map((link) => (
-              <Link 
-                key={link.href} 
-                href={link.href}
-                onClick={() => setMobileNavOpen(false)}
-                className={cn(
-                  "block py-3 text-muted-foreground hover:text-foreground",
-                  pathname === link.href && "text-foreground font-medium"
-                )}
-              >
-                {link.label}
-              </Link>
-            ))}
+          <nav className="md:hidden border-t border-border bg-card">
+            <div className="px-4 py-2">
+              {/* Flat list of all nav items */}
+              {directLinks.map((link) => (
+                <Link 
+                  key={link.href} 
+                  href={link.href}
+                  onClick={() => setMobileNavOpen(false)}
+                  className={cn(
+                    "block py-2.5 text-muted-foreground hover:text-foreground",
+                    pathname === link.href && "text-foreground font-medium"
+                  )}
+                >
+                  {link.label}
+                </Link>
+              ))}
+              {navGroups.flatMap((group) => group.items).map((item) => (
+                <Link 
+                  key={item.href} 
+                  href={item.href}
+                  onClick={() => setMobileNavOpen(false)}
+                  className={cn(
+                    "block py-2.5 text-muted-foreground hover:text-foreground",
+                    pathname === item.href && "text-foreground font-medium"
+                  )}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
             
-            {/* Grouped sections */}
-            {navGroups.map((group) => (
-              <div key={group.label}>
-                <p className="text-xs uppercase text-muted-foreground mt-4 mb-2">
-                  {group.label}
-                </p>
-                {group.items.map((item) => (
-                  <Link 
-                    key={item.href} 
-                    href={item.href}
-                    onClick={() => setMobileNavOpen(false)}
-                    className={cn(
-                      "block py-3 text-muted-foreground hover:text-foreground",
-                      pathname === item.href && "text-foreground font-medium"
-                    )}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
-            ))}
-            
-            <div className="border-t border-border mt-2 pt-2">
-              <a href="/" className="block py-3 text-muted-foreground hover:text-foreground">
+            <div className="border-t border-border bg-muted/50 px-4 py-3">
+              <a href="/" className="block py-2 text-sm text-muted-foreground hover:text-foreground">
                 Back to site
               </a>
               <Link 
                 href="/writer"
                 onClick={() => setMobileNavOpen(false)}
-                className="block py-3 text-muted-foreground hover:text-foreground"
+                className="block py-2 text-sm text-muted-foreground hover:text-foreground"
               >
                 Back to writer
               </Link>
               <button 
                 onClick={() => signOut({ callbackUrl: '/' })}
-                className="block w-full text-left py-3 text-destructive"
+                className="block w-full text-left py-2 text-sm text-destructive"
               >
                 Logout
               </button>
@@ -201,7 +194,7 @@ export default function AdminLayout({
         )}
       </header>
 
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto bg-muted">
         <div className="max-w-5xl mx-auto px-4 md:px-6 py-6 md:py-8">
           {children}
         </div>

@@ -45,11 +45,13 @@ module.exports = {
         ring: 'hsl(var(--ring))',
       },
       fontSize: {
-        title: 'var(--font-title)',
-        h1: 'var(--font-h1)',
-        section: 'var(--font-section)',
-        body: 'var(--font-body)',
-        table: 'var(--font-table)',
+        title: ['1.5rem', { lineHeight: '1.3' }],     // 24px - page titles
+        h1: ['1.375rem', { lineHeight: '1.4' }],      // 22px - article h1
+        h2: ['1.125rem', { lineHeight: '1.4' }],      // 18px - h2
+        h3: ['1rem', { lineHeight: '1.5' }],          // 16px - h3
+        section: ['1.125rem', { lineHeight: '1.4' }], // 18px - section headers
+        body: ['1rem', { lineHeight: '1.6' }],        // 16px - bio, subtitles
+        table: ['0.875rem', { lineHeight: '1.5' }],   // 14px - table cells, dense data
       },
       borderRadius: {
         lg: 'var(--radius)',
