@@ -798,3 +798,8 @@ sequenceDiagram
 - [ ] Autosave does not trigger during preview
 - [ ] "Unsaved changes" warning does not show during preview
 - [ ] API errors show user-friendly alerts
+
+
+
+
+

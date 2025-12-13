@@ -102,6 +102,9 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
   const lastSavedContent = useRef({ title: '', subtitle: '', slug: '', markdown: '', polyhedraShape: '' })
   const urlSlugRef = useRef(postSlug)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  
+  // Use state (not ref) so changes trigger re-render and effect runs
+  const [hasEditedSinceLastSave, setHasEditedSinceLastSave] = useState(false)
 
   // Revision state
   const [revisions, setRevisions] = useState<RevisionSummary[]>([])
@@ -135,6 +138,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
           markdown: data.markdown,
           polyhedraShape: data.polyhedraShape || '',
         }
+        setHasEditedSinceLastSave(false)
         urlSlugRef.current = data.slug
       })
       .catch(() => {
@@ -161,14 +165,15 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
     if (previewingRevision) return
     
     const saved = lastSavedContent.current
-    const hasChanges =
+    const contentChanged =
       title !== saved.title ||
       subtitle !== saved.subtitle ||
       slug !== saved.slug ||
       markdown !== saved.markdown ||
       polyhedraShape !== saved.polyhedraShape
-    setHasUnsavedChanges(hasChanges)
-  }, [title, subtitle, slug, markdown, polyhedraShape, previewingRevision])
+    // Include edit flag to catch whitespace changes that get normalized away
+    setHasUnsavedChanges(contentChanged || hasEditedSinceLastSave)
+  }, [title, subtitle, slug, markdown, polyhedraShape, previewingRevision, hasEditedSinceLastSave])
 
   // Browser back/refresh warning for unsaved changes
   useEffect(() => {
@@ -198,14 +203,22 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
     setIsManualSlug(true)
   }, [])
 
-  // Save handler
-  const handleSave = useCallback(async (publishStatus: 'draft' | 'published') => {
+  // Handle markdown change (tracks edits for whitespace detection)
+  const handleMarkdownChange = useCallback((value: string) => {
+    setHasEditedSinceLastSave(true)
+    setMarkdown(value)
+  }, [])
+
+  // Save handler (silent mode skips button spinner for autosave)
+  const handleSave = useCallback(async (publishStatus: 'draft' | 'published', options?: { silent?: boolean }) => {
+    const silent = options?.silent ?? false
+
     if (!title.trim()) {
-      alert('Title is required')
+      if (!silent) alert('Title is required')
       return
     }
     if (!slug.trim()) {
-      alert('Slug is required')
+      if (!silent) alert('Slug is required')
       return
     }
 
@@ -213,7 +226,10 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
       return
     }
 
-    setSavingAs(publishStatus)
+    // Only show spinner for non-silent saves
+    if (!silent) {
+      setSavingAs(publishStatus)
+    }
     const saveStartTime = Date.now()
 
     try {
@@ -261,6 +277,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
         markdown,
         polyhedraShape,
       }
+      setHasEditedSinceLastSave(false)
       setHasUnsavedChanges(false)
 
       if (publishStatus === 'published') {
@@ -270,24 +287,28 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
         }, 1000)
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to save')
-    } finally {
-      // Ensure spinner shows for at least 400ms to avoid flash
-      const elapsed = Date.now() - saveStartTime
-      const minDuration = 400
-      if (elapsed < minDuration) {
-        await new Promise(resolve => setTimeout(resolve, minDuration - elapsed))
+      if (!silent) {
+        alert(err instanceof Error ? err.message : 'Failed to save')
       }
-      setSavingAs(null)
+    } finally {
+      if (!silent) {
+        // Ensure spinner shows for at least 400ms to avoid flash
+        const elapsed = Date.now() - saveStartTime
+        const minDuration = 400
+        if (elapsed < minDuration) {
+          await new Promise(resolve => setTimeout(resolve, minDuration - elapsed))
+        }
+        setSavingAs(null)
+      }
     }
   }, [postSlug, title, subtitle, slug, markdown, polyhedraShape, router])
 
-  // Autosave drafts after 3 seconds of inactivity (skip during preview mode)
+  // Autosave drafts after 3 seconds of inactivity (silent - no button spinner)
   useEffect(() => {
     if (previewingRevision) return
     if (!postSlug || !title.trim() || status === 'published') return
 
-    const timeout = setTimeout(() => handleSave('draft'), 3000)
+    const timeout = setTimeout(() => handleSave('draft', { silent: true }), 3000)
     return () => clearTimeout(timeout)
   }, [markdown, title, postSlug, status, handleSave, previewingRevision])
 
@@ -442,7 +463,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
     setTitle,
     setSubtitle,
     setSlug: handleSlugChange,
-    setMarkdown,
+    setMarkdown: handleMarkdownChange,
     setPolyhedraShape,
     regenerateShape,
     

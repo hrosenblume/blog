@@ -26,10 +26,19 @@ export function formatNumber(num: number): string {
 
 export function formatSavedTime(date: Date): string {
   const now = new Date()
-  const isToday = date.toDateString() === now.toDateString()
+  const diffMs = now.getTime() - date.getTime()
+  const diffSecs = Math.floor(diffMs / 1000)
+  const diffMins = Math.floor(diffMs / MINUTE)
   
+  // Show relative time for recent saves
+  if (diffSecs < 10) return 'just now'
+  if (diffSecs < 60) return `${diffSecs}s ago`
+  if (diffMins < 60) return `${diffMins}m ago`
+  
+  // Show clock time for today
+  const isToday = date.toDateString() === now.toDateString()
   if (isToday) {
-    return date.toLocaleTimeString()
+    return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
   }
   
   return date.toLocaleDateString('en-US', { 
