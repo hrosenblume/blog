@@ -15,6 +15,7 @@ interface ArticleHeaderProps {
   byline?: string
   bylineHref?: string
   editable?: boolean
+  disabled?: boolean
   onTitleChange?: (value: string) => void
   onSubtitleChange?: (value: string) => void
   className?: string
@@ -33,6 +34,7 @@ export function ArticleHeader({
   byline,
   bylineHref,
   editable = false,
+  disabled = false,
   onTitleChange,
   onSubtitleChange,
   className,
@@ -62,14 +64,16 @@ export function ArticleHeader({
           value={title}
           onChange={(e) => onTitleChange?.(e.target.value)}
           placeholder="Title"
-          className={cn(TITLE_CLASSES, INPUT_CLASSES)}
+          disabled={disabled}
+          className={cn(TITLE_CLASSES, INPUT_CLASSES, disabled && 'cursor-not-allowed opacity-60')}
         />
         <input
           type="text"
           value={subtitle ?? ''}
           onChange={(e) => onSubtitleChange?.(e.target.value)}
           placeholder="Subtitle (shown on homepage)"
-          className={cn(SUBTITLE_CLASSES, INPUT_CLASSES)}
+          disabled={disabled}
+          className={cn(SUBTITLE_CLASSES, INPUT_CLASSES, disabled && 'cursor-not-allowed opacity-60')}
         />
         {bylineElement}
       </header>
@@ -84,3 +88,4 @@ export function ArticleHeader({
     </header>
   )
 }
+

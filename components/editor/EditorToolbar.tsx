@@ -21,6 +21,8 @@ import {
   UndoIcon,
   RedoIcon,
 } from '@/components/Icons'
+import { RevisionHistoryDropdown } from './RevisionHistoryDropdown'
+import type { RevisionState } from '@/lib/editor/types'
 
 interface EditorToolbarProps {
   editor: Editor | null
@@ -31,6 +33,9 @@ interface EditorToolbarProps {
   // Mode toggle
   showMarkdown?: boolean
   setShowMarkdown?: (show: boolean) => void
+  // Revision history
+  postSlug?: string
+  revisions?: RevisionState
 }
 
 interface ToolbarButtonProps {
@@ -66,7 +71,7 @@ function Divider() {
   return <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1" />
 }
 
-export function EditorToolbar({ editor, textareaRef, markdown, onMarkdownChange, showMarkdown, setShowMarkdown }: EditorToolbarProps) {
+export function EditorToolbar({ editor, textareaRef, markdown, onMarkdownChange, showMarkdown, setShowMarkdown, postSlug, revisions }: EditorToolbarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const isMarkdownMode = !editor && textareaRef && markdown !== undefined && onMarkdownChange
 
@@ -363,6 +368,22 @@ export function EditorToolbar({ editor, textareaRef, markdown, onMarkdownChange,
           >
             <span className="font-mono text-xs">MD</span>
           </ToolbarButton>
+        </>
+      )}
+
+      {/* Revision History */}
+      {revisions && (
+        <>
+          <Divider />
+          <RevisionHistoryDropdown
+            revisions={revisions.list}
+            loading={revisions.loading}
+            previewLoading={revisions.previewLoading}
+            disabled={!postSlug}
+            isPreviewMode={!!revisions.previewing}
+            onOpen={revisions.fetch}
+            onSelect={revisions.preview}
+          />
         </>
       )}
     </div>

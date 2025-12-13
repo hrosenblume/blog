@@ -9,6 +9,7 @@ import { CenteredPage } from '@/components/CenteredPage'
 import { TiptapEditor, EditorToolbar } from '@/components/TiptapEditor'
 import { EditorNavbar } from '@/components/editor/EditorNavbar'
 import { PostMetadataFooter } from '@/components/editor/PostMetadataFooter'
+import { RevisionPreviewBanner } from '@/components/editor/RevisionPreviewBanner'
 import { ArticleLayout } from '@/components/ArticleLayout'
 import { ArticleHeader } from '@/components/ArticleHeader'
 import { CheckIcon } from '@/components/Icons'
@@ -49,6 +50,7 @@ export default function Editor() {
     editor,
     setEditor,
     textareaRef,
+    revisions,
   } = usePostEditor(postSlug)
 
   // Keyboard shortcuts
@@ -67,6 +69,11 @@ export default function Editor() {
     {
       ...SHORTCUTS.ESCAPE_BACK,
       handler: () => {
+        // If in preview mode, cancel preview first
+        if (revisions.previewing) {
+          revisions.cancel()
+          return
+        }
         if (ui.hasUnsavedChanges && !confirm('You have unsaved changes. Leave anyway?')) return
         router.push('/writer')
       },
@@ -92,6 +99,15 @@ export default function Editor() {
         onSave={actions.save}
       />
 
+      {/* Preview banner when viewing a revision */}
+      {revisions.previewing && (
+        <RevisionPreviewBanner
+          revision={revisions.previewing}
+          onCancel={revisions.cancel}
+          onRestore={revisions.restore}
+        />
+      )}
+
       {/* Fixed toolbar below header */}
       <EditorToolbar
         editor={ui.showMarkdown ? null : editor}
@@ -100,6 +116,8 @@ export default function Editor() {
         onMarkdownChange={ui.showMarkdown ? setMarkdown : undefined}
         showMarkdown={ui.showMarkdown}
         setShowMarkdown={setShowMarkdown}
+        postSlug={postSlug}
+        revisions={revisions}
       />
 
       <main className="flex-1 overflow-auto pb-20 overscroll-contain">
@@ -112,6 +130,7 @@ export default function Editor() {
               subtitle={post.subtitle}
               byline={HOMEPAGE.name}
               editable
+              disabled={!!revisions.previewing}
               onTitleChange={setTitle}
               onSubtitleChange={setSubtitle}
             />
@@ -135,6 +154,7 @@ export default function Editor() {
               value={post.markdown}
               onChange={(e) => setMarkdown(e.target.value)}
               placeholder="Write your story in Markdown..."
+              readOnly={!!revisions.previewing}
               className="w-full min-h-[500px] bg-transparent border-none outline-none resize-none placeholder-gray-400 leading-relaxed overflow-hidden font-mono text-sm"
             />
           ) : (

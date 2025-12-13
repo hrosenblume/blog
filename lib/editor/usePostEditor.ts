@@ -6,6 +6,7 @@ import type { Editor as EditorInstance } from '@tiptap/react'
 import { generateSlug } from '@/lib/markdown'
 import { getRandomShape } from '@/lib/polyhedra/shapes'
 import { confirmPublish, confirmUnpublish } from '@/lib/utils/confirm'
+import type { RevisionSummary, RevisionFull, StashedContent, RevisionState } from './types'
 
 export interface PostContent {
   title: string
@@ -65,6 +66,9 @@ export interface UsePostEditorReturn {
   
   // Helpers
   isManualSlug: boolean
+  
+  // Revision history
+  revisions: RevisionState
 }
 
 export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn {
@@ -98,6 +102,13 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
   const lastSavedContent = useRef({ title: '', subtitle: '', slug: '', markdown: '', polyhedraShape: '' })
   const urlSlugRef = useRef(postSlug)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Revision state
+  const [revisions, setRevisions] = useState<RevisionSummary[]>([])
+  const [revisionsLoading, setRevisionsLoading] = useState(false)
+  const [previewLoading, setPreviewLoading] = useState(false)
+  const [previewingRevision, setPreviewingRevision] = useState<RevisionFull | null>(null)
+  const stashedContent = useRef<StashedContent | null>(null)
 
   // Load existing post
   useEffect(() => {
@@ -145,8 +156,10 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
     }
   }, [title, isManualSlug])
 
-  // Track unsaved changes
+  // Track unsaved changes (skip during preview mode)
   useEffect(() => {
+    if (previewingRevision) return
+    
     const saved = lastSavedContent.current
     const hasChanges =
       title !== saved.title ||
@@ -155,7 +168,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
       markdown !== saved.markdown ||
       polyhedraShape !== saved.polyhedraShape
     setHasUnsavedChanges(hasChanges)
-  }, [title, subtitle, slug, markdown, polyhedraShape])
+  }, [title, subtitle, slug, markdown, polyhedraShape, previewingRevision])
 
   // Browser back/refresh warning for unsaved changes
   useEffect(() => {
@@ -269,13 +282,14 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
     }
   }, [postSlug, title, subtitle, slug, markdown, polyhedraShape, router])
 
-  // Autosave drafts after 3 seconds of inactivity
+  // Autosave drafts after 3 seconds of inactivity (skip during preview mode)
   useEffect(() => {
+    if (previewingRevision) return
     if (!postSlug || !title.trim() || status === 'published') return
 
     const timeout = setTimeout(() => handleSave('draft'), 3000)
     return () => clearTimeout(timeout)
-  }, [markdown, title, postSlug, status, handleSave])
+  }, [markdown, title, postSlug, status, handleSave, previewingRevision])
 
   // Unpublish handler
   const handleUnpublish = useCallback(async () => {
@@ -305,6 +319,124 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
     setPolyhedraShape(getRandomShape())
   }, [])
 
+  // Fetch revisions for the current post
+  const fetchRevisions = useCallback(async () => {
+    if (!postSlug || revisionsLoading) return
+    setRevisionsLoading(true)
+    try {
+      const res = await fetch(`/api/posts/by-slug/${urlSlugRef.current}/revisions`)
+      if (res.ok) {
+        setRevisions(await res.json())
+      }
+    } catch (err) {
+      console.error('Failed to fetch revisions:', err)
+    } finally {
+      setRevisionsLoading(false)
+    }
+  }, [postSlug, revisionsLoading])
+
+  // Preview a revision (enter preview mode)
+  const previewRevision = useCallback(async (revisionId: string) => {
+    setPreviewLoading(true)
+    try {
+      // 1. Stash current content BEFORE making any changes
+      stashedContent.current = { title, subtitle, markdown, polyhedraShape }
+
+      // 2. Fetch full revision
+      const res = await fetch(`/api/admin/revisions/${revisionId}`)
+      if (!res.ok) throw new Error('Failed to fetch revision')
+      const revision: RevisionFull = await res.json()
+
+      // 3. Update content with revision data
+      setTitle(revision.title ?? '')
+      setSubtitle(revision.subtitle ?? '')
+      setMarkdown(revision.markdown)
+      setPolyhedraShape(revision.polyhedraShape ?? stashedContent.current.polyhedraShape)
+
+      // 4. Directly update editor content (sync effect may not trigger due to React batching)
+      if (editor) {
+        const { markdownToHtml } = await import('@/lib/markdown')
+        const html = markdownToHtml(revision.markdown)
+        editor.commands.setContent(html, { emitUpdate: false })
+      }
+
+      // 5. Set preview state and disable editing
+      setPreviewingRevision(revision)
+      editor?.setEditable(false)
+    } catch (err) {
+      // Rollback stash on error
+      stashedContent.current = null
+      alert('Failed to load revision. Please try again.')
+      console.error(err)
+    } finally {
+      setPreviewLoading(false)
+    }
+  }, [title, subtitle, markdown, polyhedraShape, editor])
+
+  // Cancel preview (restore stashed content)
+  const cancelPreview = useCallback(async () => {
+    if (!stashedContent.current) return
+
+    // Restore stashed content
+    const stash = stashedContent.current
+    setTitle(stash.title)
+    setSubtitle(stash.subtitle)
+    setMarkdown(stash.markdown)
+    setPolyhedraShape(stash.polyhedraShape)
+
+    // Directly update editor content
+    if (editor) {
+      const { markdownToHtml } = await import('@/lib/markdown')
+      const html = markdownToHtml(stash.markdown)
+      editor.commands.setContent(html, { emitUpdate: false })
+    }
+
+    // Clear preview state
+    setPreviewingRevision(null)
+    stashedContent.current = null
+
+    // Re-enable editing
+    editor?.setEditable(true)
+  }, [editor])
+
+  // Confirm restore (save stashed content first, then apply revision)
+  const confirmRestore = useCallback(async () => {
+    if (!previewingRevision || !stashedContent.current) return
+
+    try {
+      // 1. Save stashed content first (creates revision for undo)
+      const saveRes = await fetch(`/api/posts/by-slug/${urlSlugRef.current}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(stashedContent.current),
+      })
+      if (!saveRes.ok) throw new Error('Failed to save current content')
+
+      // 2. Apply the revision
+      const restoreRes = await fetch(`/api/admin/revisions/${previewingRevision.id}/restore`, {
+        method: 'POST',
+      })
+      if (!restoreRes.ok) throw new Error('Failed to restore revision')
+
+      // 3. Clear preview state
+      setPreviewingRevision(null)
+      stashedContent.current = null
+
+      // 4. Re-enable editing
+      editor?.setEditable(true)
+
+      // 5. Update UI state
+      setLastSaved(new Date())
+      setHasUnsavedChanges(false)
+
+      // 6. Refresh revisions list
+      fetchRevisions()
+    } catch (err) {
+      alert('Failed to restore revision. Please try again.')
+      console.error(err)
+    }
+  }, [previewingRevision, editor, fetchRevisions])
+
   return {
     post: { title, subtitle, slug, markdown, polyhedraShape, status },
     setTitle,
@@ -331,6 +463,17 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
     textareaRef,
     
     isManualSlug,
+    
+    revisions: {
+      list: revisions,
+      loading: revisionsLoading,
+      previewLoading,
+      previewing: previewingRevision,
+      fetch: fetchRevisions,
+      preview: previewRevision,
+      cancel: cancelPreview,
+      restore: confirmRestore,
+    },
   }
 }
 
