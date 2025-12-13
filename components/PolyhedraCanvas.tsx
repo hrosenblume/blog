@@ -24,6 +24,7 @@ const ROTATION_PERIOD_MS = 4000  // 4 seconds for one full rotation
 const BASE_SPEED = (2 * Math.PI) / ROTATION_PERIOD_MS
 const HOVER_SPEED = (2 * Math.PI) / 375    // Full rotation in 0.375 seconds (~10x base)
 const CLICK_SPEED = (2 * Math.PI) / 100    // Full rotation in 0.1 seconds (~40x base)
+const BACKGROUND_SPEED = (2 * Math.PI) / 500  // Full rotation in 0.5s when page is backgrounded
 const ACCELERATION = 0.003                  // How fast speed changes (lower = more gradual startup)
 
 export function PolyhedraCanvas({ shape, size = 60, className = '', index = 0, hovered = false, clicked = false }: PolyhedraCanvasProps) {
@@ -33,6 +34,11 @@ export function PolyhedraCanvas({ shape, size = 60, className = '', index = 0, h
   const speedRef = useRef<number>(0)        // Start at 0, smoothly accelerate to BASE_SPEED
   const lastTimeRef = useRef<number | null>(null)
   const [isVisible, setIsVisible] = useState(true)
+  const isTabVisibleRef = useRef(true)
+  const isWindowFocusedRef = useRef(true)
+  const tabHiddenAtRef = useRef<number | null>(null)  // Track when tab became hidden
+  const speedWhenHiddenRef = useRef<number>(0)        // Track speed when tab was hidden
+  const hasInitializedRef = useRef(false)
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
   const [isCanvasReady, setIsCanvasReady] = useState(false)
 
@@ -49,13 +55,59 @@ export function PolyhedraCanvas({ shape, size = 60, className = '', index = 0, h
     return () => mediaQuery.removeEventListener('change', handler)
   }, [])
 
+  // Tab visibility detection (switching browser tabs)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      const isNowVisible = document.visibilityState === 'visible'
+      
+      if (!isNowVisible && isTabVisibleRef.current) {
+        // Tab becoming hidden - record time and current speed
+        tabHiddenAtRef.current = Date.now()
+        speedWhenHiddenRef.current = speedRef.current
+      } else if (isNowVisible && !isTabVisibleRef.current && tabHiddenAtRef.current !== null) {
+        // Tab becoming visible - simulate the acceleration that would have happened
+        // Using exponential approach formula: speed(t) = target - (target - start) * e^(-k*t)
+        const hiddenDuration = Date.now() - tabHiddenAtRef.current
+        const startSpeed = speedWhenHiddenRef.current
+        const simulatedSpeed = BACKGROUND_SPEED - (BACKGROUND_SPEED - startSpeed) * Math.exp(-ACCELERATION * hiddenDuration)
+        speedRef.current = simulatedSpeed
+        tabHiddenAtRef.current = null
+      }
+      
+      isTabVisibleRef.current = isNowVisible
+    }
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [])
+
+  // Window focus detection (switching to another app)
+  useEffect(() => {
+    const handleFocus = () => { isWindowFocusedRef.current = true }
+    const handleBlur = () => { isWindowFocusedRef.current = false }
+    
+    window.addEventListener('focus', handleFocus)
+    window.addEventListener('blur', handleBlur)
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+      window.removeEventListener('blur', handleBlur)
+    }
+  }, [])
+
   // Intersection observer for visibility
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
 
     const observer = new IntersectionObserver(
-      ([entry]) => setIsVisible(entry.isIntersecting),
+      ([entry]) => {
+        // Reset lastTimeRef when visibility changes to prevent huge deltaTime on next frame
+        if (entry.isIntersecting) {
+          lastTimeRef.current = null
+        }
+        setIsVisible(entry.isIntersecting)
+      },
       { threshold: 0.1 }
     )
     
@@ -86,8 +138,11 @@ export function PolyhedraCanvas({ shape, size = 60, className = '', index = 0, h
     const angleX = 0.4
     const angleZ = 0.2
 
-    // Start at angle 0 - matches the static PNG placeholder exactly
-    angleRef.current = 0
+    // Only reset angle on first mount - not when effect re-runs due to visibility changes
+    if (!hasInitializedRef.current) {
+      angleRef.current = 0
+      hasInitializedRef.current = true
+    }
 
     // Render first frame at angle 0 and mark canvas as ready
     ctx.clearRect(0, 0, size, size)
@@ -108,8 +163,15 @@ export function PolyhedraCanvas({ shape, size = 60, className = '', index = 0, h
       lastTimeRef.current = timestamp
 
       // Smoothly accelerate/decelerate towards target speed
-      // Priority: clicked > hovered > base
-      const targetSpeed = clicked ? CLICK_SPEED : hovered ? HOVER_SPEED : BASE_SPEED
+      // Priority: clicked > hovered > background > base
+      const isInForeground = isTabVisibleRef.current && isWindowFocusedRef.current
+      const targetSpeed = clicked 
+        ? CLICK_SPEED 
+        : hovered 
+          ? HOVER_SPEED 
+          : !isInForeground 
+            ? BACKGROUND_SPEED 
+            : BASE_SPEED
       speedRef.current += (targetSpeed - speedRef.current) * ACCELERATION * deltaTime
       
       // Update angle based on current interpolated speed
