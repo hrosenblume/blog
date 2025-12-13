@@ -97,28 +97,30 @@ export default function Editor() {
         hasUnsavedChanges={ui.hasUnsavedChanges}
         savingAs={ui.savingAs}
         onSave={actions.save}
+        previewMode={revisions.previewing ? {
+          onCancel: revisions.cancel,
+          onRestore: revisions.restore,
+        } : undefined}
       />
 
-      {/* Preview banner when viewing a revision */}
+      {/* Preview info line when viewing a revision */}
       {revisions.previewing && (
-        <RevisionPreviewBanner
-          revision={revisions.previewing}
-          onCancel={revisions.cancel}
-          onRestore={revisions.restore}
-        />
+        <RevisionPreviewBanner revision={revisions.previewing} />
       )}
 
-      {/* Fixed toolbar below header */}
-      <EditorToolbar
-        editor={ui.showMarkdown ? null : editor}
-        textareaRef={ui.showMarkdown ? textareaRef : undefined}
-        markdown={ui.showMarkdown ? post.markdown : undefined}
-        onMarkdownChange={ui.showMarkdown ? setMarkdown : undefined}
-        showMarkdown={ui.showMarkdown}
-        setShowMarkdown={setShowMarkdown}
-        postSlug={postSlug}
-        revisions={revisions}
-      />
+      {/* Fixed toolbar below header - hidden in preview mode */}
+      {!revisions.previewing && (
+        <EditorToolbar
+          editor={ui.showMarkdown ? null : editor}
+          textareaRef={ui.showMarkdown ? textareaRef : undefined}
+          markdown={ui.showMarkdown ? post.markdown : undefined}
+          onMarkdownChange={ui.showMarkdown ? setMarkdown : undefined}
+          showMarkdown={ui.showMarkdown}
+          setShowMarkdown={setShowMarkdown}
+          postSlug={postSlug}
+          revisions={revisions}
+        />
+      )}
 
       <main className="flex-1 overflow-auto pb-20 overscroll-contain">
         <ArticleLayout
@@ -136,15 +138,17 @@ export default function Editor() {
             />
           }
           footer={
-            <PostMetadataFooter
-              slug={post.slug}
-              status={post.status}
-              polyhedraShape={post.polyhedraShape}
-              markdown={post.markdown}
-              onSlugChange={setSlug}
-              onShapeRegenerate={regenerateShape}
-              onUnpublish={actions.unpublish}
-            />
+            !revisions.previewing && (
+              <PostMetadataFooter
+                slug={post.slug}
+                status={post.status}
+                polyhedraShape={post.polyhedraShape}
+                markdown={post.markdown}
+                onSlugChange={setSlug}
+                onShapeRegenerate={regenerateShape}
+                onUnpublish={actions.unpublish}
+              />
+            )
           }
         >
           {/* Toggle between WYSIWYG and raw markdown */}
@@ -170,7 +174,9 @@ export default function Editor() {
 
       <footer className="fixed bottom-0 left-0 right-0 border-t border-border px-4 sm:px-6 py-3 bg-background touch-none">
         <div className="flex items-center justify-end text-sm text-muted-foreground">
-          {ui.lastSaved ? (
+          {revisions.previewing ? (
+            <span>Press Esc to cancel</span>
+          ) : ui.lastSaved ? (
             <span>Saved {formatSavedTime(ui.lastSaved)}</span>
           ) : (
             <span>Not saved yet</span>
