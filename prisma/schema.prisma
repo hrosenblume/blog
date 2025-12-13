@@ -72,3 +72,10 @@ model LeadVisit {
   @@index([leadId])
   @@index([visitedAt])
 }
+
+model AISettings {
+  id           String   @id @default("default")
+  rules        String   @default("")
+  defaultModel String   @default("claude-sonnet")
+  updatedAt    DateTime @updatedAt
+}

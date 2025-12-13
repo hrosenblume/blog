@@ -4,7 +4,7 @@
 export type AdminNavItem = {
   label: string
   href: string
-  countKey: string
+  countKey?: string  // optional for settings pages
 }
 
 export const adminNavItems: AdminNavItem[] = [
@@ -14,6 +14,7 @@ export const adminNavItems: AdminNavItem[] = [
   { label: 'Visits', href: '/admin/leads/visits', countKey: 'visits' },
   { label: 'Companies', href: '/admin/visitors/companies', countKey: 'companies' },
   { label: 'Persons', href: '/admin/visitors/persons', countKey: 'persons' },
+  { label: 'AI', href: '/admin/ai' },
 ]
 
 // For navbar grouping - items listed here will appear in dropdowns
@@ -23,7 +24,7 @@ export const adminNavGroups = [
 ]
 
 // Items not in any group (shown as direct links in navbar)
-export const adminDirectLinks = ['Users']
+export const adminDirectLinks = ['Users', 'AI']
 
 // Helper to get nav items for a group
 export function getGroupItems(groupLabel: string): AdminNavItem[] {

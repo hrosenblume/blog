@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useRouter } from 'next/navigation'
 import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
@@ -10,6 +11,8 @@ import { TiptapEditor, EditorToolbar } from '@/components/TiptapEditor'
 import { EditorNavbar } from '@/components/editor/EditorNavbar'
 import { PostMetadataFooter } from '@/components/editor/PostMetadataFooter'
 import { RevisionPreviewBanner } from '@/components/editor/RevisionPreviewBanner'
+import { GenerateModal } from '@/components/editor/GenerateModal'
+import { AIPreviewBanner } from '@/components/editor/AIPreviewBanner'
 import { ArticleLayout } from '@/components/ArticleLayout'
 import { ArticleHeader } from '@/components/ArticleHeader'
 import { CheckIcon } from '@/components/Icons'
@@ -51,7 +54,11 @@ export default function Editor() {
     setEditor,
     textareaRef,
     revisions,
+    ai,
   } = usePostEditor(postSlug)
+
+  // Generate modal state
+  const [showGenerateModal, setShowGenerateModal] = useState(false)
 
   // Keyboard shortcuts
   useKeyboard([
@@ -69,7 +76,12 @@ export default function Editor() {
     {
       ...SHORTCUTS.ESCAPE_BACK,
       handler: () => {
-        // If in preview mode, cancel preview first
+        // If in AI preview mode, discard first
+        if (ai.previewing) {
+          ai.discard()
+          return
+        }
+        // If in revision preview mode, cancel preview first
         if (revisions.previewing) {
           revisions.cancel()
           return
@@ -108,8 +120,17 @@ export default function Editor() {
         <RevisionPreviewBanner revision={revisions.previewing} />
       )}
 
+      {/* AI preview banner */}
+      {ai.previewing && (
+        <AIPreviewBanner
+          preview={ai.previewing}
+          onAccept={ai.accept}
+          onDiscard={ai.discard}
+        />
+      )}
+
       {/* Fixed toolbar below header - hidden in preview mode */}
-      {!revisions.previewing && (
+      {!revisions.previewing && !ai.previewing && (
         <EditorToolbar
           editor={ui.showMarkdown ? null : editor}
           textareaRef={ui.showMarkdown ? textareaRef : undefined}
@@ -119,6 +140,8 @@ export default function Editor() {
           setShowMarkdown={setShowMarkdown}
           postSlug={postSlug}
           revisions={revisions}
+          onOpenGenerate={() => setShowGenerateModal(true)}
+          aiGenerating={ai.generating}
         />
       )}
 
@@ -132,13 +155,13 @@ export default function Editor() {
               subtitle={post.subtitle}
               byline={HOMEPAGE.name}
               editable
-              disabled={!!revisions.previewing}
+              disabled={!!revisions.previewing || !!ai.previewing}
               onTitleChange={setTitle}
               onSubtitleChange={setSubtitle}
             />
           }
           footer={
-            !revisions.previewing && (
+            !revisions.previewing && !ai.previewing && (
               <PostMetadataFooter
                 slug={post.slug}
                 status={post.status}
@@ -158,7 +181,7 @@ export default function Editor() {
               value={post.markdown}
               onChange={(e) => setMarkdown(e.target.value)}
               placeholder="Write your story in Markdown..."
-              readOnly={!!revisions.previewing}
+              readOnly={!!revisions.previewing || !!ai.previewing}
               className="w-full min-h-[500px] bg-transparent border-none outline-none resize-none placeholder-gray-400 leading-relaxed overflow-hidden font-mono text-sm"
             />
           ) : (
@@ -174,7 +197,9 @@ export default function Editor() {
 
       <footer className="fixed bottom-0 left-0 right-0 border-t border-border px-4 sm:px-6 py-3 bg-background touch-none">
         <div className="flex items-center justify-end text-sm text-muted-foreground">
-          {revisions.previewing ? (
+          {ai.previewing ? (
+            <span>Press Esc to discard AI draft</span>
+          ) : revisions.previewing ? (
             <span>Press Esc to cancel</span>
           ) : ui.lastSaved ? (
             <span>Saved {formatSavedTime(ui.lastSaved)}</span>
@@ -183,6 +208,14 @@ export default function Editor() {
           )}
         </div>
       </footer>
+
+      {/* Generate Modal */}
+      <GenerateModal
+        open={showGenerateModal}
+        onOpenChange={setShowGenerateModal}
+        onGenerate={ai.generate}
+        generating={ai.generating}
+      />
     </div>
   )
 }

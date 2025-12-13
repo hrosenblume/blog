@@ -30,6 +30,7 @@ alwaysApply: true
 | Styling | Tailwind CSS |
 | Theme | next-themes (dark mode, class-based) |
 | Editor | Tiptap WYSIWYG (markdown via marked + turndown) |
+| AI Writing | Anthropic SDK + OpenAI SDK (Claude/GPT models) |
 | 3D Graphics | Canvas API (client-side polyhedra rendering) |
 | Image Storage | Local filesystem (dev) / DigitalOcean Spaces (prod) |
 
@@ -40,6 +41,7 @@ blog/
 ├── app/                        # Next.js App Router
 │   ├── api/                    # API routes
 │   │   ├── admin/              # Admin-only APIs (users, revisions)
+│   │   ├── ai/                 # AI generation + settings
 │   │   ├── auth/[...nextauth]/ # NextAuth handler
 │   │   └── posts/              # Posts CRUD
 │   ├── admin/                  # Admin dashboard
@@ -61,6 +63,10 @@ blog/
 │   ├── homepage.ts             # ✏️ Homepage content (DRY)
 │   ├── keyboard/               # Keyboard navigation
 │   ├── leads.ts                # Lead utilities (getLeadDisplayName)
+│   ├── ai/                     # AI writing system
+│   │   ├── models.ts           # Model definitions (Claude/GPT)
+│   │   ├── parse.ts            # Parse title/subtitle from generated content
+│   │   └── provider.ts         # Unified SDK abstraction
 │   ├── polyhedra/              # 3D rendering system
 │   ├── posts.ts                # Post CRUD logic (DRY)
 │   └── storage.ts              # Image upload (local/Spaces)
@@ -139,6 +145,13 @@ model LeadVisit {
   rawPayload String?
   visitedAt  DateTime @default(now())
 }
+
+model AISettings {
+  id           String   @id @default("default")
+  rules        String   @default("")
+  defaultModel String   @default("claude-sonnet")
+  updatedAt    DateTime @updatedAt
+}
 ```
 
 ## Key Systems
@@ -204,6 +217,21 @@ Defined in `lib/keyboard/shortcuts.ts`:
 - Revision history
 - Slug generation
 - Unsaved changes warning
+- AI generation with preview/accept/discard flow
+
+### AI Writing System
+Generate essays using Anthropic (Claude) or OpenAI (GPT-4):
+- **Models**: `lib/ai/models.ts` — Claude Sonnet 4, Opus 4, GPT-4o, GPT-4o Mini
+- **Provider**: `lib/ai/provider.ts` — Unified interface for both SDKs
+- **Settings**: `AISettings` Prisma model — custom rules and default model (persisted in DB)
+- **API**: `/api/ai/generate` (generate content), `/api/ai/settings` (CRUD settings)
+- **Components**:
+  - `GenerateModal` — Prompt input, model selection, length picker
+  - `AIPreviewBanner` — Accept/discard generated content
+  - `WritingRulesModal` — Edit custom writing rules
+- **Flow**: Toolbar button → GenerateModal → API call → Preview banner → Accept/Discard
+- **Context injection**: System prompt includes custom rules first (override everything), then all published posts as style examples
+- **Env vars**: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` (at least one required)
 
 ### Image Storage System
 Hybrid storage in `lib/storage.ts` with automatic backend detection:
@@ -255,6 +283,8 @@ This approach avoids Edge runtime limitations with Prisma.
 | `/api/admin/revisions` | Revision management (admin) |
 | `/api/webhooks/rb2b` | RB2B webhook receiver |
 | `/api/upload` | Image upload |
+| `/api/ai/generate` | Generate essay content with AI |
+| `/api/ai/settings` | Get/update AI writing rules and default model |
 
 ## Production Deployment
 
@@ -339,6 +369,10 @@ SPACES_ENDPOINT="https://..."            # Spaces API endpoint
 SPACES_CDN_ENDPOINT="https://..."        # Spaces CDN endpoint (for serving)
 SPACES_KEY="<key>"                       # Spaces access key
 SPACES_SECRET="<secret>"                 # Spaces secret key
+
+# AI Writing (at least one required)
+ANTHROPIC_API_KEY="sk-ant-..."           # Anthropic API key for Claude models
+OPENAI_API_KEY="sk-..."                  # OpenAI API key for GPT models
 ```
 
 ## ngrok Tunnel (Mobile Testing)

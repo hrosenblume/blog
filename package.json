@@ -25,6 +25,7 @@
     "build:placeholders": "node scripts/polyhedra/build-placeholders.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.2",
     "@aws-sdk/client-s3": "^3.948.0",
     "@prisma/client": "^4.16.2",
     "@radix-ui/react-alert-dialog": "^1.1.15",
@@ -48,6 +49,7 @@
     "next": "^15.5.9",
     "next-auth": "^5.0.0-beta.25",
     "next-themes": "^0.4.4",
+    "openai": "^6.10.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "sanitize-html": "^2.17.0",

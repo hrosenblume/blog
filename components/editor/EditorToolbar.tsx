@@ -20,6 +20,7 @@ import {
   ClearFormattingIcon,
   UndoIcon,
   RedoIcon,
+  SparklesIcon,
 } from '@/components/Icons'
 import { RevisionHistoryDropdown } from './RevisionHistoryDropdown'
 import type { RevisionState } from '@/lib/editor/types'
@@ -36,6 +37,9 @@ interface EditorToolbarProps {
   // Revision history
   postSlug?: string
   revisions?: RevisionState
+  // AI generation
+  onOpenGenerate?: () => void
+  aiGenerating?: boolean
 }
 
 interface ToolbarButtonProps {
@@ -71,7 +75,7 @@ function Divider() {
   return <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1" />
 }
 
-export function EditorToolbar({ editor, textareaRef, markdown, onMarkdownChange, showMarkdown, setShowMarkdown, postSlug, revisions }: EditorToolbarProps) {
+export function EditorToolbar({ editor, textareaRef, markdown, onMarkdownChange, showMarkdown, setShowMarkdown, postSlug, revisions, onOpenGenerate, aiGenerating }: EditorToolbarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const isMarkdownMode = !editor && textareaRef && markdown !== undefined && onMarkdownChange
 
@@ -384,6 +388,20 @@ export function EditorToolbar({ editor, textareaRef, markdown, onMarkdownChange,
             onOpen={revisions.fetch}
             onSelect={revisions.preview}
           />
+        </>
+      )}
+
+      {/* AI Generate */}
+      {onOpenGenerate && (
+        <>
+          <Divider />
+          <ToolbarButton
+            onClick={onOpenGenerate}
+            disabled={aiGenerating}
+            title="Generate with AI"
+          >
+            <SparklesIcon />
+          </ToolbarButton>
         </>
       )}
     </div>

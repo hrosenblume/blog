@@ -52,7 +52,11 @@ export default async function AdminDashboard() {
                 <CardTitle>{item.label}</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold">{counts[item.countKey] ?? 0}</p>
+                {item.countKey ? (
+                  <p className="text-3xl font-bold">{counts[item.countKey] ?? 0}</p>
+                ) : (
+                  <p className="text-muted-foreground">Configure →</p>
+                )}
               </CardContent>
             </Card>
           </Link>

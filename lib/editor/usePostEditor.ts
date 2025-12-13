@@ -6,7 +6,7 @@ import type { Editor as EditorInstance } from '@tiptap/react'
 import { generateSlug } from '@/lib/markdown'
 import { getRandomShape } from '@/lib/polyhedra/shapes'
 import { confirmPublish, confirmUnpublish } from '@/lib/utils/confirm'
-import type { RevisionSummary, RevisionFull, StashedContent, RevisionState } from './types'
+import type { RevisionSummary, RevisionFull, StashedContent, RevisionState, AIPreview, AIState } from './types'
 
 export interface PostContent {
   title: string
@@ -69,6 +69,9 @@ export interface UsePostEditorReturn {
   
   // Revision history
   revisions: RevisionState
+  
+  // AI generation
+  ai: AIState
 }
 
 export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn {
@@ -112,6 +115,10 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
   const [previewLoading, setPreviewLoading] = useState(false)
   const [previewingRevision, setPreviewingRevision] = useState<RevisionFull | null>(null)
   const stashedContent = useRef<StashedContent | null>(null)
+
+  // AI generation state
+  const [aiGenerating, setAiGenerating] = useState(false)
+  const [aiPreview, setAiPreview] = useState<AIPreview | null>(null)
 
   // Load existing post
   useEffect(() => {
@@ -162,7 +169,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
 
   // Track unsaved changes (skip during preview mode)
   useEffect(() => {
-    if (previewingRevision) return
+    if (previewingRevision || aiPreview) return
     
     const saved = lastSavedContent.current
     const contentChanged =
@@ -173,7 +180,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
       polyhedraShape !== saved.polyhedraShape
     // Include edit flag to catch whitespace changes that get normalized away
     setHasUnsavedChanges(contentChanged || hasEditedSinceLastSave)
-  }, [title, subtitle, slug, markdown, polyhedraShape, previewingRevision, hasEditedSinceLastSave])
+  }, [title, subtitle, slug, markdown, polyhedraShape, previewingRevision, aiPreview, hasEditedSinceLastSave])
 
   // Browser back/refresh warning for unsaved changes
   useEffect(() => {
@@ -305,12 +312,12 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
 
   // Autosave drafts after 3 seconds of inactivity (silent - no button spinner)
   useEffect(() => {
-    if (previewingRevision) return
+    if (previewingRevision || aiPreview) return
     if (!postSlug || !title.trim() || status === 'published') return
 
     const timeout = setTimeout(() => handleSave('draft', { silent: true }), 3000)
     return () => clearTimeout(timeout)
-  }, [markdown, title, postSlug, status, handleSave, previewingRevision])
+  }, [markdown, title, postSlug, status, handleSave, previewingRevision, aiPreview])
 
   // Unpublish handler
   const handleUnpublish = useCallback(async () => {
@@ -458,6 +465,98 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
     }
   }, [previewingRevision, editor, fetchRevisions])
 
+  // Generate content with AI
+  const generateWithAI = useCallback(async (prompt: string, length: string, modelId?: string) => {
+    setAiGenerating(true)
+    try {
+      // 1. Stash current content
+      stashedContent.current = { title, subtitle, markdown, polyhedraShape }
+
+      // 2. Call generate API
+      const res = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, length, modelId }),
+      })
+
+      if (!res.ok) {
+        const error = await res.json()
+        throw new Error(error.error || 'Generation failed')
+      }
+
+      const result = await res.json()
+
+      // 3. Update content with generated title, subtitle, and markdown
+      if (result.title) {
+        setTitle(result.title)
+      }
+      if (result.subtitle) {
+        setSubtitle(result.subtitle)
+      }
+      setMarkdown(result.markdown)
+
+      // 4. Directly update editor content
+      if (editor) {
+        const { markdownToHtml } = await import('@/lib/markdown')
+        const html = markdownToHtml(result.markdown)
+        editor.commands.setContent(html, { emitUpdate: false })
+      }
+
+      // 5. Set AI preview state and disable editing
+      setAiPreview({
+        title: result.title,
+        subtitle: result.subtitle,
+        markdown: result.markdown,
+        model: result.model,
+        wordCount: result.wordCount,
+      })
+      editor?.setEditable(false)
+    } catch (err) {
+      // Rollback stash on error
+      stashedContent.current = null
+      alert(err instanceof Error ? err.message : 'Generation failed')
+      console.error(err)
+    } finally {
+      setAiGenerating(false)
+    }
+  }, [title, subtitle, markdown, polyhedraShape, editor])
+
+  // Accept AI-generated content
+  const acceptAiDraft = useCallback(() => {
+    // Clear stash and preview state, keep the content
+    stashedContent.current = null
+    setAiPreview(null)
+    editor?.setEditable(true)
+    // Mark as having unsaved changes so it will save
+    setHasEditedSinceLastSave(true)
+  }, [editor])
+
+  // Discard AI-generated content and restore original
+  const discardAiDraft = useCallback(async () => {
+    if (!stashedContent.current) return
+
+    // Restore stashed content
+    const stash = stashedContent.current
+    setTitle(stash.title)
+    setSubtitle(stash.subtitle)
+    setMarkdown(stash.markdown)
+    setPolyhedraShape(stash.polyhedraShape)
+
+    // Directly update editor content
+    if (editor) {
+      const { markdownToHtml } = await import('@/lib/markdown')
+      const html = markdownToHtml(stash.markdown)
+      editor.commands.setContent(html, { emitUpdate: false })
+    }
+
+    // Clear AI preview state
+    setAiPreview(null)
+    stashedContent.current = null
+
+    // Re-enable editing
+    editor?.setEditable(true)
+  }, [editor])
+
   return {
     post: { title, subtitle, slug, markdown, polyhedraShape, status },
     setTitle,
@@ -494,6 +593,14 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
       preview: previewRevision,
       cancel: cancelPreview,
       restore: confirmRestore,
+    },
+    
+    ai: {
+      generating: aiGenerating,
+      previewing: aiPreview,
+      generate: generateWithAI,
+      accept: acceptAiDraft,
+      discard: discardAiDraft,
     },
   }
 }

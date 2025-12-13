@@ -28,7 +28,19 @@ export interface RevisionState {
   restore: () => Promise<void>
 }
 
+export interface AIPreview {
+  title?: string
+  subtitle?: string
+  markdown: string
+  model: string
+  wordCount: number
+}
 
-
-
+export interface AIState {
+  generating: boolean
+  previewing: AIPreview | null
+  generate: (prompt: string, length: string, modelId?: string) => Promise<void>
+  accept: () => void
+  discard: () => void
+}
 
