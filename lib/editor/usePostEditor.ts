@@ -18,7 +18,7 @@ export interface PostContent {
 
 export interface PostEditorUI {
   loading: boolean
-  saving: boolean
+  savingAs: 'draft' | 'published' | null
   lastSaved: Date | null
   hasUnsavedChanges: boolean
   showMarkdown: boolean
@@ -81,7 +81,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
 
   // UI state
   const [loading, setLoading] = useState(!!postSlug)
-  const [saving, setSaving] = useState(false)
+  const [savingAs, setSavingAs] = useState<'draft' | 'published' | null>(null)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [showMarkdown, setShowMarkdown] = useState(false)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
@@ -200,7 +200,8 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
       return
     }
 
-    setSaving(true)
+    setSavingAs(publishStatus)
+    const saveStartTime = Date.now()
 
     try {
       const data = {
@@ -258,7 +259,13 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to save')
     } finally {
-      setSaving(false)
+      // Ensure spinner shows for at least 400ms to avoid flash
+      const elapsed = Date.now() - saveStartTime
+      const minDuration = 400
+      if (elapsed < minDuration) {
+        await new Promise(resolve => setTimeout(resolve, minDuration - elapsed))
+      }
+      setSavingAs(null)
     }
   }, [postSlug, title, subtitle, slug, markdown, polyhedraShape, router])
 
@@ -307,7 +314,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
     setPolyhedraShape,
     regenerateShape,
     
-    ui: { loading, saving, lastSaved, hasUnsavedChanges, showMarkdown, publishSuccess },
+    ui: { loading, savingAs, lastSaved, hasUnsavedChanges, showMarkdown, publishSuccess },
     setShowMarkdown,
     
     nav: { prevSlug, nextSlug },

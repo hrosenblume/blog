@@ -85,7 +85,7 @@ export default function Editor() {
       <EditorNavbar
         status={post.status}
         hasUnsavedChanges={ui.hasUnsavedChanges}
-        saving={ui.saving}
+        savingAs={ui.savingAs}
         onSave={actions.save}
       />
 

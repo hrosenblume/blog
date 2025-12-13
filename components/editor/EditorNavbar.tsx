@@ -1,22 +1,50 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { Loader2 } from 'lucide-react'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { Button } from '@/components/ui/button'
 import { ChevronLeftIcon } from '@/components/Icons'
-import { PolyhedraCanvas } from '@/components/PolyhedraCanvas'
+
+type SaveStatus = 'draft' | 'published'
+
+interface SaveButtonProps {
+  target: SaveStatus
+  label: string
+  savedLabel: string
+  variant?: 'default' | 'secondary'
+  savingAs: SaveStatus | null
+  disabled: boolean
+  onSave: (status: SaveStatus) => void
+}
+
+function SaveButton({ target, label, savedLabel, variant = 'default', savingAs, disabled, onSave }: SaveButtonProps) {
+  const isSaving = savingAs === target
+  const isSaved = disabled && savingAs === null
+  
+  return (
+    <Button
+      variant={variant}
+      onClick={() => onSave(target)}
+      disabled={savingAs !== null || disabled}
+    >
+      {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+      {isSaved ? savedLabel : label}
+    </Button>
+  )
+}
 
 interface EditorNavbarProps {
-  status: 'draft' | 'published'
+  status: SaveStatus
   hasUnsavedChanges: boolean
-  saving: boolean
-  onSave: (status: 'draft' | 'published') => void
+  savingAs: SaveStatus | null
+  onSave: (status: SaveStatus) => void
 }
 
 export function EditorNavbar({
   status,
   hasUnsavedChanges,
-  saving,
+  savingAs,
   onSave,
 }: EditorNavbarProps) {
   const router = useRouter()
@@ -44,23 +72,25 @@ export function EditorNavbar({
           <ThemeToggle />
 
           {status === 'draft' && (
-            <Button
+            <SaveButton
+              target="draft"
+              label="Save Draft"
+              savedLabel="Saved"
               variant="secondary"
-              onClick={() => onSave('draft')}
-              disabled={saving || !hasUnsavedChanges}
-            >
-              {saving && <PolyhedraCanvas shape="cube" size={16} clicked={true} />}
-              {hasUnsavedChanges ? 'Save Draft' : 'Saved'}
-            </Button>
+              savingAs={savingAs}
+              disabled={!hasUnsavedChanges}
+              onSave={onSave}
+            />
           )}
 
-          <Button
-            onClick={() => onSave('published')}
-            disabled={saving || (status === 'published' && !hasUnsavedChanges)}
-          >
-            {saving && <PolyhedraCanvas shape="cube" size={16} clicked={true} />}
-            {status === 'published' && !hasUnsavedChanges ? 'Published' : 'Publish'}
-          </Button>
+          <SaveButton
+            target="published"
+            label="Publish"
+            savedLabel="Published"
+            savingAs={savingAs}
+            disabled={status === 'published' && !hasUnsavedChanges}
+            onSave={onSave}
+          />
         </div>
       </div>
     </header>
