@@ -50,6 +50,7 @@ cat > /etc/nginx/sites-available/blog << 'NGINX_EOF'
 server {
     listen 80;
     server_name hunterrosenblume.com www.hunterrosenblume.com;
+    client_max_body_size 10M;
 
     location / {
         proxy_pass http://localhost:3000;
@@ -127,6 +128,14 @@ echo "  GOOGLE_CLIENT_ID=\"...\""
 echo "  GOOGLE_CLIENT_SECRET=\"...\""
 echo "  NEXT_PUBLIC_CONTACT_EMAIL=\"...\""
 echo "  NEXT_PUBLIC_SITE_URL=\"https://hunterrosenblume.com\""
+echo ""
+echo "  # DigitalOcean Spaces (Image Storage)"
+echo "  SPACES_REGION=\"sfo3\""
+echo "  SPACES_BUCKET=\"hunter\""
+echo "  SPACES_ENDPOINT=\"https://sfo3.digitaloceanspaces.com\""
+echo "  SPACES_CDN_ENDPOINT=\"https://hunter.sfo3.cdn.digitaloceanspaces.com\""
+echo "  SPACES_KEY=\"...\""
+echo "  SPACES_SECRET=\"...\""
 echo ""
 echo "Run: nano /var/www/blog/.env.local"
 echo ""
