@@ -25,11 +25,9 @@ export async function generate(
 
   if (model.provider === 'anthropic') {
     return generateWithAnthropic(model.model, systemPrompt, userPrompt, maxTokens)
-  } else if (model.provider === 'openai') {
-    return generateWithOpenAI(model.model, systemPrompt, userPrompt, maxTokens)
-  } else {
-    throw new Error(`Unknown provider: ${model.provider}`)
   }
+  // model.provider === 'openai'
+  return generateWithOpenAI(model.model, systemPrompt, userPrompt, maxTokens)
 }
 
 async function generateWithAnthropic(
