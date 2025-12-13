@@ -31,6 +31,7 @@ alwaysApply: true
 | Theme | next-themes (dark mode, class-based) |
 | Editor | Tiptap WYSIWYG (markdown via marked + turndown) |
 | 3D Graphics | Canvas API (client-side polyhedra rendering) |
+| Image Storage | Local filesystem (dev) / DigitalOcean Spaces (prod) |
 
 ## Project Structure
 
@@ -61,7 +62,8 @@ blog/
 │   ├── keyboard/               # Keyboard navigation
 │   ├── leads.ts                # Lead utilities (getLeadDisplayName)
 │   ├── polyhedra/              # 3D rendering system
-│   └── posts.ts                # Post CRUD logic (DRY)
+│   ├── posts.ts                # Post CRUD logic (DRY)
+│   └── storage.ts              # Image upload (local/Spaces)
 ├── prisma/
 │   ├── schema.prisma           # SQLite (dev)
 │   ├── schema.postgresql.prisma # PostgreSQL (prod)
@@ -190,6 +192,14 @@ Defined in `lib/keyboard/shortcuts.ts`:
 - Slug generation
 - Unsaved changes warning
 
+### Image Storage System
+Hybrid storage in `lib/storage.ts` with automatic backend detection:
+- **Local (dev)**: Saves to `public/uploads/`, returns `/uploads/filename.jpg`
+- **Production**: Uploads to DigitalOcean Spaces, returns CDN URL
+- **Detection**: If `SPACES_KEY` env var is set → uses Spaces; otherwise → local filesystem
+- **API**: `/api/upload` accepts multipart form data, validates type/size, returns `{ url }`
+- **Supported types**: JPEG, PNG, GIF, WebP (max 4MB)
+
 ### Google Analytics
 Page view tracking via Google Analytics 4:
 - **Script**: `components/GoogleAnalytics.tsx` — loads gtag.js (public pages only, excludes /admin, /writer, /auth)
@@ -308,6 +318,14 @@ NGROK_DOMAIN="<domain>"                   # For dev:tunnel
 NEXT_PUBLIC_RB2B_API_KEY="<key>"         # RB2B tracking key
 RB2B_WEBHOOK_SECRET="<secret>"           # Optional: secure RB2B webhook
 NEXT_PUBLIC_GA_MEASUREMENT_ID="<id>"     # Google Analytics 4 measurement ID
+
+# DigitalOcean Spaces (production image storage)
+SPACES_REGION="sfo3"                     # Spaces region
+SPACES_BUCKET="<bucket>"                 # Spaces bucket name
+SPACES_ENDPOINT="https://..."            # Spaces API endpoint
+SPACES_CDN_ENDPOINT="https://..."        # Spaces CDN endpoint (for serving)
+SPACES_KEY="<key>"                       # Spaces access key
+SPACES_SECRET="<secret>"                 # Spaces secret key
 ```
 
 ## ngrok Tunnel (Mobile Testing)

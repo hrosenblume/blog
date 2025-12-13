@@ -118,6 +118,21 @@ export function EditorToolbar({ editor, textareaRef, markdown, onMarkdownChange,
     const file = e.target.files?.[0]
     if (!file) return
 
+    // Client-side validation
+    const maxSize = 4 * 1024 * 1024 // 4MB
+    if (file.size > maxSize) {
+      alert(`Image too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum size is 4MB.`)
+      e.target.value = ''
+      return
+    }
+
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+    if (!validTypes.includes(file.type)) {
+      alert(`Invalid file type: ${file.type}. Supported types: JPEG, PNG, GIF, WebP.`)
+      e.target.value = ''
+      return
+    }
+
     const formData = new FormData()
     formData.append('image', file)
 
@@ -126,20 +141,31 @@ export function EditorToolbar({ editor, textareaRef, markdown, onMarkdownChange,
         method: 'POST',
         body: formData,
       })
-      const { url } = await res.json()
-      if (url) {
+      
+      const data = await res.json()
+      
+      if (!res.ok) {
+        alert(data.error || 'Failed to upload image')
+        e.target.value = ''
+        return
+      }
+
+      if (data.url) {
         if (editor) {
-          editor.chain().focus().setImage({ src: url }).run()
+          editor.chain().focus().setImage({ src: data.url }).run()
         } else if (isMarkdownMode && textareaRef?.current) {
           const textarea = textareaRef.current
           const start = textarea.selectionStart
-          const newText = markdown!.substring(0, start) + `![image](${url})` + markdown!.substring(start)
+          const newText = markdown!.substring(0, start) + `![image](${data.url})` + markdown!.substring(start)
           onMarkdownChange!(newText)
           requestAnimationFrame(() => textarea.focus())
         }
+      } else {
+        alert('Upload succeeded but no URL returned')
       }
-    } catch {
-      alert('Failed to upload image')
+    } catch (err) {
+      alert('Failed to upload image. Please try again.')
+      console.error('Image upload error:', err)
     }
 
     e.target.value = ''
