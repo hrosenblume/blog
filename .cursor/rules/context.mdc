@@ -153,6 +153,19 @@ Defined directly in `tailwind.config.js` with line heights:
 - `text-body` (16px) — Body text
 - `text-table` (14px) — Table cells, dense data
 
+### Article Layout System
+Shared layout config in `lib/article-layout.ts` ensures essay pages and editor look identical:
+- `CONTENT_WIDTH`, `CONTENT_PADDING` — Container constraints
+- `TITLE_CLASSES`, `SUBTITLE_CLASSES`, `BYLINE_CLASSES` — Header typography
+- `PROSE_CLASSES` — Body content styling
+
+Components:
+- `ArticleLayout` — Shared `<article>` wrapper with header/children/footer slots
+- `ArticleHeader` — Title/subtitle/byline (renders inputs when `editable={true}`)
+- `ArticleBody` — Prose wrapper for rendered markdown
+
+Change `lib/article-layout.ts` or `ArticleLayout` → both essay and editor update automatically.
+
 ### Admin Pagination
 Shared utilities in `lib/admin/`:
 - `ITEMS_PER_PAGE` — Default pagination size (25)

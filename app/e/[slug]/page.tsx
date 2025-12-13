@@ -6,6 +6,7 @@ import { EssayNav } from '@/components/EssayNav'
 import { HomepageFooter } from '@/components/HomepageFooter'
 import { BackLink } from '@/components/BackLink'
 import { PageContainer } from '@/components/PageContainer'
+import { ArticleLayout } from '@/components/ArticleLayout'
 import { ArticleHeader } from '@/components/ArticleHeader'
 import { ArticleBody } from '@/components/ArticleBody'
 import { HOMEPAGE } from '@/lib/homepage'
@@ -119,18 +120,20 @@ export default async function EssayPage({ params }: Props) {
       <PageContainer>
         <BackLink href="/" label="Home" />
 
-        <article>
-          <ArticleHeader 
-            title={post.title} 
-            subtitle={post.subtitle ?? undefined}
-            byline={HOMEPAGE.name}
-            bylineHref="/"
-          />
-
+        <ArticleLayout
+          header={
+            <ArticleHeader 
+              title={post.title} 
+              subtitle={post.subtitle ?? undefined}
+              byline={HOMEPAGE.name}
+              bylineHref="/"
+            />
+          }
+        >
           <ArticleBody>
             <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
           </ArticleBody>
-        </article>
+        </ArticleLayout>
 
         <EssayNav 
           prev={prev} 

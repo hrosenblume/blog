@@ -9,11 +9,11 @@ import { CenteredPage } from '@/components/CenteredPage'
 import { TiptapEditor, EditorToolbar } from '@/components/TiptapEditor'
 import { EditorNavbar } from '@/components/editor/EditorNavbar'
 import { PostMetadataFooter } from '@/components/editor/PostMetadataFooter'
+import { ArticleLayout } from '@/components/ArticleLayout'
 import { ArticleHeader } from '@/components/ArticleHeader'
 import { CheckIcon } from '@/components/Icons'
 import { formatSavedTime } from '@/lib/utils/format'
 import { HOMEPAGE } from '@/lib/homepage'
-import { CONTENT_WIDTH, CONTENT_PADDING } from '@/lib/article-layout'
 
 // Success screen shown after publishing
 function PublishSuccess() {
@@ -103,16 +103,31 @@ export default function Editor() {
       />
 
       <main className="flex-1 overflow-auto pb-20 overscroll-contain">
-        <div className={`${CONTENT_WIDTH} mx-auto ${CONTENT_PADDING} pt-12 pb-24`}>
-          <ArticleHeader
-            title={post.title}
-            subtitle={post.subtitle}
-            byline={HOMEPAGE.name}
-            editable
-            onTitleChange={setTitle}
-            onSubtitleChange={setSubtitle}
-          />
-
+        <ArticleLayout
+          withContainer
+          className="pt-12 pb-24"
+          header={
+            <ArticleHeader
+              title={post.title}
+              subtitle={post.subtitle}
+              byline={HOMEPAGE.name}
+              editable
+              onTitleChange={setTitle}
+              onSubtitleChange={setSubtitle}
+            />
+          }
+          footer={
+            <PostMetadataFooter
+              slug={post.slug}
+              status={post.status}
+              polyhedraShape={post.polyhedraShape}
+              markdown={post.markdown}
+              onSlugChange={setSlug}
+              onShapeRegenerate={regenerateShape}
+              onUnpublish={actions.unpublish}
+            />
+          }
+        >
           {/* Toggle between WYSIWYG and raw markdown */}
           {ui.showMarkdown ? (
             <textarea
@@ -130,17 +145,7 @@ export default function Editor() {
               onEditorReady={setEditor}
             />
           )}
-
-          <PostMetadataFooter
-            slug={post.slug}
-            status={post.status}
-            polyhedraShape={post.polyhedraShape}
-            markdown={post.markdown}
-            onSlugChange={setSlug}
-            onShapeRegenerate={regenerateShape}
-            onUnpublish={actions.unpublish}
-          />
-        </div>
+        </ArticleLayout>
       </main>
 
       <footer className="fixed bottom-0 left-0 right-0 border-t border-border px-4 sm:px-6 py-3 bg-background touch-none">

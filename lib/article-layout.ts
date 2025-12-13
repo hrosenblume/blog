@@ -5,10 +5,10 @@
  * look identical. Customize these values when reusing this project.
  * 
  * Used by:
+ * - components/ArticleLayout.tsx (shared wrapper)
  * - components/ArticleHeader.tsx
  * - components/ArticleBody.tsx
  * - components/TiptapEditor.tsx
- * - app/writer/editor/[[...slug]]/page.tsx
  */
 
 // =============================================================================
