@@ -1,5 +1,4 @@
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
 import { prisma } from '@/lib/db'
 import { renderMarkdown } from '@/lib/markdown'
 import { KeyboardNav } from './_components/KeyboardNav'
@@ -7,6 +6,8 @@ import { EssayNav } from '@/components/EssayNav'
 import { HomepageFooter } from '@/components/HomepageFooter'
 import { BackLink } from '@/components/BackLink'
 import { PageContainer } from '@/components/PageContainer'
+import { ArticleHeader } from '@/components/ArticleHeader'
+import { ArticleBody } from '@/components/ArticleBody'
 import { HOMEPAGE } from '@/lib/homepage'
 import { getBaseUrl, OG_STYLE, OG_SIZE_SQUARE } from '@/lib/metadata'
 
@@ -118,30 +119,17 @@ export default async function EssayPage({ params }: Props) {
       <PageContainer>
         <BackLink href="/" label="Home" />
 
-        <article className="space-y-6">
-          <h1 className="text-title font-bold">{post.title}</h1>
-          {post.subtitle && (
-            <p className="text-lg text-muted-foreground -mt-4">{post.subtitle}</p>
-          )}
-          
-          {/* Author byline - no date per plan 11 */}
-          <header className="text-sm text-muted-foreground mb-8">
-            <Link 
-              href="/" 
-              className="underline hover:text-foreground transition-colors"
-            >
-              {HOMEPAGE.name}
-            </Link>
-          </header>
-
-          <div 
-            className="prose prose-gray dark:prose-invert max-w-none
-              prose-headings:font-semibold prose-headings:mt-8 prose-headings:mb-4
-              prose-p:leading-relaxed
-              prose-a:underline
-              prose-blockquote:border-border"
-            dangerouslySetInnerHTML={{ __html: htmlContent }}
+        <article>
+          <ArticleHeader 
+            title={post.title} 
+            subtitle={post.subtitle ?? undefined}
+            byline={HOMEPAGE.name}
+            bylineHref="/"
           />
+
+          <ArticleBody>
+            <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
+          </ArticleBody>
         </article>
 
         <EssayNav 

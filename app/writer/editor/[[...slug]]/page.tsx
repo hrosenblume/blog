@@ -9,8 +9,11 @@ import { CenteredPage } from '@/components/CenteredPage'
 import { TiptapEditor, EditorToolbar } from '@/components/TiptapEditor'
 import { EditorNavbar } from '@/components/editor/EditorNavbar'
 import { PostMetadataFooter } from '@/components/editor/PostMetadataFooter'
+import { ArticleHeader } from '@/components/ArticleHeader'
 import { CheckIcon } from '@/components/Icons'
 import { formatSavedTime } from '@/lib/utils/format'
+import { HOMEPAGE } from '@/lib/homepage'
+import { CONTENT_WIDTH, CONTENT_PADDING } from '@/lib/article-layout'
 
 // Success screen shown after publishing
 function PublishSuccess() {
@@ -100,22 +103,14 @@ export default function Editor() {
       />
 
       <main className="flex-1 overflow-auto pb-20 overscroll-contain">
-        <div className="max-w-2xl mx-auto px-6 pt-12 pb-24">
-          {/* Title and subtitle */}
-          <input
-            type="text"
-            value={post.title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Title"
-            className="w-full text-title font-bold bg-transparent border-none outline-none placeholder-gray-300 dark:placeholder-gray-700 mb-2"
-          />
-
-          <input
-            type="text"
-            value={post.subtitle}
-            onChange={(e) => setSubtitle(e.target.value)}
-            placeholder="Subtitle (shown on homepage)"
-            className="w-full text-lg bg-transparent border-none outline-none placeholder-gray-300 dark:placeholder-gray-700 text-gray-500 dark:text-gray-400 mb-8"
+        <div className={`${CONTENT_WIDTH} mx-auto ${CONTENT_PADDING} pt-12 pb-24`}>
+          <ArticleHeader
+            title={post.title}
+            subtitle={post.subtitle}
+            byline={HOMEPAGE.name}
+            editable
+            onTitleChange={setTitle}
+            onSubtitleChange={setSubtitle}
           />
 
           {/* Toggle between WYSIWYG and raw markdown */}

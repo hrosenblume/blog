@@ -9,6 +9,7 @@ import Image from '@tiptap/extension-image'
 import { markdownToHtml } from '@/lib/markdown'
 import { htmlToMarkdown } from '@/lib/turndown'
 import { EditorToolbar } from '@/components/editor/EditorToolbar'
+import { PROSE_CLASSES } from '@/components/ArticleBody'
 
 interface TiptapEditorProps {
   content: string // markdown
@@ -52,7 +53,8 @@ export function TiptapEditor({ content, onChange, placeholder = 'Write your stor
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-gray dark:prose-invert max-w-none prose-headings:font-semibold prose-headings:mt-8 prose-headings:mb-4 prose-p:text-gray-900 prose-p:dark:text-white prose-p:leading-relaxed prose-a:text-gray-900 prose-a:dark:text-white prose-a:underline prose-strong:text-gray-900 prose-strong:dark:text-white prose-code:text-gray-900 prose-code:dark:text-white prose-blockquote:border-gray-300 prose-blockquote:dark:border-gray-700 prose-blockquote:text-gray-600 prose-blockquote:dark:text-gray-400 min-h-[500px] outline-none',
+        // Use shared prose classes + editor-specific additions
+        class: `${PROSE_CLASSES} min-h-[500px] outline-none`,
       },
     },
   })
