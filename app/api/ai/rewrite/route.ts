@@ -3,6 +3,7 @@ import { requireSession, unauthorized, badRequest } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { generate } from '@/lib/ai/provider'
 import { getModel, AI_MODELS } from '@/lib/ai/models'
+import { getStyleContext, buildRewritePrompt } from '@/lib/ai/system-prompt'
 
 interface RewriteRequest {
   text: string
@@ -32,37 +33,9 @@ export async function POST(request: NextRequest) {
     return badRequest(`Unknown model: ${modelId}. Available: ${AI_MODELS.map(m => m.id).join(', ')}`)
   }
 
-  // Fetch AI settings for custom rules
-  const settings = await prisma.aISettings.findUnique({ where: { id: 'default' } })
-  const customRules = settings?.rules || ''
-
-  // Fetch all published posts for style context
-  const publishedPosts = await prisma.post.findMany({
-    where: { status: 'published' },
-    select: { title: true, subtitle: true, markdown: true },
-    orderBy: { publishedAt: 'desc' },
-  })
-
-  // Build style context from published posts
-  const styleExamples = publishedPosts
-    .map(p => {
-      const header = p.subtitle ? `# ${p.title}\n*${p.subtitle}*\n\n` : `# ${p.title}\n\n`
-      return header + p.markdown
-    })
-    .join('\n\n---\n\n')
-
-  // Build system prompt for rewriting
-  const systemPrompt = `You are a writing assistant that rewrites text to match the author's voice and style.
-
-## Writing Rules (Follow these exactly)
-${customRules || 'No specific rules provided. Match the style of the examples.'}
-
-## Style Reference (The author writes like this)
-${styleExamples || 'No published essays available. Write in a clear, personal essay style.'}
-
----
-
-Your task is to rewrite the given text to be cleaner and more in line with the author's style. Output ONLY the rewritten text. No preamble, no "Here is...", no explanations. Just the rewritten text.`
+  // Build system prompt with style context
+  const context = await getStyleContext()
+  const systemPrompt = buildRewritePrompt(context)
 
   const userPrompt = `Write this in a cleaner way, matching my writing style:
 

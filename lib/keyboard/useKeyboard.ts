@@ -21,8 +21,22 @@ export function useKeyboard(shortcuts: Shortcut[]) {
         e.target instanceof HTMLTextAreaElement ||
         (e.target instanceof HTMLElement && e.target.closest('[contenteditable="true"]'))
 
+      // Check if event is inside a dialog/modal - let the modal handle its own Escape
+      const targetEl = e.target instanceof HTMLElement ? e.target : null
+      const isInDialog = targetEl && (
+        targetEl.closest('[role="dialog"]') ||
+        targetEl.closest('[role="alertdialog"]') ||
+        targetEl.closest('[data-radix-dialog-content]') ||
+        targetEl.closest('[data-radix-alert-dialog-content]')
+      )
+
       for (const shortcut of shortcutsRef.current) {
         if (!shortcut.allowInInput && isTyping) continue
+
+        // Skip Escape handling if inside a dialog - let the dialog close first
+        if (shortcut.key === 'Escape' && isInDialog) {
+          continue
+        }
 
         const metaMatch = shortcut.meta ? e.metaKey : !e.metaKey
         const keyMatch = e.key === shortcut.key || e.key.toLowerCase() === shortcut.key

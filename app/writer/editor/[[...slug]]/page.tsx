@@ -151,7 +151,6 @@ export default function Editor() {
           revisions={revisions}
           onOpenGenerate={() => setShowGenerateModal(true)}
           aiGenerating={ai.generating}
-          onOpenChat={() => setShowChatPanel(true)}
         />
       )}
 

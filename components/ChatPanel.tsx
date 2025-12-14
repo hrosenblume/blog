@@ -130,6 +130,7 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
       sendMessage()
     }
     if (e.key === 'Escape') {
+      e.stopPropagation()
       onClose()
     }
   }
@@ -154,6 +155,9 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
       
       {/* Panel - full screen on mobile, full-height side panel on desktop */}
       <div 
+        role="dialog"
+        aria-modal="true"
+        aria-label="Chat"
         className={cn(
           "fixed z-50 flex flex-col bg-background shadow-xl transition-transform duration-200 ease-out",
           // Mobile: full screen

@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { generate, generateStream } from '@/lib/ai/provider'
 import { getModel, AI_MODELS } from '@/lib/ai/models'
 import { parseGeneratedContent } from '@/lib/ai/parse'
+import { getStyleContext, buildGeneratePrompt } from '@/lib/ai/system-prompt'
 import { wordCount } from '@/lib/markdown'
 
 interface GenerateRequest {
@@ -17,43 +18,6 @@ const LENGTH_TARGETS: Record<string, number> = {
   short: 500,
   medium: 1000,
   long: 2000,
-}
-
-// Build system prompt for essay generation
-async function buildSystemPrompt(): Promise<{ systemPrompt: string; customRules: string }> {
-  // Fetch AI settings for custom rules
-  const settings = await prisma.aISettings.findUnique({ where: { id: 'default' } })
-  const customRules = settings?.rules || ''
-
-  // Fetch all published posts for style context
-  const publishedPosts = await prisma.post.findMany({
-    where: { status: 'published' },
-    select: { title: true, subtitle: true, markdown: true },
-    orderBy: { publishedAt: 'desc' },
-  })
-
-  // Build style context from published posts
-  const styleExamples = publishedPosts
-    .map(p => {
-      const header = p.subtitle ? `# ${p.title}\n*${p.subtitle}*\n\n` : `# ${p.title}\n\n`
-      return header + p.markdown
-    })
-    .join('\n\n---\n\n')
-
-  // Build system prompt with rules first (they override everything)
-  const systemPrompt = `You are a writing assistant that writes in the author's voice.
-
-## Writing Rules (Follow these exactly)
-${customRules || 'No specific rules provided. Match the style of the examples.'}
-
-## Style Reference (Write in this voice)
-${styleExamples || 'No published essays available. Write in a clear, personal essay style.'}
-
----
-
-Output ONLY markdown. No preamble, no "Here is...", no explanations. Just the essay content.`
-
-  return { systemPrompt, customRules }
 }
 
 // POST /api/ai/generate - Generate essay content (supports streaming)
@@ -83,7 +47,8 @@ export async function POST(request: NextRequest) {
     return badRequest(`Unknown model: ${modelId}. Available: ${AI_MODELS.map(m => m.id).join(', ')}`)
   }
 
-  const { systemPrompt } = await buildSystemPrompt()
+  const context = await getStyleContext()
+  const systemPrompt = buildGeneratePrompt(context)
 
   const userPrompt = `Write an essay of approximately ${targetWords} words about:
 

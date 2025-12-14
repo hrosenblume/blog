@@ -3,6 +3,7 @@ import { requireSession, unauthorized, badRequest } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { generateChatStream, ChatMessage } from '@/lib/ai/provider'
 import { getModel, AI_MODELS } from '@/lib/ai/models'
+import { getStyleContext, buildChatPrompt } from '@/lib/ai/system-prompt'
 
 interface ChatRequest {
   messages: ChatMessage[]
@@ -32,37 +33,9 @@ export async function POST(request: NextRequest) {
     return badRequest(`Unknown model: ${modelId}. Available: ${AI_MODELS.map(m => m.id).join(', ')}`)
   }
 
-  // Fetch AI settings for custom rules
-  const settings = await prisma.aISettings.findUnique({ where: { id: 'default' } })
-  const customRules = settings?.rules || ''
-
-  // Fetch all published posts for style context
-  const publishedPosts = await prisma.post.findMany({
-    where: { status: 'published' },
-    select: { title: true, subtitle: true, markdown: true },
-    orderBy: { publishedAt: 'desc' },
-  })
-
-  // Build style context from published posts
-  const styleExamples = publishedPosts
-    .map(p => {
-      const header = p.subtitle ? `# ${p.title}\n*${p.subtitle}*\n\n` : `# ${p.title}\n\n`
-      return header + p.markdown
-    })
-    .join('\n\n---\n\n')
-
-  // Build system prompt for chat - focused on brainstorming and discussion
-  const systemPrompt = `You are a helpful writing assistant that helps brainstorm and develop essay ideas. You write in the author's voice and style.
-
-## Writing Rules (Follow these exactly)
-${customRules || 'No specific rules provided. Match the style of the examples.'}
-
-## Style Reference (The author writes like this)
-${styleExamples || 'No published essays available. Write in a clear, personal essay style.'}
-
----
-
-You are having a conversation to help develop essay ideas. Be helpful, insightful, and match the author's voice. When suggesting ideas or drafting content, follow the writing rules and style above.`
+  // Build system prompt with style context
+  const context = await getStyleContext()
+  const systemPrompt = buildChatPrompt(context)
 
   try {
     const encoder = new TextEncoder()
