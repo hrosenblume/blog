@@ -4,6 +4,12 @@ on:
   push:
     branches: [main, dev]
 
+# Prevent concurrent deploys to the same branch
+# If a new push comes while deploying, cancel the old one
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   security-audit:
     runs-on: ubuntu-latest
