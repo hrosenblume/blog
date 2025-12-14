@@ -167,25 +167,25 @@ Project planning lives in `plans/`:
 
 | File | Purpose |
 |------|---------|
-| `Tomorrow.md` | **Immediate tasks** — Launch checklist, minor polish, things to do next |
-| `Future.md` | **Long-term ideas** — Features, enhancements, someday/maybe list |
+| `Roadmap.md` | All planned work organized by priority |
 | `tmp/` | Working drafts and brainstorming (gitignored) |
 
-### Tomorrow.md Format
-- Use markdown checklists (`- [ ]` / `- [x]`)
-- Group by priority or category
-- Keep actionable and specific
-- Move completed items to Future.md or delete
+### Roadmap.md Structure
+Three sections by priority:
+- **Now** — Active work, what I'm building next
+- **Soon** — Queued up, scoped, ready when Now is done
+- **Later** — Ideas worth keeping, someday/maybe
 
-### Future.md Format
+### Format
 - Use `---` dividers between ideas
 - Each idea gets a heading and description
+- Use checklists (`- [ ]` / `- [x]`) for component tasks
 - Include "Design considerations" for UI features
-- No deadlines — this is the someday/maybe list
 
 ### Rules
-- Check `Tomorrow.md` at start of session to see priorities
-- Add new ideas to `Future.md`, not inline in code comments
+- Check `Roadmap.md` at start of session to see priorities
+- Promote items by moving them up (Later → Soon → Now)
+- Add new ideas to the Later section
 - Use `plans/tmp/` for messy drafts (gitignored)
 
 ## Terminal Commands
