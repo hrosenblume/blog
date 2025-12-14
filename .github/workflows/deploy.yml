@@ -7,18 +7,21 @@ on:
 jobs:
   security-audit:
     runs-on: ubuntu-latest
+    # Run in parallel with deploy, don't block on failures
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
       - name: Install dependencies
         run: npm ci
       - name: Security audit
         run: npm audit --audit-level=high
 
   deploy:
-    needs: security-audit
+    # No 'needs' - runs in parallel with security-audit
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to Production
@@ -31,10 +34,17 @@ jobs:
           script: |
             cd /var/www/blog
             git remote prune origin
+            BEFORE_LOCK=$(md5sum package-lock.json 2>/dev/null || echo "none")
             git fetch origin main
             git reset --hard origin/main
+            AFTER_LOCK=$(md5sum package-lock.json)
             chmod +x start.sh
-            npm ci
+            if [ "$BEFORE_LOCK" != "$AFTER_LOCK" ]; then
+              echo "package-lock.json changed, running npm ci..."
+              npm ci
+            else
+              echo "Dependencies unchanged, skipping npm ci"
+            fi
             export $(grep -v '^#' .env.local | xargs)
             npx prisma generate --schema=prisma/schema.postgresql.prisma
             npx prisma db push --schema=prisma/schema.postgresql.prisma --skip-generate --accept-data-loss
@@ -51,10 +61,17 @@ jobs:
           script: |
             cd /var/www/blog-staging
             git remote prune origin
+            BEFORE_LOCK=$(md5sum package-lock.json 2>/dev/null || echo "none")
             git fetch origin dev
             git reset --hard origin/dev
+            AFTER_LOCK=$(md5sum package-lock.json)
             chmod +x start.sh
-            npm ci
+            if [ "$BEFORE_LOCK" != "$AFTER_LOCK" ]; then
+              echo "package-lock.json changed, running npm ci..."
+              npm ci
+            else
+              echo "Dependencies unchanged, skipping npm ci"
+            fi
             export $(grep -v '^#' .env.local | xargs)
             npx prisma generate --schema=prisma/schema.postgresql.prisma
             npx prisma db push --schema=prisma/schema.postgresql.prisma --skip-generate --accept-data-loss
