@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
 
 const WRITER_PATH = '/writer'
-const TAP_COUNT = 5
+const TAP_COUNT = 3
 const TAP_WINDOW_MS = 2000
 
 const getWriterPath = () => 

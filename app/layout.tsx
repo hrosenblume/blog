@@ -1,13 +1,17 @@
 import './globals.css'
 import { Inter } from 'next/font/google'
 import { Providers } from './providers'
-import { Metadata } from 'next'
+import { Metadata, Viewport } from 'next'
 import { HOMEPAGE } from '@/lib/homepage'
 import { getBaseUrl, SITE_DESCRIPTION, SITE_KEYWORDS, TWITTER_HANDLE, OG_STYLE, OG_SIZE_SQUARE } from '@/lib/metadata'
 import { RB2BScript } from '@/components/RB2BScript'
 import { GoogleAnalytics } from '@/components/GoogleAnalytics'
 
 const inter = Inter({ subsets: ['latin'] })
+
+export const viewport: Viewport = {
+  viewportFit: 'cover',
+}
 
 export async function generateMetadata(): Promise<Metadata> {
   const baseUrl = await getBaseUrl()

@@ -30,3 +30,4 @@ export function AIPreviewBanner({ preview, onAccept, onDiscard }: AIPreviewBanne
     </div>
   )
 }
+
