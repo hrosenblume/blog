@@ -31,35 +31,63 @@ jobs:
           host: ${{ secrets.DO_HOST }}
           username: ${{ secrets.DO_USER }}
           key: ${{ secrets.DO_SSH_KEY }}
+          command_timeout: 10m
           script: |
+            set -e  # Exit immediately on any error
             cd /var/www/blog
+            
+            echo "=== Fetching latest code ==="
             git remote prune origin
             BEFORE_LOCK=$(md5sum package-lock.json 2>/dev/null || echo "none")
             git fetch origin main
             git reset --hard origin/main
             AFTER_LOCK=$(md5sum package-lock.json)
+            
+            echo "=== Checking dependencies ==="
+            # Run npm ci if package-lock changed OR node_modules is missing/incomplete
             if [ "$BEFORE_LOCK" != "$AFTER_LOCK" ]; then
               echo "package-lock.json changed, running npm ci..."
               npm ci
+            elif [ ! -d "node_modules" ] || [ ! -d "node_modules/.prisma" ]; then
+              echo "node_modules missing or incomplete, running npm ci..."
+              npm ci
             else
-              echo "Dependencies unchanged, skipping npm ci"
+              echo "Dependencies unchanged and present, skipping npm ci"
             fi
+            
+            echo "=== Loading environment ==="
             export $(grep -v '^#' .env.local | xargs)
+            
+            echo "=== Generating Prisma client ==="
             npx prisma generate --schema=prisma/schema.postgresql.prisma
+            
+            echo "=== Pushing database schema ==="
             npx prisma db push --schema=prisma/schema.postgresql.prisma --skip-generate --accept-data-loss
+            
+            echo "=== Building Next.js ==="
             npm run build:prod
-            # Check for cluster mode with 2+ instances
+            
+            # Verify build succeeded
+            if [ ! -f ".next/prerender-manifest.json" ]; then
+              echo "ERROR: Build failed - .next/prerender-manifest.json not found"
+              exit 1
+            fi
+            echo "=== Build verified ==="
+            
+            echo "=== Restarting PM2 ==="
             PM2_INFO=$(pm2 jlist 2>/dev/null || echo "[]")
             CLUSTER_INSTANCES=$(echo "$PM2_INFO" | grep -o '"name":"blog"[^}]*"exec_mode":"cluster"' | wc -l)
             if [ "$CLUSTER_INSTANCES" -ge 2 ]; then
               echo "Cluster mode running ($CLUSTER_INSTANCES instances), doing zero-downtime reload..."
               pm2 reload blog
             else
-              echo "Not in cluster mode or wrong instance count, starting fresh..."
+              echo "Not in cluster mode, starting fresh..."
               pm2 delete blog 2>/dev/null || true
               pm2 start ecosystem.config.js --only blog
               pm2 save
             fi
+            
+            echo "=== Deploy complete ==="
 
       - name: Deploy to Staging
         if: github.ref == 'refs/heads/dev'
@@ -68,32 +96,60 @@ jobs:
           host: ${{ secrets.DO_HOST }}
           username: ${{ secrets.DO_USER }}
           key: ${{ secrets.DO_SSH_KEY }}
+          command_timeout: 10m
           script: |
+            set -e  # Exit immediately on any error
             cd /var/www/blog-staging
+            
+            echo "=== Fetching latest code ==="
             git remote prune origin
             BEFORE_LOCK=$(md5sum package-lock.json 2>/dev/null || echo "none")
             git fetch origin dev
             git reset --hard origin/dev
             AFTER_LOCK=$(md5sum package-lock.json)
+            
+            echo "=== Checking dependencies ==="
+            # Run npm ci if package-lock changed OR node_modules is missing/incomplete
             if [ "$BEFORE_LOCK" != "$AFTER_LOCK" ]; then
               echo "package-lock.json changed, running npm ci..."
               npm ci
+            elif [ ! -d "node_modules" ] || [ ! -d "node_modules/.prisma" ]; then
+              echo "node_modules missing or incomplete, running npm ci..."
+              npm ci
             else
-              echo "Dependencies unchanged, skipping npm ci"
+              echo "Dependencies unchanged and present, skipping npm ci"
             fi
+            
+            echo "=== Loading environment ==="
             export $(grep -v '^#' .env.local | xargs)
+            
+            echo "=== Generating Prisma client ==="
             npx prisma generate --schema=prisma/schema.postgresql.prisma
+            
+            echo "=== Pushing database schema ==="
             npx prisma db push --schema=prisma/schema.postgresql.prisma --skip-generate --accept-data-loss
+            
+            echo "=== Building Next.js ==="
             npm run build:prod
-            # Check for cluster mode with 2+ instances
+            
+            # Verify build succeeded
+            if [ ! -f ".next/prerender-manifest.json" ]; then
+              echo "ERROR: Build failed - .next/prerender-manifest.json not found"
+              exit 1
+            fi
+            echo "=== Build verified ==="
+            
+            echo "=== Restarting PM2 ==="
             PM2_INFO=$(pm2 jlist 2>/dev/null || echo "[]")
             CLUSTER_INSTANCES=$(echo "$PM2_INFO" | grep -o '"name":"blog-staging"[^}]*"exec_mode":"cluster"' | wc -l)
             if [ "$CLUSTER_INSTANCES" -ge 2 ]; then
               echo "Cluster mode running ($CLUSTER_INSTANCES instances), doing zero-downtime reload..."
               pm2 reload blog-staging
             else
-              echo "Not in cluster mode or wrong instance count, starting fresh..."
+              echo "Not in cluster mode, starting fresh..."
               pm2 delete blog-staging 2>/dev/null || true
               pm2 start ecosystem.config.js --only blog-staging
               pm2 save
             fi
+            
+            echo "=== Deploy complete ==="
