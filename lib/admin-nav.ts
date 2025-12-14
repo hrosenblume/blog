@@ -22,10 +22,11 @@ export const adminNavItems: AdminNavItem[] = [
 export const adminNavGroups = [
   { label: 'Content', items: ['Posts', 'Revisions'] },
   { label: 'Analytics', items: ['Visits', 'Companies', 'Persons'] },
+  { label: 'Settings', items: ['AI', 'SEO'] },
 ]
 
 // Items not in any group (shown as direct links in navbar)
-export const adminDirectLinks = ['Users', 'AI', 'SEO']
+export const adminDirectLinks = ['Users']
 
 // Helper to get nav items for a group
 export function getGroupItems(groupLabel: string): AdminNavItem[] {
