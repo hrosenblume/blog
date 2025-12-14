@@ -51,6 +51,7 @@ export default function Editor() {
     setSeoDescription,
     setSeoKeywords,
     setNoIndex,
+    setOgImage,
     ui,
     setShowMarkdown,
     nav,
@@ -214,6 +215,7 @@ export default function Editor() {
                 seoDescription={post.seoDescription}
                 seoKeywords={post.seoKeywords}
                 noIndex={post.noIndex}
+                ogImage={post.ogImage}
                 onSlugChange={setSlug}
                 onShapeRegenerate={regenerateShape}
                 onUnpublish={actions.unpublish}
@@ -221,6 +223,7 @@ export default function Editor() {
                 onSeoDescriptionChange={setSeoDescription}
                 onSeoKeywordsChange={setSeoKeywords}
                 onNoIndexChange={setNoIndex}
+                onOgImageChange={setOgImage}
               />
             )
           }

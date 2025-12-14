@@ -8,7 +8,7 @@ import { HomepageFooter } from '@/components/HomepageFooter'
 import { TapLink } from '@/components/TapLink'
 import { HOMEPAGE } from '@/lib/homepage'
 import { getBaseUrl, OG_STYLE, OG_SIZE_SQUARE } from '@/lib/metadata'
-import { getSiteSettings, getOrgName, getOrgSocialUrls, getPageSeoValues } from '@/lib/seo'
+import { getSiteSettings, getOrgName, getOrgSocialUrls, getPageSeoValues, getEffectiveOgImage } from '@/lib/seo'
 
 // Revalidate every hour (homepage content changes rarely)
 export const revalidate = 3600
@@ -23,7 +23,9 @@ export async function generateMetadata(): Promise<Metadata> {
     description: `Essays and writing by ${HOMEPAGE.name}`,
   })
   
-  const imageUrl = `${baseUrl}/polyhedra/thumbnails/${OG_STYLE.defaultShape}.png`
+  // OG image fallback chain: page custom -> site default -> polyhedra thumbnail
+  const fallbackImage = `${baseUrl}/polyhedra/thumbnails/${OG_STYLE.defaultShape}.png`
+  const imageUrl = getEffectiveOgImage(pageSeo.ogImage, siteSettings.defaultOgImage, fallbackImage)
   
   return {
     title: {
@@ -43,7 +45,7 @@ export async function generateMetadata(): Promise<Metadata> {
       }],
     },
     twitter: {
-      card: 'summary',
+      card: 'summary_large_image',
       title: pageSeo.title,
       description: pageSeo.description,
       images: [imageUrl],

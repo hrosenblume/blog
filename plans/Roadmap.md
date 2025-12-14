@@ -92,3 +92,4 @@ Transform the plaintext bio section on the homepage into something more visually
 - Ensure accessibility (motion preferences, contrast)
 - Mobile-first approach
 - Should feel cohesive with the 3D polyhedra and overall site vibe
+

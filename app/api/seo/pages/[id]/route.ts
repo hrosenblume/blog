@@ -27,6 +27,7 @@ export const GET = withAdmin(async (req: NextRequest, context: RouteContext) => 
     description: settings?.description || null,
     keywords: settings?.keywords || null,
     noIndex: settings?.noIndex || false,
+    ogImage: settings?.ogImage || null,
     updatedAt: settings?.updatedAt || null,
   })
 })
@@ -44,7 +45,7 @@ export const PATCH = withAdmin(async (req: NextRequest, context: RouteContext) =
   }
 
   const body = await req.json()
-  const { title, description, keywords, noIndex } = body
+  const { title, description, keywords, noIndex, ogImage } = body
 
   const settings = await prisma.pageSettings.upsert({
     where: { id },
@@ -53,6 +54,7 @@ export const PATCH = withAdmin(async (req: NextRequest, context: RouteContext) =
       description: description || null,
       keywords: keywords || null,
       noIndex: noIndex || false,
+      ogImage: ogImage || null,
     },
     create: {
       id,
@@ -61,6 +63,7 @@ export const PATCH = withAdmin(async (req: NextRequest, context: RouteContext) =
       description: description || null,
       keywords: keywords || null,
       noIndex: noIndex || false,
+      ogImage: ogImage || null,
     },
   })
 

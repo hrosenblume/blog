@@ -20,6 +20,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       orgName: '',
       orgLogo: '',
       orgSameAs: '[]',
+      defaultOgImage: '',
     },
   })
 }
@@ -129,6 +130,7 @@ export async function getPageSeoValues(
   description: string
   keywords: string[]
   noIndex: boolean
+  ogImage: string | null
 }> {
   const pageSettings = await getPageSettings(pageId)
   
@@ -139,5 +141,18 @@ export async function getPageSeoValues(
       ? pageSettings.keywords.split(',').map(k => k.trim()).filter(Boolean)
       : [],
     noIndex: pageSettings?.noIndex || false,
+    ogImage: pageSettings?.ogImage || null,
   }
+}
+
+/**
+ * Get the effective OG image with fallback chain:
+ * customImage -> defaultImage -> fallbackUrl
+ */
+export function getEffectiveOgImage(
+  customImage: string | null | undefined,
+  defaultImage: string | null | undefined,
+  fallbackUrl: string
+): string {
+  return customImage || defaultImage || fallbackUrl
 }

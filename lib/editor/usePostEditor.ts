@@ -21,6 +21,7 @@ export interface PostContent {
   seoDescription: string
   seoKeywords: string
   noIndex: boolean
+  ogImage: string
 }
 
 export interface PostEditorUI {
@@ -57,6 +58,7 @@ export interface UsePostEditorReturn {
   setSeoDescription: (seoDescription: string) => void
   setSeoKeywords: (seoKeywords: string) => void
   setNoIndex: (noIndex: boolean) => void
+  setOgImage: (ogImage: string) => void
   
   // UI state
   ui: PostEditorUI
@@ -102,6 +104,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
   const [seoDescription, setSeoDescription] = useState('')
   const [seoKeywords, setSeoKeywords] = useState('')
   const [noIndex, setNoIndex] = useState(false)
+  const [ogImage, setOgImage] = useState('')
 
   // UI state
   const [loading, setLoading] = useState(!!postSlug)
@@ -119,7 +122,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
   const [editor, setEditor] = useState<EditorInstance | null>(null)
 
   // Refs
-  const lastSavedContent = useRef({ title: '', subtitle: '', slug: '', markdown: '', polyhedraShape: '', seoTitle: '', seoDescription: '', seoKeywords: '', noIndex: false })
+  const lastSavedContent = useRef({ title: '', subtitle: '', slug: '', markdown: '', polyhedraShape: '', seoTitle: '', seoDescription: '', seoKeywords: '', noIndex: false, ogImage: '' })
   const urlSlugRef = useRef(postSlug)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   
@@ -166,6 +169,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
         setSeoDescription(data.seoDescription || '')
         setSeoKeywords(data.seoKeywords || '')
         setNoIndex(data.noIndex || false)
+        setOgImage(data.ogImage || '')
         lastSavedContent.current = {
           title: data.title,
           subtitle: data.subtitle || '',
@@ -176,6 +180,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
           seoDescription: data.seoDescription || '',
           seoKeywords: data.seoKeywords || '',
           noIndex: data.noIndex || false,
+          ogImage: data.ogImage || '',
         }
         setHasEditedSinceLastSave(false)
         urlSlugRef.current = data.slug
@@ -213,10 +218,11 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
       seoTitle !== saved.seoTitle ||
       seoDescription !== saved.seoDescription ||
       seoKeywords !== saved.seoKeywords ||
-      noIndex !== saved.noIndex
+      noIndex !== saved.noIndex ||
+      ogImage !== saved.ogImage
     // Include edit flag to catch whitespace changes that get normalized away
     setHasUnsavedChanges(contentChanged || hasEditedSinceLastSave)
-  }, [title, subtitle, slug, markdown, polyhedraShape, seoTitle, seoDescription, seoKeywords, noIndex, previewingRevision, aiPreview, hasEditedSinceLastSave])
+  }, [title, subtitle, slug, markdown, polyhedraShape, seoTitle, seoDescription, seoKeywords, noIndex, ogImage, previewingRevision, aiPreview, hasEditedSinceLastSave])
 
   // Browser back/refresh warning for unsaved changes
   useEffect(() => {
@@ -288,6 +294,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
         seoDescription: seoDescription.trim() || null,
         seoKeywords: seoKeywords.trim() || null,
         noIndex,
+        ogImage: ogImage.trim() || null,
       }
 
       if (postSlug) {
@@ -328,6 +335,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
         seoDescription: seoDescription.trim(),
         seoKeywords: seoKeywords.trim(),
         noIndex,
+        ogImage: ogImage.trim(),
       }
       setHasEditedSinceLastSave(false)
       setHasUnsavedChanges(false)
@@ -353,7 +361,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
         setSavingAs(null)
       }
     }
-  }, [postSlug, title, subtitle, slug, markdown, polyhedraShape, seoTitle, seoDescription, seoKeywords, noIndex, router])
+  }, [postSlug, title, subtitle, slug, markdown, polyhedraShape, seoTitle, seoDescription, seoKeywords, noIndex, ogImage, router])
 
   // Autosave drafts after 3 seconds of inactivity (silent - no button spinner)
   useEffect(() => {
@@ -687,7 +695,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
   }, [])
 
   return {
-    post: { title, subtitle, slug, markdown, polyhedraShape, status, seoTitle, seoDescription, seoKeywords, noIndex },
+    post: { title, subtitle, slug, markdown, polyhedraShape, status, seoTitle, seoDescription, seoKeywords, noIndex, ogImage },
     setTitle,
     setSubtitle,
     setSlug: handleSlugChange,
@@ -699,6 +707,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
     setSeoDescription,
     setSeoKeywords,
     setNoIndex,
+    setOgImage,
     
     ui: { loading, savingAs, lastSaved, hasUnsavedChanges, showMarkdown, publishSuccess },
     setShowMarkdown,

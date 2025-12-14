@@ -16,6 +16,7 @@ interface CreatePostData {
   seoDescription?: string | null
   seoKeywords?: string | null
   noIndex?: boolean
+  ogImage?: string | null
 }
 
 interface UpdatePostData {
@@ -30,6 +31,7 @@ interface UpdatePostData {
   seoDescription?: string | null
   seoKeywords?: string | null
   noIndex?: boolean
+  ogImage?: string | null
 }
 
 type PostResult = 
@@ -69,6 +71,7 @@ export async function updatePost(post: Post, data: UpdatePostData): Promise<Post
   if (data.seoDescription !== undefined) updates.seoDescription = data.seoDescription || null
   if (data.seoKeywords !== undefined) updates.seoKeywords = data.seoKeywords || null
   if (data.noIndex !== undefined) updates.noIndex = data.noIndex
+  if (data.ogImage !== undefined) updates.ogImage = data.ogImage || null
 
   // Handle status change
   if (data.status !== undefined) {
@@ -151,6 +154,7 @@ export async function createPost(data: CreatePostData): Promise<PostResult> {
   const seoDescription = data.seoDescription || null
   const seoKeywords = data.seoKeywords || null
   const noIndex = data.noIndex ?? false
+  const ogImage = data.ogImage || null
 
   // Check slug uniqueness
   const existing = await prisma.post.findUnique({ where: { slug } })
@@ -172,6 +176,7 @@ export async function createPost(data: CreatePostData): Promise<PostResult> {
       seoDescription,
       seoKeywords,
       noIndex,
+      ogImage,
       revisions: {
         create: {
           title,

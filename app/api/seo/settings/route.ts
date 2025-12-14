@@ -18,6 +18,7 @@ export const GET = withSession(async () => {
       orgName: '',
       orgLogo: '',
       orgSameAs: '[]',
+      defaultOgImage: '',
     },
   })
 
@@ -30,6 +31,7 @@ export const GET = withSession(async () => {
     orgName: settings.orgName,
     orgLogo: settings.orgLogo,
     orgSameAs: settings.orgSameAs,
+    defaultOgImage: settings.defaultOgImage,
   })
 })
 
@@ -46,6 +48,7 @@ export const PATCH = withSession(async (request: NextRequest) => {
     orgName?: string
     orgLogo?: string
     orgSameAs?: string
+    defaultOgImage?: string
   } = {}
 
   if (typeof body.siteTitle === 'string') {
@@ -89,6 +92,10 @@ export const PATCH = withSession(async (request: NextRequest) => {
     }
   }
 
+  if (typeof body.defaultOgImage === 'string') {
+    updateData.defaultOgImage = body.defaultOgImage
+  }
+
   const settings = await prisma.siteSettings.upsert({
     where: { id: 'default' },
     update: updateData,
@@ -102,6 +109,7 @@ export const PATCH = withSession(async (request: NextRequest) => {
       orgName: updateData.orgName || '',
       orgLogo: updateData.orgLogo || '',
       orgSameAs: updateData.orgSameAs || '[]',
+      defaultOgImage: updateData.defaultOgImage || '',
     },
   })
 
@@ -114,5 +122,6 @@ export const PATCH = withSession(async (request: NextRequest) => {
     orgName: settings.orgName,
     orgLogo: settings.orgLogo,
     orgSameAs: settings.orgSameAs,
+    defaultOgImage: settings.defaultOgImage,
   })
 })

@@ -5,12 +5,15 @@ import { ChevronDown, ChevronRight } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { OgImageUpload } from '@/components/admin/OgImageUpload'
+import { SocialPreviews } from '@/components/admin/SocialPreviews'
 
 interface SeoSectionProps {
   seoTitle: string
   seoDescription: string
   seoKeywords: string
   noIndex: boolean
+  ogImage: string
   postTitle: string
   postSubtitle: string
   slug: string
@@ -18,6 +21,7 @@ interface SeoSectionProps {
   onSeoDescriptionChange: (value: string) => void
   onSeoKeywordsChange: (value: string) => void
   onNoIndexChange: (value: boolean) => void
+  onOgImageChange: (value: string) => void
   disabled?: boolean
 }
 
@@ -26,6 +30,7 @@ export function SeoSection({
   seoDescription,
   seoKeywords,
   noIndex,
+  ogImage,
   postTitle,
   postSubtitle,
   slug,
@@ -33,6 +38,7 @@ export function SeoSection({
   onSeoDescriptionChange,
   onSeoKeywordsChange,
   onNoIndexChange,
+  onOgImageChange,
   disabled = false,
 }: SeoSectionProps) {
   const [isExpanded, setIsExpanded] = useState(false)
@@ -54,7 +60,7 @@ export function SeoSection({
           <ChevronRight className="h-4 w-4" />
         )}
         <span>SEO Settings</span>
-        {(seoTitle || seoDescription || seoKeywords || noIndex) && (
+        {(seoTitle || seoDescription || seoKeywords || noIndex || ogImage) && (
           <span className="ml-auto text-xs text-muted-foreground">customized</span>
         )}
       </button>
@@ -131,6 +137,16 @@ export function SeoSection({
             </Label>
           </div>
 
+          {/* OG Image */}
+          <div className="pt-2">
+            <OgImageUpload
+              value={ogImage}
+              onChange={onOgImageChange}
+              disabled={disabled}
+              label="Social Preview Image"
+            />
+          </div>
+
           {/* SERP Preview */}
           <div className="pt-2">
             <p className="text-xs text-muted-foreground mb-2">Search Preview</p>
@@ -148,6 +164,14 @@ export function SeoSection({
               )}
             </div>
           </div>
+
+          {/* Social Previews */}
+          <SocialPreviews
+            title={effectiveTitle}
+            description={effectiveDescription}
+            imageUrl={ogImage || null}
+            url={`yourdomain.com/e/${slug || 'post-slug'}`}
+          />
         </div>
       )}
     </div>

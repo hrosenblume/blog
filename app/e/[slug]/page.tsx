@@ -12,7 +12,7 @@ import { ArticleHeader } from '@/components/ArticleHeader'
 import { ArticleBody } from '@/components/ArticleBody'
 import { HOMEPAGE } from '@/lib/homepage'
 import { getBaseUrl, OG_STYLE, OG_SIZE_SQUARE } from '@/lib/metadata'
-import { getPostSeoValues } from '@/lib/seo'
+import { getPostSeoValues, getSiteSettings, getEffectiveOgImage } from '@/lib/seo'
 
 export const revalidate = 60
 
@@ -71,11 +71,13 @@ export async function generateMetadata({ params }: Props) {
   if (!post) return { title: 'Not Found' }
   
   const baseUrl = await getBaseUrl()
+  const siteSettings = await getSiteSettings()
   const seo = getPostSeoValues(post)
   
-  // Use polyhedra thumbnail as OG image
+  // OG image fallback chain: post custom -> site default -> polyhedra thumbnail
   const shapeName = post.polyhedraShape || OG_STYLE.defaultShape
-  const imageUrl = `${baseUrl}/polyhedra/thumbnails/${shapeName}.png`
+  const fallbackImage = `${baseUrl}/polyhedra/thumbnails/${shapeName}.png`
+  const imageUrl = getEffectiveOgImage(post.ogImage, siteSettings.defaultOgImage, fallbackImage)
   
   return {
     title: seo.title,
@@ -99,7 +101,7 @@ export async function generateMetadata({ params }: Props) {
       }],
     },
     twitter: {
-      card: 'summary',
+      card: 'summary_large_image',
       title: seo.title,
       description: seo.description,
       images: [imageUrl],
@@ -118,9 +120,13 @@ export default async function EssayPage({ params }: Props) {
   const { prev, next, isFirst, isLast } = await getAdjacentPosts(post.slug)
   const htmlContent = renderMarkdown(post.markdown)
   const baseUrl = await getBaseUrl()
+  const siteSettings = await getSiteSettings()
   const seo = getPostSeoValues(post)
+  
+  // OG image fallback chain for JSON-LD
   const shapeName = post.polyhedraShape || OG_STYLE.defaultShape
-  const imageUrl = `${baseUrl}/polyhedra/thumbnails/${shapeName}.png`
+  const fallbackImage = `${baseUrl}/polyhedra/thumbnails/${shapeName}.png`
+  const imageUrl = getEffectiveOgImage(post.ogImage, siteSettings.defaultOgImage, fallbackImage)
 
   return (
     <div className="min-h-screen">

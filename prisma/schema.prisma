@@ -25,6 +25,7 @@ model Post {
   seoDescription String?
   seoKeywords    String?
   noIndex        Boolean    @default(false)
+  ogImage        String?    // Custom Open Graph image URL
 }
 
 model Revision {
@@ -102,6 +103,7 @@ model SiteSettings {
   orgName           String   @default("")
   orgLogo           String   @default("")
   orgSameAs         String   @default("[]")
+  defaultOgImage    String   @default("")  // Fallback OG image for all pages
   updatedAt         DateTime @updatedAt
 }
 
@@ -112,5 +114,6 @@ model PageSettings {
   description String?                // Custom meta description
   keywords    String?                // Comma-separated keywords
   noIndex     Boolean  @default(false)
+  ogImage     String?                // Custom Open Graph image URL
   updatedAt   DateTime @updatedAt
 }

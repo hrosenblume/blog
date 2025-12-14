@@ -21,6 +21,7 @@ export const GET = withAdmin(async () => {
       description: settings?.description || null,
       keywords: settings?.keywords || null,
       noIndex: settings?.noIndex || false,
+      ogImage: settings?.ogImage || null,
       updatedAt: settings?.updatedAt || null,
     }
   })

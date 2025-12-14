@@ -8,17 +8,21 @@ import { PageContainer } from '@/components/PageContainer'
 import { HOMEPAGE } from '@/lib/homepage'
 import { ESSAYS_PAGE } from '@/lib/essays'
 import { getBaseUrl, OG_STYLE, OG_SIZE_SQUARE } from '@/lib/metadata'
-import { getPageSeoValues } from '@/lib/seo'
+import { getPageSeoValues, getSiteSettings, getEffectiveOgImage } from '@/lib/seo'
 
 export async function generateMetadata(): Promise<Metadata> {
   const baseUrl = await getBaseUrl()
-  const imageUrl = `${baseUrl}/polyhedra/thumbnails/${OG_STYLE.defaultShape}.png`
+  const siteSettings = await getSiteSettings()
   
   // Get page-specific overrides (falls back to defaults)
   const pageSeo = await getPageSeoValues('essays', {
     title: ESSAYS_PAGE.title,
     description: `${ESSAYS_PAGE.descriptionPrefix}${HOMEPAGE.name}`,
   })
+  
+  // OG image fallback chain: page custom -> site default -> polyhedra thumbnail
+  const fallbackImage = `${baseUrl}/polyhedra/thumbnails/${OG_STYLE.defaultShape}.png`
+  const imageUrl = getEffectiveOgImage(pageSeo.ogImage, siteSettings.defaultOgImage, fallbackImage)
   
   return {
     title: {
@@ -38,7 +42,7 @@ export async function generateMetadata(): Promise<Metadata> {
       }],
     },
     twitter: {
-      card: 'summary',
+      card: 'summary_large_image',
       title: pageSeo.title,
       description: pageSeo.description,
       images: [imageUrl],

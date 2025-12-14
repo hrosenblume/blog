@@ -16,6 +16,7 @@ interface PostMetadataFooterProps {
   seoDescription: string
   seoKeywords: string
   noIndex: boolean
+  ogImage: string
   onSlugChange: (slug: string) => void
   onShapeRegenerate: () => void
   onUnpublish: () => void
@@ -23,6 +24,7 @@ interface PostMetadataFooterProps {
   onSeoDescriptionChange: (value: string) => void
   onSeoKeywordsChange: (value: string) => void
   onNoIndexChange: (value: boolean) => void
+  onOgImageChange: (value: string) => void
   disabled?: boolean
 }
 
@@ -37,6 +39,7 @@ export function PostMetadataFooter({
   seoDescription,
   seoKeywords,
   noIndex,
+  ogImage,
   onSlugChange,
   onShapeRegenerate,
   onUnpublish,
@@ -44,6 +47,7 @@ export function PostMetadataFooter({
   onSeoDescriptionChange,
   onSeoKeywordsChange,
   onNoIndexChange,
+  onOgImageChange,
   disabled = false,
 }: PostMetadataFooterProps) {
   const words = wordCount(markdown)
@@ -119,6 +123,7 @@ export function PostMetadataFooter({
         seoDescription={seoDescription}
         seoKeywords={seoKeywords}
         noIndex={noIndex}
+        ogImage={ogImage}
         postTitle={title}
         postSubtitle={subtitle}
         slug={slug}
@@ -126,6 +131,7 @@ export function PostMetadataFooter({
         onSeoDescriptionChange={onSeoDescriptionChange}
         onSeoKeywordsChange={onSeoKeywordsChange}
         onNoIndexChange={onNoIndexChange}
+        onOgImageChange={onOgImageChange}
         disabled={disabled}
       />
 

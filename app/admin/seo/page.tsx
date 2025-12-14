@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { OgImageUpload } from '@/components/admin/OgImageUpload'
+import { SocialPreviews } from '@/components/admin/SocialPreviews'
 
 type PageSeoData = {
   id: string
@@ -16,6 +18,7 @@ type PageSeoData = {
   title: string | null
   keywords: string | null
   noIndex: boolean
+  ogImage: string | null
 }
 
 export default function SEOSettingsPage() {
@@ -28,6 +31,7 @@ export default function SEOSettingsPage() {
   const [orgName, setOrgName] = useState('')
   const [orgLogo, setOrgLogo] = useState('')
   const [orgSameAs, setOrgSameAs] = useState('[]')
+  const [defaultOgImage, setDefaultOgImage] = useState('')
   
   // Per-page settings
   const [pages, setPages] = useState<PageSeoData[]>([])
@@ -54,6 +58,7 @@ export default function SEOSettingsPage() {
         setOrgName(siteData.orgName || '')
         setOrgLogo(siteData.orgLogo || '')
         setOrgSameAs(siteData.orgSameAs || '[]')
+        setDefaultOgImage(siteData.defaultOgImage || '')
         setPages(pagesData)
       })
       .catch(console.error)
@@ -76,6 +81,7 @@ export default function SEOSettingsPage() {
           orgName,
           orgLogo,
           orgSameAs,
+          defaultOgImage,
         }),
       })
       setSaved(true)
@@ -103,6 +109,7 @@ export default function SEOSettingsPage() {
           description: page.description,
           keywords: page.keywords,
           noIndex: page.noIndex,
+          ogImage: page.ogImage,
         }),
       })
       setPageSaved(pageId)
@@ -269,6 +276,24 @@ export default function SEOSettingsPage() {
         </CardContent>
       </Card>
 
+      {/* Default OG Image */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Default Social Preview Image</CardTitle>
+          <CardDescription>
+            Fallback image used for social previews when pages don't have a custom OG image.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <OgImageUpload
+            value={defaultOgImage}
+            onChange={setDefaultOgImage}
+            disabled={saving}
+            label="Default OG Image"
+          />
+        </CardContent>
+      </Card>
+
       <div className="flex items-center gap-3">
         <Button onClick={handleSave} disabled={saving}>
           {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -360,6 +385,21 @@ export default function SEOSettingsPage() {
                         Hide from search engines (noindex)
                       </Label>
                     </div>
+
+                    <OgImageUpload
+                      value={page.ogImage || ''}
+                      onChange={(url) => updatePage(page.id, 'ogImage', url || null)}
+                      disabled={pageSaving === page.id}
+                      label="OG Image"
+                    />
+
+                    <SocialPreviews
+                      title={page.title || page.name}
+                      description={page.description || siteDescription}
+                      imageUrl={page.ogImage || defaultOgImage || null}
+                      url={`yourdomain.com${page.path}`}
+                      siteName={siteTitle || undefined}
+                    />
 
                     <div className="flex items-center gap-3 pt-2">
                       <Button
