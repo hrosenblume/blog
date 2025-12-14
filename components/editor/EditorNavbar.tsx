@@ -15,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { ChevronLeftIcon } from '@/components/Icons'
+import { ChevronLeftIcon, ChatIcon } from '@/components/Icons'
 
 type SaveStatus = 'draft' | 'published'
 
@@ -56,6 +56,7 @@ interface EditorNavbarProps {
   savingAs: SaveStatus | null
   onSave: (status: SaveStatus) => void
   previewMode?: PreviewModeProps
+  onOpenChat?: () => void
 }
 
 export function EditorNavbar({
@@ -64,6 +65,7 @@ export function EditorNavbar({
   savingAs,
   onSave,
   previewMode,
+  onOpenChat,
 }: EditorNavbarProps) {
   const router = useRouter()
   const [showRestoreConfirm, setShowRestoreConfirm] = useState(false)
@@ -140,6 +142,16 @@ export function EditorNavbar({
 
         <div className="flex items-center gap-2 sm:gap-3">
           <ThemeToggle />
+
+          {onOpenChat && (
+            <button
+              onClick={onOpenChat}
+              className="w-9 h-9 rounded-lg border border-border hover:bg-accent flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Open chat"
+            >
+              <ChatIcon />
+            </button>
+          )}
 
           {status === 'draft' && (
             <SaveButton

@@ -119,6 +119,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
   // AI generation state
   const [aiGenerating, setAiGenerating] = useState(false)
   const [aiPreview, setAiPreview] = useState<AIPreview | null>(null)
+  const aiAbortController = useRef<AbortController | null>(null)
 
   // Load existing post
   useEffect(() => {
@@ -465,18 +466,33 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
     }
   }, [previewingRevision, editor, fetchRevisions])
 
-  // Generate content with AI
+  // Generate content with AI (streaming)
   const generateWithAI = useCallback(async (prompt: string, length: string, modelId?: string) => {
     setAiGenerating(true)
+    
+    // Create new AbortController for this request
+    aiAbortController.current = new AbortController()
+    const signal = aiAbortController.current.signal
+    
     try {
       // 1. Stash current content
       stashedContent.current = { title, subtitle, markdown, polyhedraShape }
 
-      // 2. Call generate API
+      // 2. Clear current content and disable editing
+      setTitle('')
+      setSubtitle('')
+      setMarkdown('')
+      editor?.setEditable(false)
+      if (editor) {
+        editor.commands.setContent('', { emitUpdate: false })
+      }
+
+      // 3. Call generate API with streaming
       const res = await fetch('/api/ai/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, length, modelId }),
+        body: JSON.stringify({ prompt, length, modelId, stream: true }),
+        signal,
       })
 
       if (!res.ok) {
@@ -484,40 +500,108 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
         throw new Error(error.error || 'Generation failed')
       }
 
-      const result = await res.json()
+      const reader = res.body?.getReader()
+      if (!reader) throw new Error('No response body')
 
-      // 3. Update content with generated title, subtitle, and markdown
-      if (result.title) {
-        setTitle(result.title)
-      }
-      if (result.subtitle) {
-        setSubtitle(result.subtitle)
-      }
-      setMarkdown(result.markdown)
+      const modelName = res.headers.get('X-Model-Name') || 'AI'
+      const decoder = new TextDecoder()
+      let fullContent = ''
 
-      // 4. Directly update editor content
-      if (editor) {
-        const { markdownToHtml } = await import('@/lib/markdown')
-        const html = markdownToHtml(result.markdown)
-        editor.commands.setContent(html, { emitUpdate: false })
+      // 4. Stream content and update progressively
+      const { parseGeneratedContent } = await import('@/lib/ai/parse')
+      const { markdownToHtml } = await import('@/lib/markdown')
+      const { wordCount } = await import('@/lib/markdown')
+
+      while (true) {
+        // Check if aborted before reading
+        if (signal.aborted) break
+        
+        const { done, value } = await reader.read()
+        if (done) break
+
+        const chunk = decoder.decode(value, { stream: true })
+        fullContent += chunk
+
+        // Parse incrementally to extract title/subtitle as they appear
+        const parsed = parseGeneratedContent(fullContent)
+        
+        if (parsed.title) {
+          setTitle(parsed.title)
+        }
+        if (parsed.subtitle) {
+          setSubtitle(parsed.subtitle)
+        }
+        
+        // Update markdown body (content after title/subtitle)
+        setMarkdown(parsed.body)
+        
+        // Update editor content
+        if (editor && parsed.body) {
+          const html = markdownToHtml(parsed.body)
+          editor.commands.setContent(html, { emitUpdate: false })
+        }
       }
 
-      // 5. Set AI preview state and disable editing
-      setAiPreview({
-        title: result.title,
-        subtitle: result.subtitle,
-        markdown: result.markdown,
-        model: result.model,
-        wordCount: result.wordCount,
-      })
-      editor?.setEditable(false)
+      // 5. Final parse and set AI preview state (even if stopped early)
+      const finalParsed = parseGeneratedContent(fullContent)
+      
+      // Only show preview if we have some content
+      if (finalParsed.body.trim()) {
+        setAiPreview({
+          title: finalParsed.title,
+          subtitle: finalParsed.subtitle,
+          markdown: finalParsed.body,
+          model: modelName,
+          wordCount: wordCount(finalParsed.body),
+        })
+      } else {
+        // No content generated, restore stash
+        if (stashedContent.current) {
+          const stash = stashedContent.current
+          setTitle(stash.title)
+          setSubtitle(stash.subtitle)
+          setMarkdown(stash.markdown)
+          setPolyhedraShape(stash.polyhedraShape)
+          
+          if (editor) {
+            const html = markdownToHtml(stash.markdown)
+            editor.commands.setContent(html, { emitUpdate: false })
+          }
+          
+          stashedContent.current = null
+        }
+        editor?.setEditable(true)
+      }
     } catch (err) {
+      // Handle abort gracefully - not an error
+      if (err instanceof Error && err.name === 'AbortError') {
+        // User stopped generation - keep whatever content was streamed
+        // The content was already set during streaming, no need to rollback
+        return
+      }
+      
       // Rollback stash on error
-      stashedContent.current = null
+      if (stashedContent.current) {
+        const stash = stashedContent.current
+        setTitle(stash.title)
+        setSubtitle(stash.subtitle)
+        setMarkdown(stash.markdown)
+        setPolyhedraShape(stash.polyhedraShape)
+        
+        if (editor) {
+          const { markdownToHtml } = await import('@/lib/markdown')
+          const html = markdownToHtml(stash.markdown)
+          editor.commands.setContent(html, { emitUpdate: false })
+        }
+        
+        stashedContent.current = null
+      }
+      editor?.setEditable(true)
       alert(err instanceof Error ? err.message : 'Generation failed')
       console.error(err)
     } finally {
       setAiGenerating(false)
+      aiAbortController.current = null
     }
   }, [title, subtitle, markdown, polyhedraShape, editor])
 
@@ -556,6 +640,13 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
     // Re-enable editing
     editor?.setEditable(true)
   }, [editor])
+
+  // Stop AI generation in progress
+  const stopAiGeneration = useCallback(() => {
+    if (aiAbortController.current) {
+      aiAbortController.current.abort()
+    }
+  }, [])
 
   return {
     post: { title, subtitle, slug, markdown, polyhedraShape, status },
@@ -599,6 +690,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
       generating: aiGenerating,
       previewing: aiPreview,
       generate: generateWithAI,
+      stop: stopAiGeneration,
       accept: acceptAiDraft,
       discard: discardAiDraft,
     },

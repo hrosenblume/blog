@@ -40,6 +40,7 @@ export interface AIState {
   generating: boolean
   previewing: AIPreview | null
   generate: (prompt: string, length: string, modelId?: string) => Promise<void>
+  stop: () => void
   accept: () => void
   discard: () => void
 }

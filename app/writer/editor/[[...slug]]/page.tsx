@@ -13,6 +13,7 @@ import { PostMetadataFooter } from '@/components/editor/PostMetadataFooter'
 import { RevisionPreviewBanner } from '@/components/editor/RevisionPreviewBanner'
 import { GenerateModal } from '@/components/editor/GenerateModal'
 import { AIPreviewBanner } from '@/components/editor/AIPreviewBanner'
+import { ChatPanel } from '@/components/ChatPanel'
 import { ArticleLayout } from '@/components/ArticleLayout'
 import { ArticleHeader } from '@/components/ArticleHeader'
 import { CheckIcon } from '@/components/Icons'
@@ -59,6 +60,8 @@ export default function Editor() {
 
   // Generate modal state
   const [showGenerateModal, setShowGenerateModal] = useState(false)
+  // Chat panel state
+  const [showChatPanel, setShowChatPanel] = useState(false)
 
   // Keyboard shortcuts
   useKeyboard([
@@ -76,6 +79,11 @@ export default function Editor() {
     {
       ...SHORTCUTS.ESCAPE_BACK,
       handler: () => {
+        // If generating, stop the generation
+        if (ai.generating) {
+          ai.stop()
+          return
+        }
         // If in AI preview mode, discard first
         if (ai.previewing) {
           ai.discard()
@@ -113,6 +121,7 @@ export default function Editor() {
           onCancel: revisions.cancel,
           onRestore: revisions.restore,
         } : undefined}
+        onOpenChat={() => setShowChatPanel(true)}
       />
 
       {/* Preview info line when viewing a revision */}
@@ -142,6 +151,7 @@ export default function Editor() {
           revisions={revisions}
           onOpenGenerate={() => setShowGenerateModal(true)}
           aiGenerating={ai.generating}
+          onOpenChat={() => setShowChatPanel(true)}
         />
       )}
 
@@ -197,7 +207,9 @@ export default function Editor() {
 
       <footer className="fixed bottom-0 left-0 right-0 border-t border-border px-4 sm:px-6 py-3 bg-background touch-none">
         <div className="flex items-center justify-end text-sm text-muted-foreground">
-          {ai.previewing ? (
+          {ai.generating ? (
+            <span>Press Esc to stop generating</span>
+          ) : ai.previewing ? (
             <span>Press Esc to discard AI draft</span>
           ) : revisions.previewing ? (
             <span>Press Esc to cancel</span>
@@ -215,6 +227,13 @@ export default function Editor() {
         onOpenChange={setShowGenerateModal}
         onGenerate={ai.generate}
         generating={ai.generating}
+        hasExistingContent={!!(post.title.trim() || post.markdown.trim())}
+      />
+
+      {/* Chat Panel */}
+      <ChatPanel
+        open={showChatPanel}
+        onClose={() => setShowChatPanel(false)}
       />
     </div>
   )

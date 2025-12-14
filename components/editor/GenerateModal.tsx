@@ -26,6 +26,7 @@ interface GenerateModalProps {
   onOpenChange: (open: boolean) => void
   onGenerate: (prompt: string, length: string, modelId?: string) => Promise<void>
   generating: boolean
+  hasExistingContent?: boolean
 }
 
 export function GenerateModal({
@@ -33,6 +34,7 @@ export function GenerateModal({
   onOpenChange,
   onGenerate,
   generating,
+  hasExistingContent = false,
 }: GenerateModalProps) {
   const [prompt, setPrompt] = useState('')
   const [length, setLength] = useState<'short' | 'medium' | 'long'>('medium')
@@ -56,11 +58,21 @@ export function GenerateModal({
     }
   }, [open, modelId])
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!prompt.trim()) return
-    await onGenerate(prompt.trim(), length, modelId || undefined)
+    
+    // Warn if there's existing content that will be replaced
+    if (hasExistingContent) {
+      const confirmed = window.confirm(
+        'This will replace your current content. The original will be saved so you can restore it if needed.\n\nContinue?'
+      )
+      if (!confirmed) return
+    }
+    
+    // Close modal immediately, start generation in background
     setPrompt('')
     onOpenChange(false)
+    onGenerate(prompt.trim(), length, modelId || undefined)
   }
 
   // Handle Esc key to close modal without triggering editor shortcuts
@@ -88,7 +100,8 @@ export function GenerateModal({
           <DialogTitle>Generate with AI</DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto space-y-4 py-4">
+        {/* -mx-1 px-1 creates space for focus rings without clipping */}
+        <div className="flex-1 overflow-y-auto space-y-4 py-4 -mx-1 px-1">
           <div className="space-y-2">
             <Label htmlFor="model">Model</Label>
             <Select value={modelId} onValueChange={setModelId}>
@@ -120,24 +133,16 @@ export function GenerateModal({
 
           <div className="space-y-2">
             <Label>Length</Label>
-            <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
-              {(['short', 'medium', 'long'] as const).map(len => (
-                <label key={len} className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="length"
-                    value={len}
-                    checked={length === len}
-                    onChange={() => setLength(len)}
-                    disabled={generating}
-                    className="accent-primary"
-                  />
-                  <span className="text-sm">
-                    {len === 'short' ? 'Short (~500 words)' : len === 'medium' ? 'Medium (~1000 words)' : 'Long (~2000 words)'}
-                  </span>
-                </label>
-              ))}
-            </div>
+            <Select value={length} onValueChange={(val) => setLength(val as 'short' | 'medium' | 'long')}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="short">Short (~500 words)</SelectItem>
+                <SelectItem value="medium">Medium (~1000 words)</SelectItem>
+                <SelectItem value="long">Long (~2000 words)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -147,7 +152,7 @@ export function GenerateModal({
           </Button>
           <Button onClick={handleSubmit} disabled={!prompt.trim() || generating}>
             {generating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {generating ? 'Generating...' : 'Generate ✨'}
+            {generating ? 'Generating...' : 'Generate'}
           </Button>
         </DialogFooter>
       </DialogContent>

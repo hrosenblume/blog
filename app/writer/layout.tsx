@@ -2,10 +2,11 @@
 
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter, usePathname } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { PageLoader } from '@/components/PageLoader'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import { ChatPanel } from '@/components/ChatPanel'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ExternalLinkIcon } from '@/components/Icons'
+import { ExternalLinkIcon, ChatIcon } from '@/components/Icons'
 import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
 
 export default function WriterLayout({
@@ -24,6 +25,7 @@ export default function WriterLayout({
   const { data: session, status } = useSession()
   const router = useRouter()
   const pathname = usePathname()
+  const [chatOpen, setChatOpen] = useState(false)
   
   const isEditor = pathname?.startsWith('/writer/editor')
 
@@ -65,6 +67,15 @@ export default function WriterLayout({
             </Link>
             
             <div className="flex items-center gap-2">
+              <button
+                onClick={() => setChatOpen(!chatOpen)}
+                className={`w-9 h-9 rounded-md border border-border hover:bg-accent text-muted-foreground flex items-center justify-center ${chatOpen ? 'bg-accent' : ''}`}
+                aria-label="Chat with AI"
+                title="Chat with AI"
+              >
+                <ChatIcon />
+              </button>
+              
               <a
                 href="/"
                 target="_blank"
@@ -122,6 +133,9 @@ export default function WriterLayout({
       <main className={isEditor ? '' : 'pt-14'}>
         {children}
       </main>
+      
+      {/* Chat Panel */}
+      <ChatPanel open={chatOpen} onClose={() => setChatOpen(false)} />
     </div>
   )
 }
