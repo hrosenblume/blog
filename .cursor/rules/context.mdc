@@ -80,8 +80,8 @@ blog/
 │   └── Future.md               # Long-term ideas
 ├── .cursor/rules/              # Cursor AI rules
 ├── .github/workflows/          # GitHub Actions CI/CD
-├── ecosystem.config.js         # PM2 configuration
-└── start.sh                    # PM2 wrapper (loads .env.local)
+├── ecosystem.config.js         # PM2 cluster mode configuration
+└── server.js                   # Custom server with ready signal for zero-downtime deploys
 ```
 
 ## Database Schema
@@ -300,16 +300,18 @@ This approach avoids Edge runtime limitations with Prisma.
   - Production: `defaultdb`
   - Staging: `staging`
 - **Reverse Proxy**: Nginx (port 80 → 3000)
-- **Process Manager**: PM2 with `start.sh` wrapper
+- **Process Manager**: PM2 cluster mode (2 instances) with zero-downtime deploys
 - **SSL**: Cloudflare (Flexible mode)
 - **Staging Protection**: Cloudflare Tunnel + Access (Google OAuth)
 
-### PM2 Environment Loading
-PM2 doesn't load `.env.local` directly. The `start.sh` wrapper script:
-1. Sources `.env.local` (loads env vars)
-2. Runs `npm start`
+### PM2 Zero-Downtime Deploys
+Uses `server.js` with PM2 cluster mode for zero-downtime deployments:
+1. Loads `.env.local` via dotenv
+2. Starts Next.js custom server
+3. Sends `process.send('ready')` when ready to accept traffic
+4. PM2 does rolling restarts (one instance at a time)
 
-This is required because Prisma needs `DATABASE_URL_PROD` at runtime.
+Deploy script auto-detects first deploy vs subsequent deploys.
 
 ### GitHub Actions
 Push to `main` → deploys production

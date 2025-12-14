@@ -38,7 +38,6 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
             AFTER_LOCK=$(md5sum package-lock.json)
-            chmod +x start.sh
             if [ "$BEFORE_LOCK" != "$AFTER_LOCK" ]; then
               echo "package-lock.json changed, running npm ci..."
               npm ci
@@ -49,7 +48,16 @@ jobs:
             npx prisma generate --schema=prisma/schema.postgresql.prisma
             npx prisma db push --schema=prisma/schema.postgresql.prisma --skip-generate --accept-data-loss
             npm run build:prod
-            pm2 restart blog
+            INSTANCES=$(pm2 jlist 2>/dev/null | grep -o '"name":"blog"' | wc -l)
+            if [ "$INSTANCES" -ge 2 ]; then
+              echo "Cluster mode running, doing zero-downtime reload..."
+              pm2 reload blog
+            else
+              echo "First deploy or not in cluster mode, restarting with new config..."
+              pm2 delete blog 2>/dev/null || true
+              pm2 start ecosystem.config.js --only blog
+              pm2 save
+            fi
 
       - name: Deploy to Staging
         if: github.ref == 'refs/heads/dev'
@@ -65,7 +73,6 @@ jobs:
             git fetch origin dev
             git reset --hard origin/dev
             AFTER_LOCK=$(md5sum package-lock.json)
-            chmod +x start.sh
             if [ "$BEFORE_LOCK" != "$AFTER_LOCK" ]; then
               echo "package-lock.json changed, running npm ci..."
               npm ci
@@ -76,4 +83,13 @@ jobs:
             npx prisma generate --schema=prisma/schema.postgresql.prisma
             npx prisma db push --schema=prisma/schema.postgresql.prisma --skip-generate --accept-data-loss
             npm run build:prod
-            pm2 restart blog-staging
+            INSTANCES=$(pm2 jlist 2>/dev/null | grep -o '"name":"blog-staging"' | wc -l)
+            if [ "$INSTANCES" -ge 2 ]; then
+              echo "Cluster mode running, doing zero-downtime reload..."
+              pm2 reload blog-staging
+            else
+              echo "First deploy or not in cluster mode, restarting with new config..."
+              pm2 delete blog-staging 2>/dev/null || true
+              pm2 start ecosystem.config.js --only blog-staging
+              pm2 save
+            fi

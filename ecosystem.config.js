@@ -1,12 +1,12 @@
 /**
  * PM2 Ecosystem Configuration
  * 
- * Uses a wrapper script (start.sh) to load environment variables from .env.local
- * before starting the Next.js application.
+ * Uses server.js wrapper with cluster mode for zero-downtime deployments.
+ * The server.js file loads .env.local via dotenv and signals PM2 when ready.
  * 
  * Usage:
  *   pm2 start ecosystem.config.js --only blog   # Start production
- *   pm2 restart blog                            # Restart
+ *   pm2 reload blog                             # Zero-downtime restart
  *   pm2 logs blog                               # View logs
  *   pm2 save                                    # Save process list
  */
@@ -16,8 +16,12 @@ module.exports = {
     {
       name: 'blog',
       cwd: '/var/www/blog',
-      script: './start.sh',
-      interpreter: '/bin/bash',
+      script: './server.js',
+      instances: 2,
+      exec_mode: 'cluster',
+      wait_ready: true,
+      listen_timeout: 10000,
+      kill_timeout: 5000,
       env: {
         PORT: 3000,
         NODE_ENV: 'production'
@@ -34,8 +38,12 @@ module.exports = {
     {
       name: 'blog-staging',
       cwd: '/var/www/blog-staging',
-      script: './start.sh',
-      interpreter: '/bin/bash',
+      script: './server.js',
+      instances: 2,
+      exec_mode: 'cluster',
+      wait_ready: true,
+      listen_timeout: 10000,
+      kill_timeout: 5000,
       env: {
         PORT: 3001,
         NODE_ENV: 'production'
