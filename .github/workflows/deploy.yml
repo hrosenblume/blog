@@ -48,12 +48,14 @@ jobs:
             npx prisma generate --schema=prisma/schema.postgresql.prisma
             npx prisma db push --schema=prisma/schema.postgresql.prisma --skip-generate --accept-data-loss
             npm run build:prod
-            INSTANCES=$(pm2 jlist 2>/dev/null | grep -o '"name":"blog"' | wc -l)
-            if [ "$INSTANCES" -ge 2 ]; then
-              echo "Cluster mode running, doing zero-downtime reload..."
+            # Check for cluster mode with 2+ instances
+            PM2_INFO=$(pm2 jlist 2>/dev/null || echo "[]")
+            CLUSTER_INSTANCES=$(echo "$PM2_INFO" | grep -o '"name":"blog"[^}]*"exec_mode":"cluster"' | wc -l)
+            if [ "$CLUSTER_INSTANCES" -ge 2 ]; then
+              echo "Cluster mode running ($CLUSTER_INSTANCES instances), doing zero-downtime reload..."
               pm2 reload blog
             else
-              echo "First deploy or not in cluster mode, restarting with new config..."
+              echo "Not in cluster mode or wrong instance count, starting fresh..."
               pm2 delete blog 2>/dev/null || true
               pm2 start ecosystem.config.js --only blog
               pm2 save
@@ -83,12 +85,14 @@ jobs:
             npx prisma generate --schema=prisma/schema.postgresql.prisma
             npx prisma db push --schema=prisma/schema.postgresql.prisma --skip-generate --accept-data-loss
             npm run build:prod
-            INSTANCES=$(pm2 jlist 2>/dev/null | grep -o '"name":"blog-staging"' | wc -l)
-            if [ "$INSTANCES" -ge 2 ]; then
-              echo "Cluster mode running, doing zero-downtime reload..."
+            # Check for cluster mode with 2+ instances
+            PM2_INFO=$(pm2 jlist 2>/dev/null || echo "[]")
+            CLUSTER_INSTANCES=$(echo "$PM2_INFO" | grep -o '"name":"blog-staging"[^}]*"exec_mode":"cluster"' | wc -l)
+            if [ "$CLUSTER_INSTANCES" -ge 2 ]; then
+              echo "Cluster mode running ($CLUSTER_INSTANCES instances), doing zero-downtime reload..."
               pm2 reload blog-staging
             else
-              echo "First deploy or not in cluster mode, restarting with new config..."
+              echo "Not in cluster mode or wrong instance count, starting fresh..."
               pm2 delete blog-staging 2>/dev/null || true
               pm2 start ecosystem.config.js --only blog-staging
               pm2 save
