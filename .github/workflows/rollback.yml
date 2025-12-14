@@ -26,17 +26,59 @@ jobs:
           host: ${{ secrets.DO_HOST }}
           username: ${{ secrets.DO_USER }}
           key: ${{ secrets.DO_SSH_KEY }}
+          command_timeout: 10m
           script: |
+            set -e  # Exit immediately on any error
             cd /var/www/blog
-            echo "Rolling back ${{ github.event.inputs.commits_back }} commit(s)..."
+            
+            echo "=== Current state ==="
             echo "Current HEAD: $(git rev-parse --short HEAD)"
+            
+            echo "=== Rolling back ${{ github.event.inputs.commits_back }} commit(s) ==="
+            BEFORE_LOCK=$(md5sum package-lock.json 2>/dev/null || echo "none")
             git reset --hard HEAD~${{ github.event.inputs.commits_back }}
+            AFTER_LOCK=$(md5sum package-lock.json)
             echo "New HEAD: $(git rev-parse --short HEAD)"
+            
+            echo "=== Checking dependencies ==="
+            if [ "$BEFORE_LOCK" != "$AFTER_LOCK" ]; then
+              echo "package-lock.json changed, running npm ci..."
+              npm ci
+            elif [ ! -d "node_modules" ] || [ ! -d "node_modules/.prisma" ]; then
+              echo "node_modules missing or incomplete, running npm ci..."
+              npm ci
+            else
+              echo "Dependencies unchanged and present, skipping npm ci"
+            fi
+            
+            echo "=== Loading environment ==="
             export $(grep -v '^#' .env.local | xargs)
+            
+            echo "=== Generating Prisma client ==="
             npx prisma generate --schema=prisma/schema.postgresql.prisma
+            
+            echo "=== Building Next.js ==="
             npm run build:prod
+            
+            # Verify build succeeded
+            if [ ! -f ".next/prerender-manifest.json" ]; then
+              echo "ERROR: Build failed - .next/prerender-manifest.json not found"
+              exit 1
+            fi
+            echo "=== Build verified ==="
+            
+            echo "=== Restarting PM2 ==="
             pm2 reload blog
-            echo "Rollback complete!"
+            
+            # Health check
+            sleep 3
+            if curl -sf http://localhost:3000 > /dev/null; then
+              echo "=== Health check passed ==="
+            else
+              echo "WARNING: Health check failed, but PM2 is running"
+            fi
+            
+            echo "=== Rollback complete ==="
 
       - name: Rollback Staging
         if: ${{ github.event.inputs.environment == 'staging' }}
@@ -45,14 +87,56 @@ jobs:
           host: ${{ secrets.DO_HOST }}
           username: ${{ secrets.DO_USER }}
           key: ${{ secrets.DO_SSH_KEY }}
+          command_timeout: 10m
           script: |
+            set -e  # Exit immediately on any error
             cd /var/www/blog-staging
-            echo "Rolling back ${{ github.event.inputs.commits_back }} commit(s)..."
+            
+            echo "=== Current state ==="
             echo "Current HEAD: $(git rev-parse --short HEAD)"
+            
+            echo "=== Rolling back ${{ github.event.inputs.commits_back }} commit(s) ==="
+            BEFORE_LOCK=$(md5sum package-lock.json 2>/dev/null || echo "none")
             git reset --hard HEAD~${{ github.event.inputs.commits_back }}
+            AFTER_LOCK=$(md5sum package-lock.json)
             echo "New HEAD: $(git rev-parse --short HEAD)"
+            
+            echo "=== Checking dependencies ==="
+            if [ "$BEFORE_LOCK" != "$AFTER_LOCK" ]; then
+              echo "package-lock.json changed, running npm ci..."
+              npm ci
+            elif [ ! -d "node_modules" ] || [ ! -d "node_modules/.prisma" ]; then
+              echo "node_modules missing or incomplete, running npm ci..."
+              npm ci
+            else
+              echo "Dependencies unchanged and present, skipping npm ci"
+            fi
+            
+            echo "=== Loading environment ==="
             export $(grep -v '^#' .env.local | xargs)
+            
+            echo "=== Generating Prisma client ==="
             npx prisma generate --schema=prisma/schema.postgresql.prisma
+            
+            echo "=== Building Next.js ==="
             npm run build:prod
+            
+            # Verify build succeeded
+            if [ ! -f ".next/prerender-manifest.json" ]; then
+              echo "ERROR: Build failed - .next/prerender-manifest.json not found"
+              exit 1
+            fi
+            echo "=== Build verified ==="
+            
+            echo "=== Restarting PM2 ==="
             pm2 reload blog-staging
-            echo "Rollback complete!"
+            
+            # Health check
+            sleep 3
+            if curl -sf http://localhost:3001 > /dev/null; then
+              echo "=== Health check passed ==="
+            else
+              echo "WARNING: Health check failed, but PM2 is running"
+            fi
+            
+            echo "=== Rollback complete ==="

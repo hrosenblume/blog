@@ -20,11 +20,22 @@ app.prepare().then(() => {
     }
   });
 
-  process.on('SIGINT', () => {
-    console.log('Received SIGINT, shutting down gracefully...');
+  // Graceful shutdown handler for both signals
+  // PM2 sends SIGTERM for graceful shutdown, SIGINT for interrupt
+  const gracefulShutdown = (signal) => {
+    console.log(`Received ${signal}, shutting down gracefully...`);
     server.close(() => {
       console.log('Server closed');
       process.exit(0);
     });
-  });
+    
+    // Force exit after 10 seconds if graceful shutdown hangs
+    setTimeout(() => {
+      console.error('Forcefully shutting down after timeout');
+      process.exit(1);
+    }, 10000);
+  };
+
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 });

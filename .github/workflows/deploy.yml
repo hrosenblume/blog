@@ -56,13 +56,19 @@ jobs:
             fi
             
             echo "=== Loading environment ==="
+            if [ ! -f ".env.local" ]; then
+              echo "ERROR: .env.local not found"
+              exit 1
+            fi
             export $(grep -v '^#' .env.local | xargs)
             
             echo "=== Generating Prisma client ==="
             npx prisma generate --schema=prisma/schema.postgresql.prisma
             
             echo "=== Pushing database schema ==="
-            npx prisma db push --schema=prisma/schema.postgresql.prisma --skip-generate --accept-data-loss
+            # Note: Remove --accept-data-loss when schema is stable
+            # For now, using it to allow schema changes without migration files
+            npx prisma db push --schema=prisma/schema.postgresql.prisma --skip-generate
             
             echo "=== Building Next.js ==="
             npm run build:prod
@@ -76,15 +82,34 @@ jobs:
             
             echo "=== Restarting PM2 ==="
             PM2_INFO=$(pm2 jlist 2>/dev/null || echo "[]")
-            CLUSTER_INSTANCES=$(echo "$PM2_INFO" | grep -o '"name":"blog"[^}]*"exec_mode":"cluster"' | wc -l)
-            if [ "$CLUSTER_INSTANCES" -ge 2 ]; then
-              echo "Cluster mode running ($CLUSTER_INSTANCES instances), doing zero-downtime reload..."
+            if echo "$PM2_INFO" | grep -q '"name":"blog"'; then
+              echo "PM2 process exists, doing reload..."
               pm2 reload blog
             else
-              echo "Not in cluster mode, starting fresh..."
-              pm2 delete blog 2>/dev/null || true
+              echo "PM2 process not found, starting fresh..."
               pm2 start ecosystem.config.js --only blog
               pm2 save
+            fi
+            
+            # Health check - wait for server to be ready
+            echo "=== Health check ==="
+            sleep 3
+            HEALTH_RETRIES=5
+            HEALTH_OK=false
+            for i in $(seq 1 $HEALTH_RETRIES); do
+              if curl -sf http://localhost:3000 > /dev/null; then
+                HEALTH_OK=true
+                break
+              fi
+              echo "Health check attempt $i/$HEALTH_RETRIES failed, waiting..."
+              sleep 2
+            done
+            
+            if [ "$HEALTH_OK" = true ]; then
+              echo "=== Health check passed ==="
+            else
+              echo "WARNING: Health check failed after $HEALTH_RETRIES attempts"
+              echo "Check pm2 logs blog for details"
             fi
             
             echo "=== Deploy complete ==="
@@ -121,13 +146,19 @@ jobs:
             fi
             
             echo "=== Loading environment ==="
+            if [ ! -f ".env.local" ]; then
+              echo "ERROR: .env.local not found"
+              exit 1
+            fi
             export $(grep -v '^#' .env.local | xargs)
             
             echo "=== Generating Prisma client ==="
             npx prisma generate --schema=prisma/schema.postgresql.prisma
             
             echo "=== Pushing database schema ==="
-            npx prisma db push --schema=prisma/schema.postgresql.prisma --skip-generate --accept-data-loss
+            # Note: Remove --accept-data-loss when schema is stable
+            # For now, using it to allow schema changes without migration files
+            npx prisma db push --schema=prisma/schema.postgresql.prisma --skip-generate
             
             echo "=== Building Next.js ==="
             npm run build:prod
@@ -141,15 +172,34 @@ jobs:
             
             echo "=== Restarting PM2 ==="
             PM2_INFO=$(pm2 jlist 2>/dev/null || echo "[]")
-            CLUSTER_INSTANCES=$(echo "$PM2_INFO" | grep -o '"name":"blog-staging"[^}]*"exec_mode":"cluster"' | wc -l)
-            if [ "$CLUSTER_INSTANCES" -ge 2 ]; then
-              echo "Cluster mode running ($CLUSTER_INSTANCES instances), doing zero-downtime reload..."
+            if echo "$PM2_INFO" | grep -q '"name":"blog-staging"'; then
+              echo "PM2 process exists, doing reload..."
               pm2 reload blog-staging
             else
-              echo "Not in cluster mode, starting fresh..."
-              pm2 delete blog-staging 2>/dev/null || true
+              echo "PM2 process not found, starting fresh..."
               pm2 start ecosystem.config.js --only blog-staging
               pm2 save
+            fi
+            
+            # Health check - wait for server to be ready
+            echo "=== Health check ==="
+            sleep 3
+            HEALTH_RETRIES=5
+            HEALTH_OK=false
+            for i in $(seq 1 $HEALTH_RETRIES); do
+              if curl -sf http://localhost:3001 > /dev/null; then
+                HEALTH_OK=true
+                break
+              fi
+              echo "Health check attempt $i/$HEALTH_RETRIES failed, waiting..."
+              sleep 2
+            done
+            
+            if [ "$HEALTH_OK" = true ]; then
+              echo "=== Health check passed ==="
+            else
+              echo "WARNING: Health check failed after $HEALTH_RETRIES attempts"
+              echo "Check pm2 logs blog-staging for details"
             fi
             
             echo "=== Deploy complete ==="
