@@ -124,6 +124,7 @@ export function PostMetadataFooter({
         seoKeywords={seoKeywords}
         noIndex={noIndex}
         ogImage={ogImage}
+        polyhedraShape={polyhedraShape}
         postTitle={title}
         postSubtitle={subtitle}
         slug={slug}

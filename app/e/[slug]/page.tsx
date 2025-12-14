@@ -74,10 +74,11 @@ export async function generateMetadata({ params }: Props) {
   const siteSettings = await getSiteSettings()
   const seo = getPostSeoValues(post)
   
-  // OG image fallback chain: post custom -> site default -> polyhedra thumbnail
+  // OG image fallback chain: post custom -> polyhedra -> site default
+  // Polyhedra is the natural default for essays, site default is last resort
   const shapeName = post.polyhedraShape || OG_STYLE.defaultShape
-  const fallbackImage = `${baseUrl}/polyhedra/thumbnails/${shapeName}.png`
-  const imageUrl = getEffectiveOgImage(post.ogImage, siteSettings.defaultOgImage, fallbackImage)
+  const polyhedraImage = `${baseUrl}/polyhedra/thumbnails/${shapeName}.png`
+  const imageUrl = post.ogImage || polyhedraImage || siteSettings.defaultOgImage
   
   return {
     title: seo.title,
@@ -123,10 +124,10 @@ export default async function EssayPage({ params }: Props) {
   const siteSettings = await getSiteSettings()
   const seo = getPostSeoValues(post)
   
-  // OG image fallback chain for JSON-LD
+  // OG image fallback chain for JSON-LD: post custom -> polyhedra -> site default
   const shapeName = post.polyhedraShape || OG_STYLE.defaultShape
-  const fallbackImage = `${baseUrl}/polyhedra/thumbnails/${shapeName}.png`
-  const imageUrl = getEffectiveOgImage(post.ogImage, siteSettings.defaultOgImage, fallbackImage)
+  const polyhedraImage = `${baseUrl}/polyhedra/thumbnails/${shapeName}.png`
+  const imageUrl = post.ogImage || polyhedraImage || siteSettings.defaultOgImage
 
   return (
     <div className="min-h-screen">

@@ -14,6 +14,7 @@ interface SeoSectionProps {
   seoKeywords: string
   noIndex: boolean
   ogImage: string
+  polyhedraShape: string
   postTitle: string
   postSubtitle: string
   slug: string
@@ -31,6 +32,7 @@ export function SeoSection({
   seoKeywords,
   noIndex,
   ogImage,
+  polyhedraShape,
   postTitle,
   postSubtitle,
   slug,
@@ -46,6 +48,9 @@ export function SeoSection({
   // Calculate effective values (what will actually be shown in search)
   const effectiveTitle = seoTitle || postTitle || 'Untitled'
   const effectiveDescription = seoDescription || postSubtitle || ''
+  
+  // Polyhedra thumbnail is the default social image for essays
+  const polyhedraImageUrl = `/polyhedra/thumbnails/${polyhedraShape}.png`
 
   return (
     <div className="border-t border-border pt-4">
@@ -169,7 +174,7 @@ export function SeoSection({
           <SocialPreviews
             title={effectiveTitle}
             description={effectiveDescription}
-            imageUrl={ogImage || null}
+            imageUrl={ogImage || polyhedraImageUrl}
             url={`yourdomain.com/e/${slug || 'post-slug'}`}
           />
         </div>
