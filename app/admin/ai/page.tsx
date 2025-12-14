@@ -17,6 +17,7 @@ import type { AIModelOption } from '@/lib/ai/models'
 
 export default function AISettingsPage() {
   const [rules, setRules] = useState('')
+  const [chatRules, setChatRules] = useState('')
   const [defaultModel, setDefaultModel] = useState('claude-sonnet')
   const [models, setModels] = useState<AIModelOption[]>([])
   const [loading, setLoading] = useState(true)
@@ -29,6 +30,7 @@ export default function AISettingsPage() {
       .then(res => res.json())
       .then(data => {
         setRules(data.rules || '')
+        setChatRules(data.chatRules || '')
         setDefaultModel(data.defaultModel || 'claude-sonnet')
         setModels(data.availableModels || [])
       })
@@ -43,7 +45,7 @@ export default function AISettingsPage() {
       await fetch('/api/ai/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rules, defaultModel }),
+        body: JSON.stringify({ rules, chatRules, defaultModel }),
       })
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
@@ -69,9 +71,9 @@ export default function AISettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Writing Rules</CardTitle>
+          <CardTitle>AI Settings</CardTitle>
           <CardDescription>
-            Configure your AI writing assistant. These rules override everything and are injected into every generation.
+            Configure your AI writing assistant. Writing rules apply to essay generation; chat rules control how the assistant behaves during brainstorming.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -92,9 +94,9 @@ export default function AISettingsPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="rules">Custom Writing Rules</Label>
+            <Label htmlFor="rules">Essay Writing Rules</Label>
             <p className="text-sm text-muted-foreground">
-              Be specific. These are injected at the start of every generation prompt.
+              Style and format rules for generated essays. Applied when generating or rewriting content.
             </p>
             <Textarea
               id="rules"
@@ -106,7 +108,26 @@ export default function AISettingsPage() {
 - Short paragraphs (3-4 sentences max)
 - Use em-dashes sparingly
 - End with forward motion, not tidy conclusions`}
-              className="min-h-[250px] font-mono text-sm resize-none"
+              className="min-h-[180px] font-mono text-sm resize-none"
+              disabled={saving}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="chatRules">Chat Behavior Rules</Label>
+            <p className="text-sm text-muted-foreground">
+              How the assistant should behave during brainstorming conversations. Controls personality and interaction style.
+            </p>
+            <Textarea
+              id="chatRules"
+              value={chatRules}
+              onChange={e => setChatRules(e.target.value)}
+              placeholder={`- Be direct and concise
+- Push back on vague ideas
+- Ask clarifying questions before drafting
+- Challenge my assumptions
+- Don't be sycophantic`}
+              className="min-h-[140px] font-mono text-sm resize-none"
               disabled={saving}
             />
           </div>

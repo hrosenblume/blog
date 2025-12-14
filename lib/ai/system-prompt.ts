@@ -2,6 +2,7 @@ import { prisma } from '@/lib/db'
 
 interface StyleContext {
   customRules: string
+  chatRules: string
   styleExamples: string
 }
 
@@ -13,6 +14,7 @@ export async function getStyleContext(): Promise<StyleContext> {
   // Fetch AI settings for custom rules
   const settings = await prisma.aISettings.findUnique({ where: { id: 'default' } })
   const customRules = settings?.rules || ''
+  const chatRules = settings?.chatRules || ''
 
   // Fetch all published posts for style context
   const publishedPosts = await prisma.post.findMany({
@@ -29,7 +31,7 @@ export async function getStyleContext(): Promise<StyleContext> {
     })
     .join('\n\n---\n\n')
 
-  return { customRules, styleExamples }
+  return { customRules, chatRules, styleExamples }
 }
 
 /**
@@ -53,9 +55,15 @@ Output ONLY markdown. No preamble, no "Here is...", no explanations. Just the es
  * Build a system prompt for chat/brainstorming.
  */
 export function buildChatPrompt(context: StyleContext): string {
-  return `You are a helpful writing assistant that helps brainstorm and develop essay ideas. You write in the author's voice and style.
+  // Use chat-specific rules if provided, otherwise fall back to writing rules
+  const behaviorRules = context.chatRules || 'Be direct, insightful, and push back on vague ideas. Ask clarifying questions when needed.'
+  
+  return `You are a helpful writing assistant that helps brainstorm and develop essay ideas.
 
-## Writing Rules (Follow these exactly)
+## Chat Behavior (How to interact)
+${behaviorRules}
+
+## Writing Style (When drafting content, follow these)
 ${context.customRules || 'No specific rules provided. Match the style of the examples.'}
 
 ## Style Reference (The author writes like this)
@@ -63,7 +71,7 @@ ${context.styleExamples || 'No published essays available. Write in a clear, per
 
 ---
 
-You are having a conversation to help develop essay ideas. Be helpful, insightful, and match the author's voice. When suggesting ideas or drafting content, follow the writing rules and style above.`
+You are having a conversation to help develop essay ideas. Follow the chat behavior rules above. When suggesting ideas or drafting content, match the author's writing style.`
 }
 
 /**

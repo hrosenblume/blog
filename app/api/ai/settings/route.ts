@@ -12,12 +12,14 @@ export const GET = withSession(async () => {
     create: {
       id: 'default',
       rules: '',
+      chatRules: '',
       defaultModel: 'claude-sonnet',
     },
   })
 
   return NextResponse.json({
     rules: settings.rules,
+    chatRules: settings.chatRules,
     defaultModel: settings.defaultModel,
     availableModels: AI_MODELS.map(m => ({
       id: m.id,
@@ -31,10 +33,14 @@ export const GET = withSession(async () => {
 export const PATCH = withSession(async (request: NextRequest) => {
   const body = await request.json()
   
-  const updateData: { rules?: string; defaultModel?: string } = {}
+  const updateData: { rules?: string; chatRules?: string; defaultModel?: string } = {}
 
   if (typeof body.rules === 'string') {
     updateData.rules = body.rules
+  }
+
+  if (typeof body.chatRules === 'string') {
+    updateData.chatRules = body.chatRules
   }
 
   if (typeof body.defaultModel === 'string') {
@@ -55,12 +61,14 @@ export const PATCH = withSession(async (request: NextRequest) => {
     create: {
       id: 'default',
       rules: updateData.rules || '',
+      chatRules: updateData.chatRules || '',
       defaultModel: updateData.defaultModel || 'claude-sonnet',
     },
   })
 
   return NextResponse.json({
     rules: settings.rules,
+    chatRules: settings.chatRules,
     defaultModel: settings.defaultModel,
   })
 })

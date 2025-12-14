@@ -66,7 +66,8 @@ blog/
 │   ├── ai/                     # AI writing system
 │   │   ├── models.ts           # Model definitions (Claude/GPT)
 │   │   ├── parse.ts            # Parse title/subtitle from generated content
-│   │   └── provider.ts         # Unified SDK abstraction
+│   │   ├── provider.ts         # Unified SDK abstraction
+│   │   └── system-prompt.ts    # Shared prompt builders (generate/chat/rewrite)
 │   ├── polyhedra/              # 3D rendering system
 │   ├── posts.ts                # Post CRUD logic (DRY)
 │   └── storage.ts              # Image upload (local/Spaces)
@@ -149,6 +150,7 @@ model LeadVisit {
 model AISettings {
   id           String   @id @default("default")
   rules        String   @default("")
+  chatRules    String   @default("")
   defaultModel String   @default("claude-sonnet")
   updatedAt    DateTime @updatedAt
 }
@@ -223,12 +225,15 @@ Defined in `lib/keyboard/shortcuts.ts`:
 Generate essays using Anthropic (Claude) or OpenAI (GPT-4):
 - **Models**: `lib/ai/models.ts` — Claude Sonnet 4, Opus 4, GPT-4o, GPT-4o Mini
 - **Provider**: `lib/ai/provider.ts` — Unified interface for both SDKs
-- **Settings**: `AISettings` Prisma model — custom rules and default model (persisted in DB)
+- **System prompts**: `lib/ai/system-prompt.ts` — Shared prompt builders for generate/chat/rewrite
+- **Settings**: `AISettings` Prisma model — essay rules, chat rules, default model (persisted in DB)
+  - `rules` — Style/format rules applied during essay generation and rewriting
+  - `chatRules` — Behavior rules for brainstorming conversations (personality, interaction style)
 - **API**: `/api/ai/generate` (generate content), `/api/ai/settings` (CRUD settings)
 - **Components**:
   - `GenerateModal` — Prompt input, model selection, length picker
   - `AIPreviewBanner` — Accept/discard generated content
-  - `WritingRulesModal` — Edit custom writing rules
+- **Admin UI**: `/admin/ai` — Configure essay writing rules, chat behavior rules, and default model
 - **Flow**: Toolbar button → GenerateModal → API call → Preview banner → Accept/Discard
 - **Context injection**: System prompt includes custom rules first (override everything), then all published posts as style examples
 - **Env vars**: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` (at least one required)
