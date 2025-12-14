@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/db'
 import { HOMEPAGE } from '@/lib/homepage'
 import { SITE_DESCRIPTION, SITE_KEYWORDS } from '@/lib/metadata'
-import type { Post, SiteSettings } from '@prisma/client'
+import type { Post, SiteSettings, PageSettings } from '@prisma/client'
 
 /**
  * Get site settings with defaults (upserts if not exists)
@@ -106,4 +106,38 @@ export function getOrgSocialUrls(settings: SiteSettings): string[] {
  */
 export function getOrgName(settings: SiteSettings): string {
   return settings.orgName || HOMEPAGE.name
+}
+
+/**
+ * Get page-specific SEO settings by page ID
+ * Returns null if no custom settings exist for this page
+ */
+export async function getPageSettings(pageId: string): Promise<PageSettings | null> {
+  return prisma.pageSettings.findUnique({
+    where: { id: pageId },
+  })
+}
+
+/**
+ * Get effective SEO values for a static page with fallbacks
+ */
+export async function getPageSeoValues(
+  pageId: string,
+  defaults: { title: string; description: string }
+): Promise<{
+  title: string
+  description: string
+  keywords: string[]
+  noIndex: boolean
+}> {
+  const pageSettings = await getPageSettings(pageId)
+  
+  return {
+    title: pageSettings?.title || defaults.title,
+    description: pageSettings?.description || defaults.description,
+    keywords: pageSettings?.keywords
+      ? pageSettings.keywords.split(',').map(k => k.trim()).filter(Boolean)
+      : [],
+    noIndex: pageSettings?.noIndex || false,
+  }
 }

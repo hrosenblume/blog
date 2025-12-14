@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Metadata } from 'next'
 import { OrganizationJsonLd } from 'next-seo'
 import { prisma } from '@/lib/db'
 import { SecretNav } from '@/components/SecretNav'
@@ -6,11 +7,49 @@ import { EssayLink } from '@/components/EssayLink'
 import { HomepageFooter } from '@/components/HomepageFooter'
 import { TapLink } from '@/components/TapLink'
 import { HOMEPAGE } from '@/lib/homepage'
-import { getBaseUrl } from '@/lib/metadata'
-import { getSiteSettings, getOrgName, getOrgSocialUrls } from '@/lib/seo'
+import { getBaseUrl, OG_STYLE, OG_SIZE_SQUARE } from '@/lib/metadata'
+import { getSiteSettings, getOrgName, getOrgSocialUrls, getPageSeoValues } from '@/lib/seo'
 
 // Revalidate every hour (homepage content changes rarely)
 export const revalidate = 3600
+
+export async function generateMetadata(): Promise<Metadata> {
+  const baseUrl = await getBaseUrl()
+  const siteSettings = await getSiteSettings()
+  
+  // Get page-specific overrides (falls back to site defaults)
+  const pageSeo = await getPageSeoValues('home', {
+    title: HOMEPAGE.name,
+    description: `Essays and writing by ${HOMEPAGE.name}`,
+  })
+  
+  const imageUrl = `${baseUrl}/polyhedra/thumbnails/${OG_STYLE.defaultShape}.png`
+  
+  return {
+    title: {
+      absolute: pageSeo.title,  // Override template for homepage
+    },
+    description: pageSeo.description,
+    keywords: pageSeo.keywords.length > 0 ? pageSeo.keywords : undefined,
+    robots: pageSeo.noIndex ? { index: false, follow: false } : undefined,
+    openGraph: {
+      title: pageSeo.title,
+      description: pageSeo.description,
+      images: [{
+        url: imageUrl,
+        width: OG_SIZE_SQUARE.width,
+        height: OG_SIZE_SQUARE.height,
+        alt: pageSeo.title,
+      }],
+    },
+    twitter: {
+      card: 'summary',
+      title: pageSeo.title,
+      description: pageSeo.description,
+      images: [imageUrl],
+    },
+  }
+}
 
 async function getPublishedPosts() {
   return prisma.post.findMany({

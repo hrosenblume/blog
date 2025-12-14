@@ -1,14 +1,25 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Loader2 } from 'lucide-react'
+import { Loader2, ChevronDown, ChevronRight } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 
+type PageSeoData = {
+  id: string
+  path: string
+  name: string
+  description: string
+  title: string | null
+  keywords: string | null
+  noIndex: boolean
+}
+
 export default function SEOSettingsPage() {
+  // Site-wide settings
   const [siteTitle, setSiteTitle] = useState('')
   const [siteTitleTemplate, setSiteTitleTemplate] = useState('%s | {name}')
   const [siteDescription, setSiteDescription] = useState('')
@@ -17,23 +28,33 @@ export default function SEOSettingsPage() {
   const [orgName, setOrgName] = useState('')
   const [orgLogo, setOrgLogo] = useState('')
   const [orgSameAs, setOrgSameAs] = useState('[]')
+  
+  // Per-page settings
+  const [pages, setPages] = useState<PageSeoData[]>([])
+  const [expandedPage, setExpandedPage] = useState<string | null>(null)
+  const [pageSaving, setPageSaving] = useState<string | null>(null)
+  const [pageSaved, setPageSaved] = useState<string | null>(null)
+  
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
   // Fetch current settings on mount
   useEffect(() => {
-    fetch('/api/seo/settings')
-      .then(res => res.json())
-      .then(data => {
-        setSiteTitle(data.siteTitle || '')
-        setSiteTitleTemplate(data.siteTitleTemplate || '%s | {name}')
-        setSiteDescription(data.siteDescription || '')
-        setSiteKeywords(data.siteKeywords || '')
-        setTwitterHandle(data.twitterHandle || '')
-        setOrgName(data.orgName || '')
-        setOrgLogo(data.orgLogo || '')
-        setOrgSameAs(data.orgSameAs || '[]')
+    Promise.all([
+      fetch('/api/seo/settings').then(res => res.json()),
+      fetch('/api/seo/pages').then(res => res.json()),
+    ])
+      .then(([siteData, pagesData]) => {
+        setSiteTitle(siteData.siteTitle || '')
+        setSiteTitleTemplate(siteData.siteTitleTemplate || '%s | {name}')
+        setSiteDescription(siteData.siteDescription || '')
+        setSiteKeywords(siteData.siteKeywords || '')
+        setTwitterHandle(siteData.twitterHandle || '')
+        setOrgName(siteData.orgName || '')
+        setOrgLogo(siteData.orgLogo || '')
+        setOrgSameAs(siteData.orgSameAs || '[]')
+        setPages(pagesData)
       })
       .catch(console.error)
       .finally(() => setLoading(false))
@@ -65,6 +86,39 @@ export default function SEOSettingsPage() {
     } finally {
       setSaving(false)
     }
+  }
+
+  const handlePageSave = async (pageId: string) => {
+    const page = pages.find(p => p.id === pageId)
+    if (!page) return
+
+    setPageSaving(pageId)
+    setPageSaved(null)
+    try {
+      await fetch(`/api/seo/pages/${pageId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: page.title,
+          description: page.description,
+          keywords: page.keywords,
+          noIndex: page.noIndex,
+        }),
+      })
+      setPageSaved(pageId)
+      setTimeout(() => setPageSaved(null), 2000)
+    } catch (err) {
+      console.error('Failed to save page settings:', err)
+      alert('Failed to save page settings')
+    } finally {
+      setPageSaving(null)
+    }
+  }
+
+  const updatePage = (pageId: string, field: keyof PageSeoData, value: string | boolean | null) => {
+    setPages(prev => prev.map(p => 
+      p.id === pageId ? { ...p, [field]: value } : p
+    ))
   }
 
   if (loading) {
@@ -218,7 +272,7 @@ export default function SEOSettingsPage() {
       <div className="flex items-center gap-3">
         <Button onClick={handleSave} disabled={saving}>
           {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {saving ? 'Saving...' : 'Save'}
+          {saving ? 'Saving...' : 'Save Site Settings'}
         </Button>
         {saved && (
           <span className="text-sm text-green-600 dark:text-green-400">
@@ -226,6 +280,109 @@ export default function SEOSettingsPage() {
           </span>
         )}
       </div>
+
+      {/* Per-Page SEO Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Page-Specific SEO</CardTitle>
+          <CardDescription>
+            Configure SEO settings for individual static pages. Leave fields empty to use site defaults.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {pages.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No configurable pages found.</p>
+          ) : (
+            pages.map(page => (
+              <div key={page.id} className="border rounded-lg">
+                <button
+                  type="button"
+                  onClick={() => setExpandedPage(expandedPage === page.id ? null : page.id)}
+                  className="w-full flex items-center justify-between p-4 text-left hover:bg-muted/50 transition-colors"
+                >
+                  <div>
+                    <div className="font-medium">{page.name}</div>
+                    <div className="text-sm text-muted-foreground">{page.path}</div>
+                  </div>
+                  {expandedPage === page.id ? (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </button>
+                
+                {expandedPage === page.id && (
+                  <div className="p-4 pt-0 space-y-4 border-t">
+                    <div className="space-y-2">
+                      <Label htmlFor={`${page.id}-title`}>Page Title</Label>
+                      <Input
+                        id={`${page.id}-title`}
+                        value={page.title || ''}
+                        onChange={e => updatePage(page.id, 'title', e.target.value || null)}
+                        placeholder="Leave empty for site default"
+                        disabled={pageSaving === page.id}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor={`${page.id}-description`}>Meta Description</Label>
+                      <Textarea
+                        id={`${page.id}-description`}
+                        value={page.description || ''}
+                        onChange={e => updatePage(page.id, 'description', e.target.value || null)}
+                        placeholder="Leave empty for site default"
+                        className="min-h-[80px] resize-none"
+                        disabled={pageSaving === page.id}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor={`${page.id}-keywords`}>Keywords</Label>
+                      <Input
+                        id={`${page.id}-keywords`}
+                        value={page.keywords || ''}
+                        onChange={e => updatePage(page.id, 'keywords', e.target.value || null)}
+                        placeholder="Comma-separated keywords"
+                        disabled={pageSaving === page.id}
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id={`${page.id}-noindex`}
+                        checked={page.noIndex}
+                        onChange={e => updatePage(page.id, 'noIndex', e.target.checked)}
+                        disabled={pageSaving === page.id}
+                        className="h-4 w-4"
+                      />
+                      <Label htmlFor={`${page.id}-noindex`} className="font-normal">
+                        Hide from search engines (noindex)
+                      </Label>
+                    </div>
+
+                    <div className="flex items-center gap-3 pt-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handlePageSave(page.id)}
+                        disabled={pageSaving === page.id}
+                      >
+                        {pageSaving === page.id && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
+                        {pageSaving === page.id ? 'Saving...' : 'Save'}
+                      </Button>
+                      {pageSaved === page.id && (
+                        <span className="text-sm text-green-600 dark:text-green-400">
+                          Saved!
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

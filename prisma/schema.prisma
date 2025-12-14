@@ -104,3 +104,13 @@ model SiteSettings {
   orgSameAs         String   @default("[]")
   updatedAt         DateTime @updatedAt
 }
+
+model PageSettings {
+  id          String   @id           // e.g., "home", "essays"
+  path        String   @unique       // e.g., "/", "/essays"
+  title       String?                // Custom page title
+  description String?                // Custom meta description
+  keywords    String?                // Comma-separated keywords
+  noIndex     Boolean  @default(false)
+  updatedAt   DateTime @updatedAt
+}

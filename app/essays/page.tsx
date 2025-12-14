@@ -8,28 +8,39 @@ import { PageContainer } from '@/components/PageContainer'
 import { HOMEPAGE } from '@/lib/homepage'
 import { ESSAYS_PAGE } from '@/lib/essays'
 import { getBaseUrl, OG_STYLE, OG_SIZE_SQUARE } from '@/lib/metadata'
+import { getPageSeoValues } from '@/lib/seo'
 
 export async function generateMetadata(): Promise<Metadata> {
   const baseUrl = await getBaseUrl()
   const imageUrl = `${baseUrl}/polyhedra/thumbnails/${OG_STYLE.defaultShape}.png`
   
+  // Get page-specific overrides (falls back to defaults)
+  const pageSeo = await getPageSeoValues('essays', {
+    title: ESSAYS_PAGE.title,
+    description: `${ESSAYS_PAGE.descriptionPrefix}${HOMEPAGE.name}`,
+  })
+  
   return {
     title: {
-      absolute: ESSAYS_PAGE.title,  // Override template, just show "Essays"
+      absolute: pageSeo.title,  // Override template
     },
-    description: `${ESSAYS_PAGE.descriptionPrefix}${HOMEPAGE.name}`,
+    description: pageSeo.description,
+    keywords: pageSeo.keywords.length > 0 ? pageSeo.keywords : undefined,
+    robots: pageSeo.noIndex ? { index: false, follow: false } : undefined,
     openGraph: {
-      title: ESSAYS_PAGE.title,
+      title: pageSeo.title,
+      description: pageSeo.description,
       images: [{
         url: imageUrl,
         width: OG_SIZE_SQUARE.width,
         height: OG_SIZE_SQUARE.height,
-        alt: ESSAYS_PAGE.title,
+        alt: pageSeo.title,
       }],
     },
     twitter: {
       card: 'summary',
-      title: ESSAYS_PAGE.title,
+      title: pageSeo.title,
+      description: pageSeo.description,
       images: [imageUrl],
     },
   }
