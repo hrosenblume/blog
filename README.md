@@ -8,6 +8,7 @@ A personal essay site with AI-powered writing, animated 3D polyhedra, and a full
 
 - **AI Writing** — Generate essays with Claude or GPT-4, brainstorm ideas, rewrite selections
 - **Rich Text Editor** — Tiptap WYSIWYG with markdown import/export and auto-save
+- **SEO Management** — Per-post and site-wide SEO with JSON-LD structured data (via next-seo)
 - **3D Polyhedra** — 50+ animated wireframe shapes rendered on Canvas
 - **Post Management** — Drafts, revisions, slug generation, image uploads
 - **Lead Tracking** — RB2B integration for visitor identification
@@ -24,6 +25,7 @@ A personal essay site with AI-powered writing, animated 3D polyhedra, and a full
 | Auth | NextAuth.js v5 (Google OAuth, allowlist model) |
 | Editor | Tiptap |
 | AI | Anthropic SDK + OpenAI SDK |
+| SEO | next-seo (JSON-LD structured data) |
 | Styling | Tailwind CSS |
 | Images | Local filesystem (dev) / DigitalOcean Spaces (prod) |
 | Deploy | GitHub Actions → DigitalOcean Droplet (PM2 cluster) |
@@ -82,26 +84,48 @@ SPACES_SECRET="..."
 | `/writer/editor` | Create/edit essays |
 | `/admin` | Admin dashboard |
 | `/admin/ai` | AI writing rules & model settings |
+| `/admin/seo` | Site-wide SEO settings |
 | `/admin/leads` | Lead tracking |
 | `/admin/users` | User management |
 | `/admin/revisions` | Post revision history |
+
+## SEO
+
+SEO is managed through the admin panel and editor:
+
+- **Site-wide settings** (`/admin/seo`) — Title template, description, keywords, organization info for JSON-LD
+- **Per-post overrides** (editor) — Custom title, description, keywords, noIndex flag
+- **Auto-generation** — SEO fields auto-populate from post content if not overridden
+- **Structured data** — ArticleJsonLd, BreadcrumbJsonLd, OrganizationJsonLd via next-seo
 
 ## Deployment
 
 Push to `main` triggers production deploy via GitHub Actions:
 
 1. SSH into DigitalOcean Droplet
-2. Pull latest, install deps, run migrations
-3. Build with PostgreSQL schema
-4. PM2 zero-downtime restart (cluster mode)
+2. Pull latest code
+3. Install dependencies if `package-lock.json` changed or `node_modules` missing
+4. Generate Prisma client and push schema
+5. Build with PostgreSQL schema
+6. Verify build succeeded (checks for `.next/prerender-manifest.json`)
+7. PM2 zero-downtime reload (cluster mode)
+8. Health check (5 retries)
 
 Staging deploys from `dev` branch to a separate instance protected by Cloudflare Access.
+
+### Rollback
+
+Manual rollback via GitHub Actions workflow dispatch:
+1. Go to Actions → Rollback → Run workflow
+2. Select environment (production/staging) and commits to roll back
+3. Same verification and health checks as deploy
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
 | `npm run dev` | Development server |
+| `npm run dev:tunnel` | Dev + ngrok tunnel (mobile testing) |
 | `npm run build:prod` | Production build (PostgreSQL) |
 | `npm run db:push` | Push schema (SQLite) |
 | `npm run db:push:prod` | Push schema (PostgreSQL) |
