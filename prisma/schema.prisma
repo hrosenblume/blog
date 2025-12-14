@@ -76,6 +76,7 @@ model LeadVisit {
 model AISettings {
   id           String   @id @default("default")
   rules        String   @default("")
+  chatRules    String   @default("")
   defaultModel String   @default("claude-sonnet")
   updatedAt    DateTime @updatedAt
 }
