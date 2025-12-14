@@ -129,7 +129,10 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
     if (!postSlug) return
 
     fetch(`/api/posts/by-slug/${postSlug}`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error('Post not found')
+        return res.json()
+      })
       .then(data => {
         setTitle(data.title)
         setSubtitle(data.subtitle || '')

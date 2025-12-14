@@ -21,10 +21,10 @@ export const POST = withAdmin(async (request: NextRequest, { params }: { params:
   if (revision.title !== null) {
     updateData.title = revision.title
   }
-  if (revision.subtitle !== undefined) {
+  if (revision.subtitle !== null) {
     updateData.subtitle = revision.subtitle
   }
-  if (revision.polyhedraShape !== undefined) {
+  if (revision.polyhedraShape !== null) {
     updateData.polyhedraShape = revision.polyhedraShape
   }
 

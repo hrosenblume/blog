@@ -69,7 +69,12 @@ export async function generateMetadata({ params }: Props) {
   if (!post) return { title: 'Not Found' }
   
   const baseUrl = await getBaseUrl()
-  const description = post.subtitle || post.markdown.replace(/[#*_\[\]]/g, '').slice(0, 160).trim() + '...'
+  const rawText = post.markdown.replace(/[#*_\[\]]/g, '').trim()
+  const description = post.subtitle || (
+    rawText.length <= 160 
+      ? rawText 
+      : rawText.slice(0, 157).replace(/\s+\S*$/, '') + '...'
+  )
   
   // Use polyhedra thumbnail as OG image
   const shapeName = post.polyhedraShape || OG_STYLE.defaultShape

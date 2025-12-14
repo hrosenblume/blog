@@ -88,8 +88,22 @@ export default function Editor() {
         }
       },
     },
-    { ...SHORTCUTS.PREV, handler: () => { if (nav.prevSlug) router.push(`/writer/editor/${nav.prevSlug}`) } },
-    { ...SHORTCUTS.NEXT, handler: () => { if (nav.nextSlug) router.push(`/writer/editor/${nav.nextSlug}`) } },
+    { 
+      ...SHORTCUTS.PREV, 
+      handler: () => { 
+        if (ai.generating || ai.previewing || revisions.previewing) return
+        if (ui.hasUnsavedChanges && !confirm('You have unsaved changes. Leave anyway?')) return
+        if (nav.prevSlug) router.push(`/writer/editor/${nav.prevSlug}`) 
+      } 
+    },
+    { 
+      ...SHORTCUTS.NEXT, 
+      handler: () => { 
+        if (ai.generating || ai.previewing || revisions.previewing) return
+        if (ui.hasUnsavedChanges && !confirm('You have unsaved changes. Leave anyway?')) return
+        if (nav.nextSlug) router.push(`/writer/editor/${nav.nextSlug}`) 
+      } 
+    },
     {
       ...SHORTCUTS.ESCAPE_BACK,
       handler: () => {

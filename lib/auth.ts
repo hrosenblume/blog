@@ -104,8 +104,9 @@ export function withAdmin<T extends Record<string, string> = Record<string, stri
   handler: ApiHandler<T>
 ): ApiHandler<T> {
   return async (request, context) => {
-    const session = await requireAdmin()
-    if (!session) return unauthorized()
+    const session = await requireSession()
+    if (!session) return unauthorized() // 401 - not logged in
+    if (!(await isAdmin(session.user?.email))) return forbidden() // 403 - logged in but not admin
     return handler(request, context)
   }
 }
