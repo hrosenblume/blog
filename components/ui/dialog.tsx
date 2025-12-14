@@ -31,15 +31,20 @@ const DialogContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
     /** Max width class, defaults to max-w-lg */
     maxWidth?: string
+    /** Fullscreen on mobile, centered dialog on desktop */
+    fullscreenMobile?: boolean
   }
->(({ className, maxWidth = "max-w-lg", children, ...props }, ref) => (
+>(({ className, maxWidth = "max-w-lg", fullscreenMobile = false, children, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
-        maxWidth,
+        "fixed z-50 gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+        fullscreenMobile
+          ? "inset-0 flex flex-col sm:inset-auto sm:left-1/2 sm:top-1/2 sm:grid sm:h-auto sm:max-h-[85vh] sm:w-full sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-lg"
+          : "left-1/2 top-1/2 grid w-full -translate-x-1/2 -translate-y-1/2 sm:rounded-lg data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
+        fullscreenMobile ? "sm:max-w-[500px]" : maxWidth,
         className
       )}
       {...props}

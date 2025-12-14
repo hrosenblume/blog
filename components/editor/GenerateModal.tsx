@@ -59,8 +59,6 @@ export function GenerateModal({
   const handleSubmit = async () => {
     if (!prompt.trim()) return
     await onGenerate(prompt.trim(), length, modelId || undefined)
-    // Don't close modal on success - the preview banner will show instead
-    // Clear the form for next time
     setPrompt('')
     onOpenChange(false)
   }
@@ -75,10 +73,7 @@ export function GenerateModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent 
-        className="w-[calc(100%-2rem)] max-w-[500px] max-h-[90vh] overflow-y-auto mx-4 sm:mx-auto"
-        onKeyDown={handleKeyDown}
-      >
+      <DialogContent fullscreenMobile onKeyDown={handleKeyDown}>
         {/* X close button */}
         <button
           onClick={() => onOpenChange(false)}
@@ -93,7 +88,7 @@ export function GenerateModal({
           <DialogTitle>Generate with AI</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-2 sm:py-4">
+        <div className="flex-1 overflow-y-auto space-y-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="model">Model</Label>
             <Select value={modelId} onValueChange={setModelId}>
