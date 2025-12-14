@@ -239,7 +239,7 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
         {/* Input - wrapped in form to isolate from other form fields and remove iOS nav arrows */}
         <form 
           onSubmit={(e) => { e.preventDefault(); sendMessage(); }}
-          className="flex-shrink-0 border-t border-border bg-background p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+          className="flex-shrink-0 border-t border-border bg-background p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]"
         >
           <div className="flex gap-2">
             <Textarea
