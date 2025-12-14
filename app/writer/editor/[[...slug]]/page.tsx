@@ -47,6 +47,10 @@ export default function Editor() {
     setSlug,
     setMarkdown,
     regenerateShape,
+    setSeoTitle,
+    setSeoDescription,
+    setSeoKeywords,
+    setNoIndex,
     ui,
     setShowMarkdown,
     nav,
@@ -204,9 +208,19 @@ export default function Editor() {
                 status={post.status}
                 polyhedraShape={post.polyhedraShape}
                 markdown={post.markdown}
+                title={post.title}
+                subtitle={post.subtitle}
+                seoTitle={post.seoTitle}
+                seoDescription={post.seoDescription}
+                seoKeywords={post.seoKeywords}
+                noIndex={post.noIndex}
                 onSlugChange={setSlug}
                 onShapeRegenerate={regenerateShape}
                 onUnpublish={actions.unpublish}
+                onSeoTitleChange={setSeoTitle}
+                onSeoDescriptionChange={setSeoDescription}
+                onSeoKeywordsChange={setSeoKeywords}
+                onNoIndexChange={setNoIndex}
               />
             )
           }

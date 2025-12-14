@@ -15,6 +15,7 @@ export const adminNavItems: AdminNavItem[] = [
   { label: 'Companies', href: '/admin/visitors/companies', countKey: 'companies' },
   { label: 'Persons', href: '/admin/visitors/persons', countKey: 'persons' },
   { label: 'AI', href: '/admin/ai' },
+  { label: 'SEO', href: '/admin/seo' },
 ]
 
 // For navbar grouping - items listed here will appear in dropdowns
@@ -24,7 +25,7 @@ export const adminNavGroups = [
 ]
 
 // Items not in any group (shown as direct links in navbar)
-export const adminDirectLinks = ['Users', 'AI']
+export const adminDirectLinks = ['Users', 'AI', 'SEO']
 
 // Helper to get nav items for a group
 export function getGroupItems(groupLabel: string): AdminNavItem[] {

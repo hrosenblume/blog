@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { ArticleJsonLd, BreadcrumbJsonLd } from 'next-seo'
 import { prisma } from '@/lib/db'
 import { renderMarkdown } from '@/lib/markdown'
 import { KeyboardNav } from './_components/KeyboardNav'
@@ -11,6 +12,7 @@ import { ArticleHeader } from '@/components/ArticleHeader'
 import { ArticleBody } from '@/components/ArticleBody'
 import { HOMEPAGE } from '@/lib/homepage'
 import { getBaseUrl, OG_STYLE, OG_SIZE_SQUARE } from '@/lib/metadata'
+import { getPostSeoValues } from '@/lib/seo'
 
 export const revalidate = 60
 
@@ -69,26 +71,23 @@ export async function generateMetadata({ params }: Props) {
   if (!post) return { title: 'Not Found' }
   
   const baseUrl = await getBaseUrl()
-  const rawText = post.markdown.replace(/[#*_\[\]]/g, '').trim()
-  const description = post.subtitle || (
-    rawText.length <= 160 
-      ? rawText 
-      : rawText.slice(0, 157).replace(/\s+\S*$/, '') + '...'
-  )
+  const seo = getPostSeoValues(post)
   
   // Use polyhedra thumbnail as OG image
   const shapeName = post.polyhedraShape || OG_STYLE.defaultShape
   const imageUrl = `${baseUrl}/polyhedra/thumbnails/${shapeName}.png`
   
   return {
-    title: post.title,
-    description,
+    title: seo.title,
+    description: seo.description,
+    keywords: seo.keywords.length > 0 ? seo.keywords : undefined,
+    robots: post.noIndex ? { index: false, follow: false } : undefined,
     alternates: {
       canonical: `${baseUrl}/e/${slug}`,
     },
     openGraph: {
-      title: post.title,
-      description,
+      title: seo.title,
+      description: seo.description,
       type: 'article',
       publishedTime: post.publishedAt?.toISOString(),
       authors: [HOMEPAGE.name],
@@ -96,13 +95,13 @@ export async function generateMetadata({ params }: Props) {
         url: imageUrl,
         width: OG_SIZE_SQUARE.width,
         height: OG_SIZE_SQUARE.height,
-        alt: post.title,
+        alt: seo.title,
       }],
     },
     twitter: {
       card: 'summary',
-      title: post.title,
-      description,
+      title: seo.title,
+      description: seo.description,
       images: [imageUrl],
     },
   }
@@ -118,9 +117,31 @@ export default async function EssayPage({ params }: Props) {
 
   const { prev, next, isFirst, isLast } = await getAdjacentPosts(post.slug)
   const htmlContent = renderMarkdown(post.markdown)
+  const baseUrl = await getBaseUrl()
+  const seo = getPostSeoValues(post)
+  const shapeName = post.polyhedraShape || OG_STYLE.defaultShape
+  const imageUrl = `${baseUrl}/polyhedra/thumbnails/${shapeName}.png`
 
   return (
     <div className="min-h-screen">
+      {/* JSON-LD Structured Data */}
+      <ArticleJsonLd
+        type="BlogPosting"
+        headline={seo.title}
+        datePublished={post.publishedAt?.toISOString() || post.createdAt.toISOString()}
+        dateModified={post.updatedAt.toISOString()}
+        author={HOMEPAGE.name}
+        image={imageUrl}
+        description={seo.description}
+        url={`${baseUrl}/e/${post.slug}`}
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', item: baseUrl },
+          { name: post.title },
+        ]}
+      />
+      
       <KeyboardNav prevSlug={prev?.slug ?? null} nextSlug={next?.slug ?? null} slug={post.slug} />
       <PageContainer>
         <BackLink href="/" label="Home" />

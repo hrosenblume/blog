@@ -102,6 +102,11 @@ model Post {
   updatedAt      DateTime   @updatedAt
   publishedAt    DateTime?
   revisions      Revision[]
+  // SEO fields (optional overrides)
+  seoTitle       String?
+  seoDescription String?
+  seoKeywords    String?
+  noIndex        Boolean    @default(false)
 }
 
 model Revision {
@@ -113,6 +118,10 @@ model Revision {
   polyhedraShape String?
   createdAt      DateTime @default(now())
   post           Post     @relation(...)
+  // SEO fields
+  seoTitle       String?
+  seoDescription String?
+  seoKeywords    String?
 }
 
 model User {
@@ -156,6 +165,19 @@ model AISettings {
   chatRules    String   @default("")
   defaultModel String   @default("claude-sonnet")
   updatedAt    DateTime @updatedAt
+}
+
+model SiteSettings {
+  id                String   @id @default("default")
+  siteTitle         String   @default("")
+  siteTitleTemplate String   @default("%s | {name}")
+  siteDescription   String   @default("")
+  siteKeywords      String   @default("")
+  twitterHandle     String   @default("")
+  orgName           String   @default("")
+  orgLogo           String   @default("")
+  orgSameAs         String   @default("[]")  // JSON array of social URLs
+  updatedAt         DateTime @updatedAt
 }
 ```
 
@@ -282,6 +304,21 @@ Visitor identification via RB2B integration:
   - `NEXT_PUBLIC_RB2B_API_KEY` — tracking key from RB2B dashboard
   - `RB2B_WEBHOOK_SECRET` — (optional) secret for webhook authentication
 
+### SEO System
+Admin-managed SEO with database persistence using `next-seo` for JSON-LD structured data:
+- **Database models**:
+  - `Post` fields: `seoTitle`, `seoDescription`, `seoKeywords`, `noIndex` (optional overrides)
+  - `SiteSettings`: site-wide SEO config (title, description, keywords, org info)
+- **Utilities**: `lib/seo.ts` — `getSiteSettings()`, `getPostSeoValues()`, fallback helpers
+- **Admin UI**: `/admin/seo` — configure site title, description, keywords, organization info for JSON-LD
+- **Editor UI**: `components/editor/SeoSection.tsx` — per-post SEO overrides with SERP preview
+- **JSON-LD components** (via `next-seo`):
+  - `ArticleJsonLd` + `BreadcrumbJsonLd` on essay pages (`app/e/[slug]/page.tsx`)
+  - `OrganizationJsonLd` on homepage (`app/page.tsx`)
+- **Auto-generation**: SEO fields auto-generate from post content (title, subtitle, markdown truncation)
+- **Fallbacks**: Post SEO → auto-generated from content; Site SEO → `lib/metadata.ts` defaults
+- **API**: `/api/seo/settings` — GET/PATCH site settings
+
 ### Route Protection
 Auth checks happen in layout components (client-side):
 - `/writer/*` — `useSession()` hook redirects unauthenticated users to signin
@@ -307,6 +344,7 @@ This approach avoids Edge runtime limitations with Prisma.
 | `/api/upload` | Image upload |
 | `/api/ai/generate` | Generate essay content with AI |
 | `/api/ai/settings` | Get/update AI writing rules and default model |
+| `/api/seo/settings` | Get/update site SEO settings |
 
 ## Production Deployment
 

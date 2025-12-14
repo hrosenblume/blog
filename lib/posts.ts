@@ -11,6 +11,11 @@ interface CreatePostData {
   markdown?: string
   polyhedraShape?: string | null
   status?: 'draft' | 'published'
+  // SEO fields
+  seoTitle?: string | null
+  seoDescription?: string | null
+  seoKeywords?: string | null
+  noIndex?: boolean
 }
 
 interface UpdatePostData {
@@ -20,6 +25,11 @@ interface UpdatePostData {
   markdown?: string
   polyhedraShape?: string | null
   status?: string
+  // SEO fields
+  seoTitle?: string | null
+  seoDescription?: string | null
+  seoKeywords?: string | null
+  noIndex?: boolean
 }
 
 type PostResult = 
@@ -54,6 +64,12 @@ export async function updatePost(post: Post, data: UpdatePostData): Promise<Post
   if (data.polyhedraShape !== undefined) updates.polyhedraShape = data.polyhedraShape
   if (data.markdown !== undefined) updates.markdown = data.markdown
 
+  // SEO fields
+  if (data.seoTitle !== undefined) updates.seoTitle = data.seoTitle || null
+  if (data.seoDescription !== undefined) updates.seoDescription = data.seoDescription || null
+  if (data.seoKeywords !== undefined) updates.seoKeywords = data.seoKeywords || null
+  if (data.noIndex !== undefined) updates.noIndex = data.noIndex
+
   // Handle status change
   if (data.status !== undefined) {
     updates.status = data.status
@@ -71,12 +87,18 @@ export async function updatePost(post: Post, data: UpdatePostData): Promise<Post
   const newSubtitle = (updates.subtitle as string | null) ?? post.subtitle
   const newMarkdown = (updates.markdown as string) ?? post.markdown
   const newPolyhedraShape = (updates.polyhedraShape as string | null) ?? post.polyhedraShape
+  const newSeoTitle = (updates.seoTitle as string | null) ?? post.seoTitle
+  const newSeoDescription = (updates.seoDescription as string | null) ?? post.seoDescription
+  const newSeoKeywords = (updates.seoKeywords as string | null) ?? post.seoKeywords
 
   const hasContentChanges = 
     newTitle !== post.title ||
     newSubtitle !== post.subtitle ||
     newMarkdown !== post.markdown ||
-    newPolyhedraShape !== post.polyhedraShape
+    newPolyhedraShape !== post.polyhedraShape ||
+    newSeoTitle !== post.seoTitle ||
+    newSeoDescription !== post.seoDescription ||
+    newSeoKeywords !== post.seoKeywords
 
   // Create revision if content changed
   if (hasContentChanges) {
@@ -87,6 +109,9 @@ export async function updatePost(post: Post, data: UpdatePostData): Promise<Post
         subtitle: newSubtitle,
         markdown: newMarkdown,
         polyhedraShape: newPolyhedraShape,
+        seoTitle: newSeoTitle,
+        seoDescription: newSeoDescription,
+        seoKeywords: newSeoKeywords,
       }
     })
   }
@@ -122,6 +147,10 @@ export async function createPost(data: CreatePostData): Promise<PostResult> {
   const markdown = data.markdown ?? ''
   const polyhedraShape = data.polyhedraShape || null
   const status = data.status ?? 'draft'
+  const seoTitle = data.seoTitle || null
+  const seoDescription = data.seoDescription || null
+  const seoKeywords = data.seoKeywords || null
+  const noIndex = data.noIndex ?? false
 
   // Check slug uniqueness
   const existing = await prisma.post.findUnique({ where: { slug } })
@@ -139,12 +168,19 @@ export async function createPost(data: CreatePostData): Promise<PostResult> {
       polyhedraShape,
       status,
       publishedAt: status === 'published' ? new Date() : null,
+      seoTitle,
+      seoDescription,
+      seoKeywords,
+      noIndex,
       revisions: {
         create: {
           title,
           subtitle,
           markdown,
           polyhedraShape,
+          seoTitle,
+          seoDescription,
+          seoKeywords,
         },
       },
     },

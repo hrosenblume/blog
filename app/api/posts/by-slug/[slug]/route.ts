@@ -43,6 +43,11 @@ export const GET = withSession(async (request: NextRequest, { params }: { params
     publishedAt: post.publishedAt?.toISOString() ?? null,
     prevSlug: prev?.slug ?? null,
     nextSlug: next?.slug ?? null,
+    // SEO fields
+    seoTitle: post.seoTitle,
+    seoDescription: post.seoDescription,
+    seoKeywords: post.seoKeywords,
+    noIndex: post.noIndex,
   })
 })
 

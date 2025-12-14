@@ -3,15 +3,27 @@
 import { PolyhedraCanvas } from '@/components/PolyhedraCanvas'
 import { LockIcon } from '@/components/Icons'
 import { wordCount } from '@/lib/markdown'
+import { SeoSection } from './SeoSection'
 
 interface PostMetadataFooterProps {
   slug: string
   status: 'draft' | 'published'
   polyhedraShape: string
   markdown: string
+  title: string
+  subtitle: string
+  seoTitle: string
+  seoDescription: string
+  seoKeywords: string
+  noIndex: boolean
   onSlugChange: (slug: string) => void
   onShapeRegenerate: () => void
   onUnpublish: () => void
+  onSeoTitleChange: (value: string) => void
+  onSeoDescriptionChange: (value: string) => void
+  onSeoKeywordsChange: (value: string) => void
+  onNoIndexChange: (value: boolean) => void
+  disabled?: boolean
 }
 
 export function PostMetadataFooter({
@@ -19,9 +31,20 @@ export function PostMetadataFooter({
   status,
   polyhedraShape,
   markdown,
+  title,
+  subtitle,
+  seoTitle,
+  seoDescription,
+  seoKeywords,
+  noIndex,
   onSlugChange,
   onShapeRegenerate,
   onUnpublish,
+  onSeoTitleChange,
+  onSeoDescriptionChange,
+  onSeoKeywordsChange,
+  onNoIndexChange,
+  disabled = false,
 }: PostMetadataFooterProps) {
   const words = wordCount(markdown)
   const isPublished = status === 'published'
@@ -89,6 +112,22 @@ export function PostMetadataFooter({
           </button>
         </div>
       )}
+
+      {/* SEO Section */}
+      <SeoSection
+        seoTitle={seoTitle}
+        seoDescription={seoDescription}
+        seoKeywords={seoKeywords}
+        noIndex={noIndex}
+        postTitle={title}
+        postSubtitle={subtitle}
+        slug={slug}
+        onSeoTitleChange={onSeoTitleChange}
+        onSeoDescriptionChange={onSeoDescriptionChange}
+        onSeoKeywordsChange={onSeoKeywordsChange}
+        onNoIndexChange={onNoIndexChange}
+        disabled={disabled}
+      />
 
       {/* Word count */}
       <div className="text-sm text-muted-foreground pt-2 border-t border-border">

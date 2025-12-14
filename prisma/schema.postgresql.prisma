@@ -19,6 +19,12 @@ model Post {
   publishedAt    DateTime?
   subtitle       String?
   revisions      Revision[]
+  
+  // SEO fields (optional overrides)
+  seoTitle       String?
+  seoDescription String?
+  seoKeywords    String?
+  noIndex        Boolean    @default(false)
 }
 
 model Revision {
@@ -30,6 +36,11 @@ model Revision {
   polyhedraShape String?
   createdAt      DateTime @default(now())
   post           Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  // SEO fields
+  seoTitle       String?
+  seoDescription String?
+  seoKeywords    String?
 }
 
 model User {
@@ -79,5 +90,18 @@ model AISettings {
   chatRules    String   @default("")
   defaultModel String   @default("claude-sonnet")
   updatedAt    DateTime @updatedAt
+}
+
+model SiteSettings {
+  id                String   @id @default("default")
+  siteTitle         String   @default("")
+  siteTitleTemplate String   @default("%s | {name}")
+  siteDescription   String   @default("")
+  siteKeywords      String   @default("")
+  twitterHandle     String   @default("")
+  orgName           String   @default("")
+  orgLogo           String   @default("")
+  orgSameAs         String   @default("[]")
+  updatedAt         DateTime @updatedAt
 }
 

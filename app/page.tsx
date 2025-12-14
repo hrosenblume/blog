@@ -1,10 +1,13 @@
 import Link from 'next/link'
+import { OrganizationJsonLd } from 'next-seo'
 import { prisma } from '@/lib/db'
 import { SecretNav } from '@/components/SecretNav'
 import { EssayLink } from '@/components/EssayLink'
 import { HomepageFooter } from '@/components/HomepageFooter'
 import { TapLink } from '@/components/TapLink'
 import { HOMEPAGE } from '@/lib/homepage'
+import { getBaseUrl } from '@/lib/metadata'
+import { getSiteSettings, getOrgName, getOrgSocialUrls } from '@/lib/seo'
 
 // Revalidate every hour (homepage content changes rarely)
 export const revalidate = 3600
@@ -31,8 +34,21 @@ export default async function Home() {
 
   const linkClass = 'underline hover:text-gray-900 dark:hover:text-white transition-colors'
 
+  // Get SEO settings for JSON-LD
+  const baseUrl = await getBaseUrl()
+  const siteSettings = await getSiteSettings()
+  const orgName = getOrgName(siteSettings)
+  const socialUrls = getOrgSocialUrls(siteSettings)
+
   return (
     <main className="max-w-2xl mx-auto px-6 py-16">
+      {/* JSON-LD Structured Data */}
+      <OrganizationJsonLd
+        name={orgName}
+        url={baseUrl}
+        logo={siteSettings.orgLogo || undefined}
+        sameAs={socialUrls.length > 0 ? socialUrls : undefined}
+      />
       <header className="mb-16">
         <h1 className="text-title font-bold mb-6 dark:text-white">
           <SecretNav>{HOMEPAGE.name}</SecretNav>

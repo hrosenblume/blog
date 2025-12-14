@@ -16,6 +16,11 @@ export interface PostContent {
   markdown: string
   polyhedraShape: string
   status: 'draft' | 'published'
+  // SEO fields
+  seoTitle: string
+  seoDescription: string
+  seoKeywords: string
+  noIndex: boolean
 }
 
 export interface PostEditorUI {
@@ -47,6 +52,11 @@ export interface UsePostEditorReturn {
   setMarkdown: (markdown: string) => void
   setPolyhedraShape: (shape: string) => void
   regenerateShape: () => void
+  // SEO setters
+  setSeoTitle: (seoTitle: string) => void
+  setSeoDescription: (seoDescription: string) => void
+  setSeoKeywords: (seoKeywords: string) => void
+  setNoIndex: (noIndex: boolean) => void
   
   // UI state
   ui: PostEditorUI
@@ -87,6 +97,12 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
   const [status, setStatus] = useState<'draft' | 'published'>('draft')
   const [isManualSlug, setIsManualSlug] = useState(false)
 
+  // SEO state
+  const [seoTitle, setSeoTitle] = useState('')
+  const [seoDescription, setSeoDescription] = useState('')
+  const [seoKeywords, setSeoKeywords] = useState('')
+  const [noIndex, setNoIndex] = useState(false)
+
   // UI state
   const [loading, setLoading] = useState(!!postSlug)
   const [savingAs, setSavingAs] = useState<'draft' | 'published' | null>(null)
@@ -103,7 +119,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
   const [editor, setEditor] = useState<EditorInstance | null>(null)
 
   // Refs
-  const lastSavedContent = useRef({ title: '', subtitle: '', slug: '', markdown: '', polyhedraShape: '' })
+  const lastSavedContent = useRef({ title: '', subtitle: '', slug: '', markdown: '', polyhedraShape: '', seoTitle: '', seoDescription: '', seoKeywords: '', noIndex: false })
   const urlSlugRef = useRef(postSlug)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   
@@ -145,12 +161,21 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
         setIsManualSlug(true)
         setLoading(false)
         setLastSaved(new Date(data.updatedAt))
+        // SEO fields
+        setSeoTitle(data.seoTitle || '')
+        setSeoDescription(data.seoDescription || '')
+        setSeoKeywords(data.seoKeywords || '')
+        setNoIndex(data.noIndex || false)
         lastSavedContent.current = {
           title: data.title,
           subtitle: data.subtitle || '',
           slug: data.slug,
           markdown: data.markdown,
           polyhedraShape: data.polyhedraShape || '',
+          seoTitle: data.seoTitle || '',
+          seoDescription: data.seoDescription || '',
+          seoKeywords: data.seoKeywords || '',
+          noIndex: data.noIndex || false,
         }
         setHasEditedSinceLastSave(false)
         urlSlugRef.current = data.slug
@@ -184,10 +209,14 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
       subtitle !== saved.subtitle ||
       slug !== saved.slug ||
       markdown !== saved.markdown ||
-      polyhedraShape !== saved.polyhedraShape
+      polyhedraShape !== saved.polyhedraShape ||
+      seoTitle !== saved.seoTitle ||
+      seoDescription !== saved.seoDescription ||
+      seoKeywords !== saved.seoKeywords ||
+      noIndex !== saved.noIndex
     // Include edit flag to catch whitespace changes that get normalized away
     setHasUnsavedChanges(contentChanged || hasEditedSinceLastSave)
-  }, [title, subtitle, slug, markdown, polyhedraShape, previewingRevision, aiPreview, hasEditedSinceLastSave])
+  }, [title, subtitle, slug, markdown, polyhedraShape, seoTitle, seoDescription, seoKeywords, noIndex, previewingRevision, aiPreview, hasEditedSinceLastSave])
 
   // Browser back/refresh warning for unsaved changes
   useEffect(() => {
@@ -254,6 +283,11 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
         markdown,
         polyhedraShape,
         status: publishStatus,
+        // SEO fields
+        seoTitle: seoTitle.trim() || null,
+        seoDescription: seoDescription.trim() || null,
+        seoKeywords: seoKeywords.trim() || null,
+        noIndex,
       }
 
       if (postSlug) {
@@ -290,6 +324,10 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
         slug: slug.trim(),
         markdown,
         polyhedraShape,
+        seoTitle: seoTitle.trim(),
+        seoDescription: seoDescription.trim(),
+        seoKeywords: seoKeywords.trim(),
+        noIndex,
       }
       setHasEditedSinceLastSave(false)
       setHasUnsavedChanges(false)
@@ -315,7 +353,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
         setSavingAs(null)
       }
     }
-  }, [postSlug, title, subtitle, slug, markdown, polyhedraShape, router])
+  }, [postSlug, title, subtitle, slug, markdown, polyhedraShape, seoTitle, seoDescription, seoKeywords, noIndex, router])
 
   // Autosave drafts after 3 seconds of inactivity (silent - no button spinner)
   useEffect(() => {
@@ -649,13 +687,18 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
   }, [])
 
   return {
-    post: { title, subtitle, slug, markdown, polyhedraShape, status },
+    post: { title, subtitle, slug, markdown, polyhedraShape, status, seoTitle, seoDescription, seoKeywords, noIndex },
     setTitle,
     setSubtitle,
     setSlug: handleSlugChange,
     setMarkdown: handleMarkdownChange,
     setPolyhedraShape,
     regenerateShape,
+    // SEO setters
+    setSeoTitle,
+    setSeoDescription,
+    setSeoKeywords,
+    setNoIndex,
     
     ui: { loading, savingAs, lastSaved, hasUnsavedChanges, showMarkdown, publishSuccess },
     setShowMarkdown,
