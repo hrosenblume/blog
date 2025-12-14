@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { Loader2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -22,13 +23,24 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
   const [isStreaming, setIsStreaming] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  
+  // Client-side only for portal
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
-  // Handle open/close animation
+  // Handle open/close animation and body scroll lock
   useEffect(() => {
     if (open) {
       setIsVisible(true)
+      // Lock body scroll on iOS
+      document.body.style.overflow = 'hidden'
+      document.body.style.position = 'fixed'
+      document.body.style.width = '100%'
+      document.body.style.top = `-${window.scrollY}px`
       // Small delay to trigger animation
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -37,6 +49,13 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
       })
     } else {
       setIsAnimating(false)
+      // Restore body scroll
+      const scrollY = document.body.style.top
+      document.body.style.overflow = ''
+      document.body.style.position = ''
+      document.body.style.width = ''
+      document.body.style.top = ''
+      window.scrollTo(0, parseInt(scrollY || '0') * -1)
       // Wait for animation to complete before hiding
       const timer = setTimeout(() => {
         setIsVisible(false)
@@ -135,19 +154,14 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
     }
   }
 
-  const handleNewChat = () => {
-    setMessages([])
-    setInput('')
-  }
+  if (!isVisible || !mounted) return null
 
-  if (!isVisible) return null
-
-  return (
+  return createPortal(
     <>
-      {/* Backdrop */}
+      {/* Backdrop - use 100dvh to cover full dynamic viewport on iOS */}
       <div 
         className={cn(
-          "fixed inset-0 bg-black/20 z-40 transition-opacity duration-200",
+          "fixed inset-x-0 top-0 h-[100dvh] bg-black/20 z-40 transition-opacity duration-200",
           isAnimating ? "opacity-100" : "opacity-0"
         )}
         onClick={onClose}
@@ -159,9 +173,9 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
         aria-modal="true"
         aria-label="Chat"
         className={cn(
-          "fixed z-50 flex flex-col bg-background shadow-xl transition-transform duration-200 ease-out",
-          // Mobile: full screen
-          "inset-0",
+          "fixed z-50 flex flex-col bg-background shadow-xl transition-transform duration-200 ease-out overflow-hidden",
+          // Mobile: full screen with dynamic viewport height
+          "inset-x-0 top-0 h-[100dvh]",
           // Desktop: full-height right panel
           "md:left-auto md:w-full md:max-w-md md:border-l md:border-border",
           // Animation
@@ -171,23 +185,13 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
         {/* Header */}
         <div className="flex-shrink-0 border-b border-border px-4 py-3 flex items-center justify-between">
           <h2 className="font-medium">Chat</h2>
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handleNewChat} 
-              disabled={messages.length === 0}
-            >
-              New
-            </Button>
-            <button
-              onClick={onClose}
-              className="w-8 h-8 rounded-md hover:bg-accent flex items-center justify-center text-muted-foreground"
-              aria-label="Close chat"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-md hover:bg-accent flex items-center justify-center text-muted-foreground"
+            aria-label="Close chat"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
         {/* Messages */}
@@ -232,8 +236,11 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
           )}
         </div>
 
-        {/* Input */}
-        <div className="flex-shrink-0 border-t border-border bg-background p-3">
+        {/* Input - wrapped in form to isolate from other form fields and remove iOS nav arrows */}
+        <form 
+          onSubmit={(e) => { e.preventDefault(); sendMessage(); }}
+          className="flex-shrink-0 border-t border-border bg-background p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+        >
           <div className="flex gap-2">
             <Textarea
               ref={textareaRef}
@@ -241,12 +248,13 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Ask anything..."
-              className="min-h-[40px] max-h-[120px] resize-none text-sm"
+              className="min-h-[40px] max-h-[120px] resize-none"
               disabled={isStreaming}
               rows={1}
+              enterKeyHint="send"
             />
             <Button
-              onClick={sendMessage}
+              type="submit"
               disabled={!input.trim() || isStreaming}
               size="sm"
               className="h-auto px-4"
@@ -258,8 +266,9 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
               )}
             </Button>
           </div>
-        </div>
+        </form>
       </div>
-    </>
+    </>,
+    document.body
   )
 }
