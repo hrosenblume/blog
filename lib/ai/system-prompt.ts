@@ -74,6 +74,41 @@ ${context.styleExamples || 'No published essays available. Write in a clear, per
 You are having a conversation to help develop essay ideas. Follow the chat behavior rules above. When suggesting ideas or drafting content, match the author's writing style.`
 }
 
+export interface EssayContext {
+  title: string
+  subtitle?: string
+  markdown: string
+}
+
+/**
+ * Build a system prompt for chat/brainstorming with the current essay in context.
+ * When an essay is being edited, this provides the AI with awareness of its content.
+ */
+export function buildChatPromptWithEssay(
+  context: StyleContext,
+  essay?: EssayContext | null
+): string {
+  const basePrompt = buildChatPrompt(context)
+  
+  if (!essay?.markdown) return basePrompt
+  
+  const header = essay.subtitle 
+    ? `# ${essay.title}\n*${essay.subtitle}*` 
+    : `# ${essay.title}`
+    
+  return `${basePrompt}
+
+---
+
+## Current Essay Draft
+
+When the user refers to "this essay", "this paragraph", "the intro", "the conclusion", or any specific section, they mean the content below. Help them improve, critique, or discuss this draft.
+
+${header}
+
+${essay.markdown}`
+}
+
 /**
  * Build a system prompt for rewriting selected text.
  */

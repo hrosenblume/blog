@@ -59,6 +59,9 @@ blog/
 │   ├── admin/                  # Admin utilities (pagination, constants)
 │   ├── admin-nav.ts            # ✏️ Admin nav config (DRY)
 │   ├── auth.ts                 # NextAuth config + route protection
+│   ├── chat/                   # Chat context (essay-aware AI chat)
+│   │   ├── context.tsx         # ChatProvider + useChatContext hook
+│   │   └── index.ts            # Clean exports
 │   ├── db.ts                   # Prisma client singleton
 │   ├── homepage.ts             # ✏️ Homepage content (DRY)
 │   ├── keyboard/               # Keyboard navigation
@@ -237,6 +240,20 @@ Generate essays using Anthropic (Claude) or OpenAI (GPT-4):
 - **Flow**: Toolbar button → GenerateModal → API call → Preview banner → Accept/Discard
 - **Context injection**: System prompt includes custom rules first (override everything), then all published posts as style examples
 - **Env vars**: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` (at least one required)
+
+### Chat Context System
+Session-persistent AI chat that's aware of the currently open essay:
+- **Context**: `lib/chat/context.tsx` — `ChatProvider` wraps writer layout, `useChatContext()` hook
+- **State**: Messages persist across navigation within `/writer/*` routes (session-level, not DB)
+- **Essay awareness**: When editing an essay, the editor syncs `{ title, subtitle, markdown }` to chat context
+- **API**: `/api/ai/chat` accepts optional `essayContext` — AI can discuss, critique, and help improve the current draft
+- **Flow**:
+  1. Open essay in editor → `setEssayContext()` called with post content
+  2. Open chat panel → AI has full essay in context
+  3. Ask "What's wrong with paragraph 2?" → AI responds with essay-aware feedback
+  4. Navigate to different essay → Context updates, chat history preserved
+  5. Leave editor → Essay context cleared, chat history still available
+- **Components**: `ChatPanel` (uses context, no props needed)
 
 ### Image Storage System
 Hybrid storage in `lib/storage.ts` with automatic backend detection:

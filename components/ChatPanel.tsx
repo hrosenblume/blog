@@ -6,26 +6,26 @@ import { Loader2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils/cn'
+import { useChatContext } from '@/lib/chat'
 
-interface Message {
-  role: 'user' | 'assistant'
-  content: string
-}
-
-interface ChatPanelProps {
-  open: boolean
-  onClose: () => void
-}
-
-export function ChatPanel({ open, onClose }: ChatPanelProps) {
-  const [messages, setMessages] = useState<Message[]>([])
+export function ChatPanel() {
+  const { 
+    messages, 
+    isStreaming, 
+    isOpen: open, 
+    setIsOpen,
+    sendMessage: contextSendMessage,
+    essayContext,
+  } = useChatContext()
+  
   const [input, setInput] = useState('')
-  const [isStreaming, setIsStreaming] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
   const [mounted, setMounted] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  
+  const onClose = useCallback(() => setIsOpen(false), [setIsOpen])
   
   // Client-side only for portal
   useEffect(() => {
@@ -87,61 +87,10 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
 
   const sendMessage = useCallback(async () => {
     if (!input.trim() || isStreaming) return
-
-    const userMessage: Message = { role: 'user', content: input.trim() }
-    const newMessages = [...messages, userMessage]
-    setMessages(newMessages)
+    const content = input.trim()
     setInput('')
-    setIsStreaming(true)
-
-    // Add empty assistant message that we'll stream into
-    const assistantMessage: Message = { role: 'assistant', content: '' }
-    setMessages([...newMessages, assistantMessage])
-
-    try {
-      const response = await fetch('/api/ai/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: newMessages }),
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to send message')
-      }
-
-      const reader = response.body?.getReader()
-      if (!reader) throw new Error('No response body')
-
-      const decoder = new TextDecoder()
-      let assistantContent = ''
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        const chunk = decoder.decode(value, { stream: true })
-        assistantContent += chunk
-
-        // Update the assistant message with streamed content
-        setMessages(prev => {
-          const updated = [...prev]
-          updated[updated.length - 1] = { role: 'assistant', content: assistantContent }
-          return updated
-        })
-      }
-    } catch (error) {
-      console.error('Chat error:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Something went wrong'
-      setMessages(prev => {
-        const updated = [...prev]
-        updated[updated.length - 1] = { role: 'assistant', content: `Error: ${errorMessage}` }
-        return updated
-      })
-    } finally {
-      setIsStreaming(false)
-    }
-  }, [input, messages, isStreaming])
+    await contextSendMessage(content)
+  }, [input, isStreaming, contextSendMessage])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -184,7 +133,14 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
       >
         {/* Header */}
         <div className="flex-shrink-0 border-b border-border px-4 py-3 flex items-center justify-between">
-          <h2 className="font-medium">Chat</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="font-medium">Chat</h2>
+            {essayContext && (
+              <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                {essayContext.title || 'Untitled'}
+              </span>
+            )}
+          </div>
           <button
             onClick={onClose}
             className="w-8 h-8 rounded-md hover:bg-accent flex items-center justify-center text-muted-foreground"
@@ -200,7 +156,10 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
             <div className="h-full flex items-center justify-center">
               <div className="text-center max-w-xs px-6">
                 <p className="text-muted-foreground text-sm">
-                  Chat with AI to brainstorm ideas, get feedback, or explore topics.
+                  {essayContext 
+                    ? "Chat about your essay — ask for feedback, discuss ideas, or get help with specific sections."
+                    : "Chat with AI to brainstorm ideas, get feedback, or explore topics."
+                  }
                 </p>
               </div>
             </div>
@@ -247,7 +206,7 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask anything..."
+              placeholder={essayContext ? "Ask about your essay..." : "Ask anything..."}
               className="min-h-[40px] max-h-[120px] resize-none"
               disabled={isStreaming}
               rows={1}

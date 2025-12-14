@@ -1,30 +1,12 @@
 'use client'
 
-import { useRef, useCallback, useState, useEffect, RefObject } from 'react'
-import { Editor } from '@tiptap/react'
-import { Loader2 } from 'lucide-react'
-import { cn } from '@/lib/utils/cn'
-import {
-  insertAtCursor,
-  insertBlockAtCursor,
-  setHeadingAtCursor,
-  clearMarkdownFormatting,
-} from '@/lib/editor/markdown-helpers'
-import {
-  BulletListIcon,
-  NumberedListIcon,
-  BlockquoteIcon,
-  CodeBlockIcon,
-  HorizontalRuleIcon,
-  LinkIcon,
-  ImageIcon,
-  ClearFormattingIcon,
-  UndoIcon,
-  RedoIcon,
-  SparklesIcon,
-  WandIcon,
-} from '@/components/Icons'
-import { RevisionHistoryDropdown } from './RevisionHistoryDropdown'
+import type { RefObject } from 'react'
+import type { Editor } from '@tiptap/react'
+import { Divider } from './toolbar/ToolbarButton'
+import { FormatButtons } from './toolbar/FormatButtons'
+import { BlockButtons } from './toolbar/BlockButtons'
+import { MediaButtons } from './toolbar/MediaButtons'
+import { HistoryButtons } from './toolbar/HistoryButtons'
 import type { RevisionState } from '@/lib/editor/types'
 
 interface EditorToolbarProps {
@@ -44,443 +26,62 @@ interface EditorToolbarProps {
   aiGenerating?: boolean
 }
 
-interface ToolbarButtonProps {
-  onClick: () => void
-  active?: boolean
-  disabled?: boolean
-  children: React.ReactNode
-  title?: string
-}
-
-function ToolbarButton({ onClick, active, disabled, children, title }: ToolbarButtonProps) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      title={title}
-      className={cn(
-        'px-2.5 py-1.5 text-sm font-medium rounded transition-colors',
-        'flex items-center justify-center',
-        'hover:bg-gray-100 dark:hover:bg-gray-800',
-        'disabled:opacity-50 disabled:cursor-not-allowed',
-        active && 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white',
-        !active && 'text-gray-600 dark:text-gray-400'
-      )}
-    >
-      {children}
-    </button>
-  )
-}
-
-function Divider() {
-  return <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1" />
-}
-
-export function EditorToolbar({ editor, textareaRef, markdown, onMarkdownChange, showMarkdown, setShowMarkdown, postSlug, revisions, onOpenGenerate, aiGenerating }: EditorToolbarProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null)
+export function EditorToolbar({
+  editor,
+  textareaRef,
+  markdown,
+  onMarkdownChange,
+  showMarkdown,
+  setShowMarkdown,
+  postSlug,
+  revisions,
+  onOpenGenerate,
+  aiGenerating,
+}: EditorToolbarProps) {
   const isMarkdownMode = !editor && textareaRef && markdown !== undefined && onMarkdownChange
-  const [hasSelection, setHasSelection] = useState(false)
-  const [isRewriting, setIsRewriting] = useState(false)
-
-  // Track text selection in the editor
-  useEffect(() => {
-    if (!editor) {
-      setHasSelection(false)
-      return
-    }
-
-    const updateSelection = () => {
-      const { from, to } = editor.state.selection
-      setHasSelection(from !== to)
-    }
-
-    editor.on('selectionUpdate', updateSelection)
-    editor.on('transaction', updateSelection)
-    
-    return () => {
-      editor.off('selectionUpdate', updateSelection)
-      editor.off('transaction', updateSelection)
-    }
-  }, [editor])
-
-  // Handle rewrite selected text
-  const handleRewrite = useCallback(async () => {
-    if (!editor || isRewriting) return
-    
-    const { from, to } = editor.state.selection
-    if (from === to) return
-
-    const selectedText = editor.state.doc.textBetween(from, to, ' ')
-    if (!selectedText.trim()) return
-
-    setIsRewriting(true)
-    try {
-      const res = await fetch('/api/ai/rewrite', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: selectedText }),
-      })
-
-      if (!res.ok) {
-        const error = await res.json()
-        throw new Error(error.error || 'Rewrite failed')
-      }
-
-      const result = await res.json()
-      
-      // Replace the selected text with the rewritten version
-      editor.chain().focus().deleteSelection().insertContent(result.text).run()
-    } catch (err) {
-      console.error('Rewrite error:', err)
-      alert(err instanceof Error ? err.message : 'Failed to rewrite text')
-    } finally {
-      setIsRewriting(false)
-    }
-  }, [editor, isRewriting])
-
-  // Wrap markdown operations to insert syntax
-  const wrapSelection = useCallback((before: string, after: string) => {
-    if (editor) return
-    if (textareaRef?.current && markdown !== undefined && onMarkdownChange) {
-      insertAtCursor(textareaRef.current, before, after, markdown, onMarkdownChange)
-    }
-  }, [editor, textareaRef, markdown, onMarkdownChange])
-
-  const insertBlock = useCallback((prefix: string) => {
-    if (textareaRef?.current && markdown !== undefined && onMarkdownChange) {
-      insertBlockAtCursor(textareaRef.current, prefix, markdown, onMarkdownChange)
-    }
-  }, [textareaRef, markdown, onMarkdownChange])
-
-  const setHeading = useCallback((level: number) => {
-    if (textareaRef?.current && markdown !== undefined && onMarkdownChange) {
-      setHeadingAtCursor(textareaRef.current, level, markdown, onMarkdownChange)
-    }
-  }, [textareaRef, markdown, onMarkdownChange])
-
-  const handleLinkClick = useCallback(() => {
-    if (editor) {
-      if (editor.isActive('link')) {
-        editor.chain().focus().unsetLink().run()
-        return
-      }
-      const url = window.prompt('Enter URL:')
-      if (url) {
-        editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
-      }
-    } else if (isMarkdownMode) {
-      const url = window.prompt('Enter URL:')
-      if (url && textareaRef?.current) {
-        const textarea = textareaRef.current
-        const start = textarea.selectionStart
-        const end = textarea.selectionEnd
-        const selected = markdown!.substring(start, end) || 'link text'
-        const newText = markdown!.substring(0, start) + `[${selected}](${url})` + markdown!.substring(end)
-        onMarkdownChange!(newText)
-        requestAnimationFrame(() => textarea.focus())
-      }
-    }
-  }, [editor, isMarkdownMode, textareaRef, markdown, onMarkdownChange])
-
-  const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    // Client-side validation
-    const maxSize = 4 * 1024 * 1024 // 4MB
-    if (file.size > maxSize) {
-      alert(`Image too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum size is 4MB.`)
-      e.target.value = ''
-      return
-    }
-
-    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-    if (!validTypes.includes(file.type)) {
-      alert(`Invalid file type: ${file.type}. Supported types: JPEG, PNG, GIF, WebP.`)
-      e.target.value = ''
-      return
-    }
-
-    const formData = new FormData()
-    formData.append('image', file)
-
-    try {
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      })
-      
-      const data = await res.json()
-      
-      if (!res.ok) {
-        alert(data.error || 'Failed to upload image')
-        e.target.value = ''
-        return
-      }
-
-      if (data.url) {
-        if (editor) {
-          editor.chain().focus().setImage({ src: data.url }).run()
-        } else if (isMarkdownMode && textareaRef?.current) {
-          const textarea = textareaRef.current
-          const start = textarea.selectionStart
-          const newText = markdown!.substring(0, start) + `![image](${data.url})` + markdown!.substring(start)
-          onMarkdownChange!(newText)
-          requestAnimationFrame(() => textarea.focus())
-        }
-      } else {
-        alert('Upload succeeded but no URL returned')
-      }
-    } catch (err) {
-      alert('Failed to upload image. Please try again.')
-      console.error('Image upload error:', err)
-    }
-
-    e.target.value = ''
-  }, [editor, isMarkdownMode, textareaRef, markdown, onMarkdownChange])
-
-  const handleClearFormatting = useCallback(() => {
-    if (editor) {
-      editor.chain().focus().unsetAllMarks().clearNodes().run()
-    } else if (isMarkdownMode && textareaRef?.current && markdown && onMarkdownChange) {
-      clearMarkdownFormatting(textareaRef.current, markdown, onMarkdownChange)
-    }
-  }, [editor, isMarkdownMode, textareaRef, markdown, onMarkdownChange])
-
-  const handleHorizontalRule = useCallback(() => {
-    if (editor) {
-      editor.chain().focus().setHorizontalRule().run()
-    } else if (isMarkdownMode && textareaRef?.current) {
-      const textarea = textareaRef.current
-      const start = textarea.selectionStart
-      const newText = markdown!.substring(0, start) + '\n---\n' + markdown!.substring(start)
-      onMarkdownChange!(newText)
-      requestAnimationFrame(() => textarea.focus())
-    }
-  }, [editor, isMarkdownMode, textareaRef, markdown, onMarkdownChange])
-
-  const handleUndo = useCallback(() => {
-    if (editor) {
-      editor.chain().focus().undo().run()
-    } else if (textareaRef?.current) {
-      textareaRef.current.focus()
-      document.execCommand('undo')
-    }
-  }, [editor, textareaRef])
-
-  const handleRedo = useCallback(() => {
-    if (editor) {
-      editor.chain().focus().redo().run()
-    } else if (textareaRef?.current) {
-      textareaRef.current.focus()
-      document.execCommand('redo')
-    }
-  }, [editor, textareaRef])
 
   // Don't render if we have neither editor nor markdown mode
   if (!editor && !isMarkdownMode) return null
 
   return (
     <div className="flex items-center justify-start md:justify-center gap-0.5 px-4 py-2 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-black overflow-x-auto">
-      {/* Headings */}
-      <ToolbarButton
-        onClick={() => editor ? editor.chain().focus().toggleHeading({ level: 1 }).run() : setHeading(1)}
-        active={editor?.isActive('heading', { level: 1 })}
-        title="Heading 1"
-      >
-        H1
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor ? editor.chain().focus().toggleHeading({ level: 2 }).run() : setHeading(2)}
-        active={editor?.isActive('heading', { level: 2 })}
-        title="Heading 2"
-      >
-        H2
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor ? editor.chain().focus().toggleHeading({ level: 3 }).run() : setHeading(3)}
-        active={editor?.isActive('heading', { level: 3 })}
-        title="Heading 3"
-      >
-        H3
-      </ToolbarButton>
-
-      <Divider />
-
-      {/* Text formatting */}
-      <ToolbarButton
-        onClick={() => editor ? editor.chain().focus().toggleBold().run() : wrapSelection('**', '**')}
-        active={editor?.isActive('bold')}
-        title="Bold (⌘B)"
-      >
-        <span className="font-bold">B</span>
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor ? editor.chain().focus().toggleItalic().run() : wrapSelection('*', '*')}
-        active={editor?.isActive('italic')}
-        title="Italic (⌘I)"
-      >
-        <span className="italic">I</span>
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor ? editor.chain().focus().toggleStrike().run() : wrapSelection('~~', '~~')}
-        active={editor?.isActive('strike')}
-        title="Strikethrough"
-      >
-        <span className="line-through">S</span>
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor ? editor.chain().focus().toggleCode().run() : wrapSelection('`', '`')}
-        active={editor?.isActive('code')}
-        title="Inline code"
-      >
-        <span className="font-mono text-xs">&lt;/&gt;</span>
-      </ToolbarButton>
-
-      <Divider />
-
-      {/* Lists */}
-      <ToolbarButton
-        onClick={() => editor ? editor.chain().focus().toggleBulletList().run() : insertBlock('- ')}
-        active={editor?.isActive('bulletList')}
-        title="Bullet list"
-      >
-        <BulletListIcon />
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor ? editor.chain().focus().toggleOrderedList().run() : insertBlock('1. ')}
-        active={editor?.isActive('orderedList')}
-        title="Numbered list"
-      >
-        <NumberedListIcon />
-      </ToolbarButton>
-
-      <Divider />
-
-      {/* Block elements */}
-      <ToolbarButton
-        onClick={() => editor ? editor.chain().focus().toggleBlockquote().run() : insertBlock('> ')}
-        active={editor?.isActive('blockquote')}
-        title="Blockquote"
-      >
-        <BlockquoteIcon />
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor ? editor.chain().focus().toggleCodeBlock().run() : wrapSelection('```\n', '\n```')}
-        active={editor?.isActive('codeBlock')}
-        title="Code block"
-      >
-        <CodeBlockIcon />
-      </ToolbarButton>
-      <ToolbarButton onClick={handleHorizontalRule} title="Horizontal rule">
-        <HorizontalRuleIcon />
-      </ToolbarButton>
-
-      <Divider />
-
-      {/* Link and Image */}
-      <ToolbarButton
-        onClick={handleLinkClick}
-        active={editor?.isActive('link')}
-        title="Insert link"
-      >
-        <LinkIcon />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => fileInputRef.current?.click()} title="Insert image">
-        <ImageIcon />
-      </ToolbarButton>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleImageUpload}
-        className="hidden"
+      <FormatButtons
+        editor={editor}
+        textareaRef={textareaRef}
+        markdown={markdown}
+        onMarkdownChange={onMarkdownChange}
       />
 
-      {/* Clear formatting */}
-      <ToolbarButton onClick={handleClearFormatting} title="Clear formatting">
-        <ClearFormattingIcon />
-      </ToolbarButton>
+      <Divider />
+
+      <BlockButtons
+        editor={editor}
+        textareaRef={textareaRef}
+        markdown={markdown}
+        onMarkdownChange={onMarkdownChange}
+      />
 
       <Divider />
 
-      {/* Undo/Redo */}
-      <ToolbarButton
-        onClick={handleUndo}
-        disabled={editor ? !editor.can().undo() : false}
-        title="Undo (⌘Z)"
-      >
-        <UndoIcon />
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={handleRedo}
-        disabled={editor ? !editor.can().redo() : false}
-        title="Redo (⌘⇧Z)"
-      >
-        <RedoIcon />
-      </ToolbarButton>
+      <MediaButtons
+        editor={editor}
+        textareaRef={textareaRef}
+        markdown={markdown}
+        onMarkdownChange={onMarkdownChange}
+      />
 
-      {/* Markdown/Rich Text mode toggle */}
-      {setShowMarkdown && (
-        <>
-          <Divider />
-          <ToolbarButton
-            onClick={() => setShowMarkdown(!showMarkdown)}
-            active={showMarkdown}
-            title={showMarkdown ? 'Switch to rich text editor' : 'Switch to markdown mode'}
-          >
-            <span className="font-mono text-xs">MD</span>
-          </ToolbarButton>
-        </>
-      )}
+      <Divider />
 
-      {/* Revision History */}
-      {revisions && (
-        <>
-          <Divider />
-          <RevisionHistoryDropdown
-            revisions={revisions.list}
-            loading={revisions.loading}
-            previewLoading={revisions.previewLoading}
-            disabled={!postSlug}
-            isPreviewMode={!!revisions.previewing}
-            onOpen={revisions.fetch}
-            onSelect={revisions.preview}
-          />
-        </>
-      )}
-
-      {/* AI Generate */}
-      {onOpenGenerate && (
-        <>
-          <Divider />
-          <ToolbarButton
-            onClick={onOpenGenerate}
-            disabled={aiGenerating}
-            title="Generate with AI"
-          >
-            <SparklesIcon />
-          </ToolbarButton>
-        </>
-      )}
-
-      {/* AI Rewrite (only in rich text mode with selection) */}
-      {editor && (
-        <>
-          <ToolbarButton
-            onClick={handleRewrite}
-            disabled={!hasSelection || isRewriting || aiGenerating}
-            title={hasSelection ? 'Rewrite selection with AI' : 'Select text to rewrite'}
-          >
-            {isRewriting ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <WandIcon />
-            )}
-          </ToolbarButton>
-        </>
-      )}
+      <HistoryButtons
+        editor={editor}
+        textareaRef={textareaRef}
+        showMarkdown={showMarkdown}
+        setShowMarkdown={setShowMarkdown}
+        postSlug={postSlug}
+        revisions={revisions}
+        onOpenGenerate={onOpenGenerate}
+        aiGenerating={aiGenerating}
+      />
     </div>
   )
 }

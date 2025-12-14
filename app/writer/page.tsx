@@ -4,29 +4,13 @@ import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { PageLoader } from '@/components/PageLoader'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
-import { PlusIcon, MoreVerticalIcon } from '@/components/Icons'
-import { formatRelativeTime, formatNumber } from '@/lib/utils/format'
+import { PlusIcon } from '@/components/Icons'
+import { formatNumber } from '@/lib/utils/format'
 import { confirmPublish, confirmUnpublish } from '@/lib/utils/confirm'
 import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
 import { HOMEPAGE } from '@/lib/homepage'
-
-interface Post {
-  id: string
-  title: string
-  slug: string
-  status: 'draft' | 'published' | 'deleted'
-  wordCount: number
-  updatedAt: string
-  publishedAt: string | null
-}
+import { PostItem, type Post } from '@/components/writer/PostItem'
 
 export default function Dashboard() {
   const router = useRouter()
@@ -181,68 +165,6 @@ export default function Dashboard() {
           <p className="text-muted-foreground">No published articles</p>
         )}
       </section>
-    </div>
-  )
-}
-
-function PostItem({ 
-  post, 
-  onDelete, 
-  onUnpublish,
-  onPublish,
-}: { 
-  post: Post
-  onDelete: (id: string) => void
-  onUnpublish: (id: string) => void
-  onPublish: (id: string) => void
-}) {
-  return (
-    <div className="flex items-center justify-between py-4 border-b border-border group">
-      <div className="flex-1 min-w-0">
-        <Link href={`/writer/editor/${post.slug}`} className="block">
-          <h3 className="font-medium truncate group-hover:text-muted-foreground">
-            {post.title || 'Untitled'}
-          </h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            {formatRelativeTime(post.updatedAt)} · {post.wordCount} words
-          </p>
-        </Link>
-      </div>
-      
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon">
-            <MoreVerticalIcon className="text-muted-foreground" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem asChild>
-            <Link href={`/writer/editor/${post.slug}`}>Edit</Link>
-          </DropdownMenuItem>
-          {post.status === 'draft' && (
-            <DropdownMenuItem onClick={() => onPublish(post.id)}>
-              Publish
-            </DropdownMenuItem>
-          )}
-          {post.status === 'published' && (
-            <>
-              <DropdownMenuItem asChild>
-                <Link href={`/e/${post.slug}`} target="_blank">View Live</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onUnpublish(post.id)}>
-                Unpublish
-              </DropdownMenuItem>
-            </>
-          )}
-          <DropdownMenuSeparator />
-          <DropdownMenuItem 
-            onClick={() => onDelete(post.id)}
-            className="text-destructive focus:text-destructive"
-          >
-            Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
     </div>
   )
 }

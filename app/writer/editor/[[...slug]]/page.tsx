@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { useRouter } from 'next/navigation'
 import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
 import { usePostEditor } from '@/lib/editor/usePostEditor'
+import { useChatContext } from '@/lib/chat'
 import { PageLoader } from '@/components/PageLoader'
 import { CenteredPage } from '@/components/CenteredPage'
 import { TiptapEditor, EditorToolbar } from '@/components/TiptapEditor'
@@ -13,7 +14,6 @@ import { PostMetadataFooter } from '@/components/editor/PostMetadataFooter'
 import { RevisionPreviewBanner } from '@/components/editor/RevisionPreviewBanner'
 import { GenerateModal } from '@/components/editor/GenerateModal'
 import { AIPreviewBanner } from '@/components/editor/AIPreviewBanner'
-import { ChatPanel } from '@/components/ChatPanel'
 import { ArticleLayout } from '@/components/ArticleLayout'
 import { ArticleHeader } from '@/components/ArticleHeader'
 import { CheckIcon } from '@/components/Icons'
@@ -58,10 +58,24 @@ export default function Editor() {
     ai,
   } = usePostEditor(postSlug)
 
+  // Chat context - sync essay content for AI awareness
+  const { setEssayContext, setIsOpen: setShowChatPanel } = useChatContext()
+
+  // Keep essay context in sync with current post content
+  useEffect(() => {
+    if (!ui.loading) {
+      setEssayContext({
+        title: post.title,
+        subtitle: post.subtitle,
+        markdown: post.markdown,
+      })
+    }
+    // Clear context when leaving the editor
+    return () => setEssayContext(null)
+  }, [post.title, post.subtitle, post.markdown, ui.loading, setEssayContext])
+
   // Generate modal state
   const [showGenerateModal, setShowGenerateModal] = useState(false)
-  // Chat panel state
-  const [showChatPanel, setShowChatPanel] = useState(false)
 
   // Keyboard shortcuts
   useKeyboard([
@@ -227,12 +241,6 @@ export default function Editor() {
         onGenerate={ai.generate}
         generating={ai.generating}
         hasExistingContent={!!(post.title.trim() || post.markdown.trim())}
-      />
-
-      {/* Chat Panel */}
-      <ChatPanel
-        open={showChatPanel}
-        onClose={() => setShowChatPanel(false)}
       />
     </div>
   )

@@ -6,7 +6,8 @@ import type { Editor as EditorInstance } from '@tiptap/react'
 import { generateSlug } from '@/lib/markdown'
 import { getRandomShape } from '@/lib/polyhedra/shapes'
 import { confirmPublish, confirmUnpublish } from '@/lib/utils/confirm'
-import type { RevisionSummary, RevisionFull, StashedContent, RevisionState, AIPreview, AIState } from './types'
+import { useContentStash } from './useContentStash'
+import type { RevisionSummary, RevisionFull, RevisionState, AIPreview, AIState } from './types'
 
 export interface PostContent {
   title: string
@@ -114,7 +115,9 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
   const [revisionsLoading, setRevisionsLoading] = useState(false)
   const [previewLoading, setPreviewLoading] = useState(false)
   const [previewingRevision, setPreviewingRevision] = useState<RevisionFull | null>(null)
-  const stashedContent = useRef<StashedContent | null>(null)
+  
+  // Shared stash for preview modes (revision preview and AI generation)
+  const stash = useContentStash()
 
   // AI generation state
   const [aiGenerating, setAiGenerating] = useState(false)
@@ -369,7 +372,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
     setPreviewLoading(true)
     try {
       // 1. Stash current content BEFORE making any changes
-      stashedContent.current = { title, subtitle, markdown, polyhedraShape }
+      stash.save({ title, subtitle, markdown, polyhedraShape })
 
       // 2. Fetch full revision
       const res = await fetch(`/api/admin/revisions/${revisionId}`)
@@ -380,7 +383,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
       setTitle(revision.title ?? '')
       setSubtitle(revision.subtitle ?? '')
       setMarkdown(revision.markdown)
-      setPolyhedraShape(revision.polyhedraShape ?? stashedContent.current.polyhedraShape)
+      setPolyhedraShape(revision.polyhedraShape ?? stash.current?.polyhedraShape ?? 'cube')
 
       // 4. Directly update editor content (sync effect may not trigger due to React batching)
       if (editor) {
@@ -394,50 +397,49 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
       editor?.setEditable(false)
     } catch (err) {
       // Rollback stash on error
-      stashedContent.current = null
+      stash.clear()
       alert('Failed to load revision. Please try again.')
       console.error(err)
     } finally {
       setPreviewLoading(false)
     }
-  }, [title, subtitle, markdown, polyhedraShape, editor])
+  }, [title, subtitle, markdown, polyhedraShape, editor, stash])
 
   // Cancel preview (restore stashed content)
   const cancelPreview = useCallback(async () => {
-    if (!stashedContent.current) return
+    const stashed = stash.restore()
+    if (!stashed) return
 
     // Restore stashed content
-    const stash = stashedContent.current
-    setTitle(stash.title)
-    setSubtitle(stash.subtitle)
-    setMarkdown(stash.markdown)
-    setPolyhedraShape(stash.polyhedraShape)
+    setTitle(stashed.title)
+    setSubtitle(stashed.subtitle)
+    setMarkdown(stashed.markdown)
+    setPolyhedraShape(stashed.polyhedraShape)
 
     // Directly update editor content
     if (editor) {
       const { markdownToHtml } = await import('@/lib/markdown')
-      const html = markdownToHtml(stash.markdown)
+      const html = markdownToHtml(stashed.markdown)
       editor.commands.setContent(html, { emitUpdate: false })
     }
 
     // Clear preview state
     setPreviewingRevision(null)
-    stashedContent.current = null
 
     // Re-enable editing
     editor?.setEditable(true)
-  }, [editor])
+  }, [editor, stash])
 
   // Confirm restore (save stashed content first, then apply revision)
   const confirmRestore = useCallback(async () => {
-    if (!previewingRevision || !stashedContent.current) return
+    if (!previewingRevision || !stash.current) return
 
     try {
       // 1. Save stashed content first (creates revision for undo)
       const saveRes = await fetch(`/api/posts/by-slug/${urlSlugRef.current}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(stashedContent.current),
+        body: JSON.stringify(stash.current),
       })
       if (!saveRes.ok) throw new Error('Failed to save current content')
 
@@ -449,7 +451,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
 
       // 3. Clear preview state
       setPreviewingRevision(null)
-      stashedContent.current = null
+      stash.clear()
 
       // 4. Re-enable editing
       editor?.setEditable(true)
@@ -464,7 +466,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
       alert('Failed to restore revision. Please try again.')
       console.error(err)
     }
-  }, [previewingRevision, editor, fetchRevisions])
+  }, [previewingRevision, editor, fetchRevisions, stash])
 
   // Generate content with AI (streaming)
   const generateWithAI = useCallback(async (prompt: string, length: string, modelId?: string) => {
@@ -476,7 +478,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
     
     try {
       // 1. Stash current content
-      stashedContent.current = { title, subtitle, markdown, polyhedraShape }
+      stash.save({ title, subtitle, markdown, polyhedraShape })
 
       // 2. Clear current content and disable editing
       setTitle('')
@@ -556,19 +558,17 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
         })
       } else {
         // No content generated, restore stash
-        if (stashedContent.current) {
-          const stash = stashedContent.current
-          setTitle(stash.title)
-          setSubtitle(stash.subtitle)
-          setMarkdown(stash.markdown)
-          setPolyhedraShape(stash.polyhedraShape)
+        const stashed = stash.restore()
+        if (stashed) {
+          setTitle(stashed.title)
+          setSubtitle(stashed.subtitle)
+          setMarkdown(stashed.markdown)
+          setPolyhedraShape(stashed.polyhedraShape)
           
           if (editor) {
-            const html = markdownToHtml(stash.markdown)
+            const html = markdownToHtml(stashed.markdown)
             editor.commands.setContent(html, { emitUpdate: false })
           }
-          
-          stashedContent.current = null
         }
         editor?.setEditable(true)
       }
@@ -581,20 +581,18 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
       }
       
       // Rollback stash on error
-      if (stashedContent.current) {
-        const stash = stashedContent.current
-        setTitle(stash.title)
-        setSubtitle(stash.subtitle)
-        setMarkdown(stash.markdown)
-        setPolyhedraShape(stash.polyhedraShape)
+      const stashed = stash.restore()
+      if (stashed) {
+        setTitle(stashed.title)
+        setSubtitle(stashed.subtitle)
+        setMarkdown(stashed.markdown)
+        setPolyhedraShape(stashed.polyhedraShape)
         
         if (editor) {
           const { markdownToHtml } = await import('@/lib/markdown')
-          const html = markdownToHtml(stash.markdown)
+          const html = markdownToHtml(stashed.markdown)
           editor.commands.setContent(html, { emitUpdate: false })
         }
-        
-        stashedContent.current = null
       }
       editor?.setEditable(true)
       alert(err instanceof Error ? err.message : 'Generation failed')
@@ -603,43 +601,42 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
       setAiGenerating(false)
       aiAbortController.current = null
     }
-  }, [title, subtitle, markdown, polyhedraShape, editor])
+  }, [title, subtitle, markdown, polyhedraShape, editor, stash])
 
   // Accept AI-generated content
   const acceptAiDraft = useCallback(() => {
     // Clear stash and preview state, keep the content
-    stashedContent.current = null
+    stash.clear()
     setAiPreview(null)
     editor?.setEditable(true)
     // Mark as having unsaved changes so it will save
     setHasEditedSinceLastSave(true)
-  }, [editor])
+  }, [editor, stash])
 
   // Discard AI-generated content and restore original
   const discardAiDraft = useCallback(async () => {
-    if (!stashedContent.current) return
+    const stashed = stash.restore()
+    if (!stashed) return
 
     // Restore stashed content
-    const stash = stashedContent.current
-    setTitle(stash.title)
-    setSubtitle(stash.subtitle)
-    setMarkdown(stash.markdown)
-    setPolyhedraShape(stash.polyhedraShape)
+    setTitle(stashed.title)
+    setSubtitle(stashed.subtitle)
+    setMarkdown(stashed.markdown)
+    setPolyhedraShape(stashed.polyhedraShape)
 
     // Directly update editor content
     if (editor) {
       const { markdownToHtml } = await import('@/lib/markdown')
-      const html = markdownToHtml(stash.markdown)
+      const html = markdownToHtml(stashed.markdown)
       editor.commands.setContent(html, { emitUpdate: false })
     }
 
     // Clear AI preview state
     setAiPreview(null)
-    stashedContent.current = null
 
     // Re-enable editing
     editor?.setEditable(true)
-  }, [editor])
+  }, [editor, stash])
 
   // Stop AI generation in progress
   const stopAiGeneration = useCallback(() => {

@@ -3,11 +3,12 @@ import { requireSession, unauthorized, badRequest } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { generateChatStream, ChatMessage } from '@/lib/ai/provider'
 import { getModel, AI_MODELS } from '@/lib/ai/models'
-import { getStyleContext, buildChatPrompt } from '@/lib/ai/system-prompt'
+import { getStyleContext, buildChatPromptWithEssay, EssayContext } from '@/lib/ai/system-prompt'
 
 interface ChatRequest {
   messages: ChatMessage[]
   modelId?: string
+  essayContext?: EssayContext | null
 }
 
 // POST /api/ai/chat - Streaming chat for brainstorming essays
@@ -33,9 +34,9 @@ export async function POST(request: NextRequest) {
     return badRequest(`Unknown model: ${modelId}. Available: ${AI_MODELS.map(m => m.id).join(', ')}`)
   }
 
-  // Build system prompt with style context
+  // Build system prompt with style context and optional essay context
   const context = await getStyleContext()
-  const systemPrompt = buildChatPrompt(context)
+  const systemPrompt = buildChatPromptWithEssay(context, body.essayContext)
 
   try {
     const encoder = new TextEncoder()

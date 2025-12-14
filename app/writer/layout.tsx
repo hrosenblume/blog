@@ -2,11 +2,12 @@
 
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter, usePathname } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import Link from 'next/link'
 import { PageLoader } from '@/components/PageLoader'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { ChatPanel } from '@/components/ChatPanel'
+import { ChatProvider, useChatContext } from '@/lib/chat'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,7 +18,7 @@ import {
 import { ExternalLinkIcon, ChatIcon } from '@/components/Icons'
 import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
 
-export default function WriterLayout({
+function WriterLayoutContent({
   children,
 }: {
   children: React.ReactNode
@@ -25,7 +26,7 @@ export default function WriterLayout({
   const { data: session, status } = useSession()
   const router = useRouter()
   const pathname = usePathname()
-  const [chatOpen, setChatOpen] = useState(false)
+  const { isOpen: chatOpen, setIsOpen: setChatOpen } = useChatContext()
   
   const isEditor = pathname?.startsWith('/writer/editor')
 
@@ -141,7 +142,19 @@ export default function WriterLayout({
       </main>
       
       {/* Chat Panel */}
-      <ChatPanel open={chatOpen} onClose={() => setChatOpen(false)} />
+      <ChatPanel />
     </div>
+  )
+}
+
+export default function WriterLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <ChatProvider>
+      <WriterLayoutContent>{children}</WriterLayoutContent>
+    </ChatProvider>
   )
 }
