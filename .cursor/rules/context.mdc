@@ -162,9 +162,11 @@ model AISettings {
   id               String   @id @default("default")
   rules            String   @default("")
   chatRules        String   @default("")
+  rewriteRules     String?  // Specific rules for rewrite tool
   defaultModel     String   @default("claude-sonnet")
   generateTemplate String?  // Custom generate prompt template
   chatTemplate     String?  // Custom chat prompt template
+  rewriteTemplate  String?  // Custom rewrite prompt template
   updatedAt        DateTime @updatedAt
 }
 
@@ -260,20 +262,23 @@ Generate essays using Anthropic (Claude) or OpenAI (GPT-4):
 - **Models**: `lib/ai/models.ts` — Claude Sonnet 4, Opus 4, GPT-4o, GPT-4o Mini
 - **Provider**: `lib/ai/provider.ts` — Unified interface for both SDKs
 - **System prompts**: `lib/ai/system-prompt.ts` — Shared prompt builders for generate/chat/rewrite
-- **Settings**: `AISettings` Prisma model — essay rules, chat rules, default model, prompt templates (persisted in DB)
+- **Settings**: `AISettings` Prisma model — essay rules, chat rules, rewrite rules, default model, prompt templates (persisted in DB)
   - `rules` — Style/format rules applied during essay generation and rewriting
   - `chatRules` — Behavior rules for brainstorming conversations (personality, interaction style)
+  - `rewriteRules` — Specific rules for the rewrite tool (cleanup behavior)
   - `generateTemplate` — Custom system prompt template for essay generation (nullable, falls back to default)
   - `chatTemplate` — Custom system prompt template for chat/brainstorming (nullable, falls back to default)
+  - `rewriteTemplate` — Custom system prompt template for rewriting (nullable, falls back to default)
 - **Prompt templates**: Editable via collapsible UI in admin, with placeholder substitution:
   - `{{RULES}}` — Replaced with essay writing rules
   - `{{CHAT_RULES}}` — Replaced with chat behavior rules
+  - `{{REWRITE_RULES}}` — Replaced with rewrite-specific rules
   - `{{STYLE_EXAMPLES}}` — Replaced with all published essays as style reference
 - **API**: `/api/ai/generate` (generate content), `/api/ai/settings` (CRUD settings)
 - **Components**:
   - `GenerateModal` — Prompt input, model selection, length picker
   - `AIPreviewBanner` — Accept/discard generated content
-- **Admin UI**: `/admin/ai` — Configure essay writing rules, chat behavior rules, default model, and editable prompt templates
+- **Admin UI**: `/admin/ai` — Configure essay writing rules, chat behavior rules, rewrite rules, default model, and editable prompt templates
 - **Flow**: Toolbar button → GenerateModal → API call → Preview banner → Accept/Discard
 - **Context injection**: System prompt includes custom rules first (override everything), then all published posts as style examples
 - **Env vars**: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` (at least one required)

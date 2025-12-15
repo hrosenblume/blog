@@ -94,6 +94,8 @@ model AISettings {
   openaiApiKey     String?
   generateTemplate String?  // Custom generate prompt template
   chatTemplate     String?  // Custom chat prompt template
+  rewriteRules     String?  // Specific rules for magic pencil rewrites
+  rewriteTemplate  String?  // Custom rewrite prompt template
   updatedAt        DateTime @updatedAt
 }
 

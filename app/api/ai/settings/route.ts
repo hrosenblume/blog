@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { withSession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { AI_MODELS } from '@/lib/ai/models'
-import { DEFAULT_GENERATE_TEMPLATE, DEFAULT_CHAT_TEMPLATE } from '@/lib/ai/system-prompt'
+import { DEFAULT_GENERATE_TEMPLATE, DEFAULT_CHAT_TEMPLATE, DEFAULT_REWRITE_TEMPLATE } from '@/lib/ai/system-prompt'
 
 // GET /api/ai/settings - Get current AI settings
 export const GET = withSession(async () => {
@@ -21,11 +21,14 @@ export const GET = withSession(async () => {
   return NextResponse.json({
     rules: settings.rules,
     chatRules: settings.chatRules,
+    rewriteRules: settings.rewriteRules,
     defaultModel: settings.defaultModel,
     generateTemplate: settings.generateTemplate,
     chatTemplate: settings.chatTemplate,
+    rewriteTemplate: settings.rewriteTemplate,
     defaultGenerateTemplate: DEFAULT_GENERATE_TEMPLATE,
     defaultChatTemplate: DEFAULT_CHAT_TEMPLATE,
+    defaultRewriteTemplate: DEFAULT_REWRITE_TEMPLATE,
     availableModels: AI_MODELS.map(m => ({
       id: m.id,
       name: m.name,
@@ -41,9 +44,11 @@ export const PATCH = withSession(async (request: NextRequest) => {
   const updateData: { 
     rules?: string
     chatRules?: string
+    rewriteRules?: string
     defaultModel?: string
     generateTemplate?: string | null
     chatTemplate?: string | null
+    rewriteTemplate?: string | null
   } = {}
 
   if (typeof body.rules === 'string') {
@@ -52,6 +57,10 @@ export const PATCH = withSession(async (request: NextRequest) => {
 
   if (typeof body.chatRules === 'string') {
     updateData.chatRules = body.chatRules
+  }
+
+  if (typeof body.rewriteRules === 'string') {
+    updateData.rewriteRules = body.rewriteRules
   }
 
   if (typeof body.defaultModel === 'string') {
@@ -75,6 +84,10 @@ export const PATCH = withSession(async (request: NextRequest) => {
     updateData.chatTemplate = body.chatTemplate
   }
 
+  if (body.rewriteTemplate !== undefined) {
+    updateData.rewriteTemplate = body.rewriteTemplate
+  }
+
   const settings = await prisma.aISettings.upsert({
     where: { id: 'default' },
     update: updateData,
@@ -82,17 +95,21 @@ export const PATCH = withSession(async (request: NextRequest) => {
       id: 'default',
       rules: updateData.rules || '',
       chatRules: updateData.chatRules || '',
+      rewriteRules: updateData.rewriteRules,
       defaultModel: updateData.defaultModel || 'claude-sonnet',
       generateTemplate: updateData.generateTemplate,
       chatTemplate: updateData.chatTemplate,
+      rewriteTemplate: updateData.rewriteTemplate,
     },
   })
 
   return NextResponse.json({
     rules: settings.rules,
     chatRules: settings.chatRules,
+    rewriteRules: settings.rewriteRules,
     defaultModel: settings.defaultModel,
     generateTemplate: settings.generateTemplate,
     chatTemplate: settings.chatTemplate,
+    rewriteTemplate: settings.rewriteTemplate,
   })
 })

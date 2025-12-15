@@ -20,12 +20,15 @@ import type { AIModelOption } from '@/lib/ai/models'
 export default function AISettingsPage() {
   const [rules, setRules] = useState('')
   const [chatRules, setChatRules] = useState('')
+  const [rewriteRules, setRewriteRules] = useState('')
   const [defaultModel, setDefaultModel] = useState('claude-sonnet')
   const [models, setModels] = useState<AIModelOption[]>([])
   const [generateTemplate, setGenerateTemplate] = useState<string | null>(null)
   const [chatTemplate, setChatTemplate] = useState<string | null>(null)
+  const [rewriteTemplate, setRewriteTemplate] = useState<string | null>(null)
   const [defaultGenerateTemplate, setDefaultGenerateTemplate] = useState('')
   const [defaultChatTemplate, setDefaultChatTemplate] = useState('')
+  const [defaultRewriteTemplate, setDefaultRewriteTemplate] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -37,12 +40,15 @@ export default function AISettingsPage() {
       .then(data => {
         setRules(data.rules || '')
         setChatRules(data.chatRules || '')
+        setRewriteRules(data.rewriteRules || '')
         setDefaultModel(data.defaultModel || 'claude-sonnet')
         setModels(data.availableModels || [])
         setGenerateTemplate(data.generateTemplate)
         setChatTemplate(data.chatTemplate)
+        setRewriteTemplate(data.rewriteTemplate)
         setDefaultGenerateTemplate(data.defaultGenerateTemplate || '')
         setDefaultChatTemplate(data.defaultChatTemplate || '')
+        setDefaultRewriteTemplate(data.defaultRewriteTemplate || '')
       })
       .catch(console.error)
       .finally(() => setLoading(false))
@@ -57,10 +63,12 @@ export default function AISettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           rules, 
-          chatRules, 
+          chatRules,
+          rewriteRules,
           defaultModel,
           generateTemplate,
           chatTemplate,
+          rewriteTemplate,
         }),
       })
       setSaved(true)
@@ -76,10 +84,12 @@ export default function AISettingsPage() {
   // Get the effective template (custom or default)
   const effectiveGenerateTemplate = generateTemplate ?? defaultGenerateTemplate
   const effectiveChatTemplate = chatTemplate ?? defaultChatTemplate
+  const effectiveRewriteTemplate = rewriteTemplate ?? defaultRewriteTemplate
 
   // Check if using custom template
   const isCustomGenerateTemplate = generateTemplate !== null
   const isCustomChatTemplate = chatTemplate !== null
+  const isCustomRewriteTemplate = rewriteTemplate !== null
 
   if (loading) {
     return (
@@ -217,6 +227,56 @@ export default function AISettingsPage() {
                     value={effectiveChatTemplate}
                     onChange={e => setChatTemplate(e.target.value)}
                     className="min-h-[300px] font-mono text-xs resize-none"
+                    disabled={saving}
+                  />
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="rewriteRules">Rewrite Rules</Label>
+            <p className="text-sm text-muted-foreground">
+              Rules for cleaning up selected text with the rewrite tool. Controls how content is polished.
+            </p>
+            <Textarea
+              id="rewriteRules"
+              value={rewriteRules}
+              onChange={e => setRewriteRules(e.target.value)}
+              placeholder={`- Keep the same meaning, improve clarity
+- Maintain sentence length variety
+- Remove filler words
+- Don't add new ideas`}
+              className="min-h-[140px] font-mono text-sm resize-none"
+              disabled={saving}
+            />
+            <Collapsible>
+              <CollapsibleTrigger className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground cursor-pointer">
+                <ChevronDown className="h-4 w-4 transition-transform [[data-state=open]>&]:rotate-180" />
+                {isCustomRewriteTemplate ? 'Edit prompt template (customized)' : 'Edit prompt template'}
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="mt-2 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">
+                      Placeholders: <code className="bg-muted px-1 rounded">{'{{RULES}}'}</code>, <code className="bg-muted px-1 rounded">{'{{REWRITE_RULES}}'}</code>, <code className="bg-muted px-1 rounded">{'{{STYLE_EXAMPLES}}'}</code>
+                    </p>
+                    {isCustomRewriteTemplate && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setRewriteTemplate(null)}
+                        className="h-7 text-xs"
+                      >
+                        <RotateCcw className="h-3 w-3 mr-1" />
+                        Reset to default
+                      </Button>
+                    )}
+                  </div>
+                  <Textarea
+                    value={effectiveRewriteTemplate}
+                    onChange={e => setRewriteTemplate(e.target.value)}
+                    className="min-h-[250px] font-mono text-xs resize-none"
                     disabled={saving}
                   />
                 </div>

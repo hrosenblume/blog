@@ -33,6 +33,9 @@ export const DEFAULT_REWRITE_TEMPLATE = `You are a writing assistant that rewrit
 ## Writing Rules (Follow these exactly)
 {{RULES}}
 
+## Rewrite Rules (Follow these for cleanup)
+{{REWRITE_RULES}}
+
 ## Style Reference (The author writes like this)
 {{STYLE_EXAMPLES}}
 
@@ -43,9 +46,11 @@ Your task is to rewrite the given text to be cleaner and more in line with the a
 export interface StyleContext {
   customRules: string
   chatRules: string
+  rewriteRules: string
   styleExamples: string
   generateTemplate: string | null
   chatTemplate: string | null
+  rewriteTemplate: string | null
 }
 
 /**
@@ -55,15 +60,18 @@ function applyPlaceholders(
   template: string,
   customRules: string,
   chatRules: string,
+  rewriteRules: string,
   styleExamples: string
 ): string {
   const rulesValue = customRules || 'No specific rules provided. Match the style of the examples.'
   const chatRulesValue = chatRules || 'Be direct, insightful, and push back on vague ideas. Ask clarifying questions when needed.'
+  const rewriteRulesValue = rewriteRules || 'Keep the same meaning. Improve clarity and flow. Remove filler words.'
   const styleValue = styleExamples || 'No published essays available. Write in a clear, personal essay style.'
 
   return template
     .replace(/\{\{RULES\}\}/g, rulesValue)
     .replace(/\{\{CHAT_RULES\}\}/g, chatRulesValue)
+    .replace(/\{\{REWRITE_RULES\}\}/g, rewriteRulesValue)
     .replace(/\{\{STYLE_EXAMPLES\}\}/g, styleValue)
 }
 
@@ -76,8 +84,10 @@ export async function getStyleContext(): Promise<StyleContext> {
   const settings = await prisma.aISettings.findUnique({ where: { id: 'default' } })
   const customRules = settings?.rules || ''
   const chatRules = settings?.chatRules || ''
+  const rewriteRules = settings?.rewriteRules || ''
   const generateTemplate = settings?.generateTemplate || null
   const chatTemplate = settings?.chatTemplate || null
+  const rewriteTemplate = settings?.rewriteTemplate || null
 
   // Fetch all published posts for style context
   const publishedPosts = await prisma.post.findMany({
@@ -94,7 +104,7 @@ export async function getStyleContext(): Promise<StyleContext> {
     })
     .join('\n\n---\n\n')
 
-  return { customRules, chatRules, styleExamples, generateTemplate, chatTemplate }
+  return { customRules, chatRules, rewriteRules, styleExamples, generateTemplate, chatTemplate, rewriteTemplate }
 }
 
 /**
@@ -102,7 +112,7 @@ export async function getStyleContext(): Promise<StyleContext> {
  */
 export function buildGeneratePrompt(context: StyleContext): string {
   const template = context.generateTemplate || DEFAULT_GENERATE_TEMPLATE
-  return applyPlaceholders(template, context.customRules, context.chatRules, context.styleExamples)
+  return applyPlaceholders(template, context.customRules, context.chatRules, context.rewriteRules, context.styleExamples)
 }
 
 /**
@@ -110,7 +120,7 @@ export function buildGeneratePrompt(context: StyleContext): string {
  */
 export function buildChatPrompt(context: StyleContext): string {
   const template = context.chatTemplate || DEFAULT_CHAT_TEMPLATE
-  return applyPlaceholders(template, context.customRules, context.chatRules, context.styleExamples)
+  return applyPlaceholders(template, context.customRules, context.chatRules, context.rewriteRules, context.styleExamples)
 }
 
 export interface EssayContext {
@@ -150,9 +160,9 @@ ${essay.markdown}`
 
 /**
  * Build a system prompt for rewriting selected text.
- * Uses the generate template for consistency (rewrite follows same rules).
+ * Uses rewrite-specific rules and template for cleanup operations.
  */
 export function buildRewritePrompt(context: StyleContext): string {
-  // Rewrite uses the same rules as generate, but with rewrite-specific framing
-  return applyPlaceholders(DEFAULT_REWRITE_TEMPLATE, context.customRules, context.chatRules, context.styleExamples)
+  const template = context.rewriteTemplate || DEFAULT_REWRITE_TEMPLATE
+  return applyPlaceholders(template, context.customRules, context.chatRules, context.rewriteRules, context.styleExamples)
 }
