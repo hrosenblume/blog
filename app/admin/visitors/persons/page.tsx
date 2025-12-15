@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/db'
-import { ITEMS_PER_PAGE, parsePaginationParams } from '@/lib/admin'
+import { parsePaginationParams, paginateArray } from '@/lib/admin'
 import { getLeadDisplayName } from '@/lib/leads'
 import { Pagination } from '@/components/admin/Pagination'
 import { AdminTable, AdminTableRow } from '@/components/admin/AdminTable'
@@ -12,36 +12,26 @@ interface PageProps {
 }
 
 export default async function PersonVisitorsPage({ searchParams }: PageProps) {
-  const { currentPage, skip } = await parsePaginationParams(searchParams)
+  const { currentPage } = await parsePaginationParams(searchParams)
 
   // Get identified persons (have email or name)
   // Fetch all to sort by last visit, then paginate
-  const [allLeads, totalCount] = await Promise.all([
-    prisma.lead.findMany({
-      where: {
-        OR: [
-          { email: { not: null } },
-          { firstName: { not: null } },
-        ],
+  const allLeads = await prisma.lead.findMany({
+    where: {
+      OR: [
+        { email: { not: null } },
+        { firstName: { not: null } },
+      ],
+    },
+    include: {
+      _count: { select: { visits: true } },
+      visits: {
+        select: { visitedAt: true },
+        orderBy: { visitedAt: 'desc' },
+        take: 1,
       },
-      include: {
-        _count: { select: { visits: true } },
-        visits: {
-          select: { visitedAt: true },
-          orderBy: { visitedAt: 'desc' },
-          take: 1,
-        },
-      },
-    }),
-    prisma.lead.count({
-      where: {
-        OR: [
-          { email: { not: null } },
-          { firstName: { not: null } },
-        ],
-      },
-    }),
-  ])
+    },
+  })
 
   // Sort by last seen (most recent first)
   const sortedLeads = allLeads.sort((a, b) => {
@@ -51,9 +41,7 @@ export default async function PersonVisitorsPage({ searchParams }: PageProps) {
   })
 
   // Paginate after sorting
-  const leads = sortedLeads.slice(skip, skip + ITEMS_PER_PAGE)
-
-  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)
+  const { items: leads, total: totalCount, totalPages } = paginateArray(sortedLeads, currentPage)
 
   const columns = [
     { header: 'Name' },

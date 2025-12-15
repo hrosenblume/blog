@@ -1,6 +1,7 @@
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
 import { getRandomShape } from '@/lib/polyhedra/shapes'
+import { canPublish } from '@/lib/auth/helpers'
 import { Post } from '@prisma/client'
 
 // Shared types for post operations
@@ -198,6 +199,23 @@ export async function createPost(data: CreatePostData): Promise<PostResult> {
 }
 
 /**
+ * Update a post with authorization check for publishing.
+ * Wraps updatePost with role-based publish permission check.
+ * Used by PATCH /api/posts/[id] and PATCH /api/posts/by-slug/[slug]
+ */
+export async function updatePostWithAuth(
+  post: Post,
+  data: UpdatePostData,
+  userRole?: string
+): Promise<PostResult> {
+  // Check if user has permission to publish
+  if (data.status === 'published' && !canPublish(userRole)) {
+    return { success: false, error: 'Not authorized to publish' }
+  }
+  return updatePost(post, data)
+}
+
+/**
  * Soft delete a post by setting status to 'deleted'.
  * Used by DELETE /api/posts/[id] and DELETE /api/posts/by-slug/[slug]
  */
@@ -222,5 +240,3 @@ export async function deletePost(postOrId: Post | string): Promise<PostResult> {
 
   return { success: true, post: updated }
 }
-
-

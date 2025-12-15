@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireSession, unauthorized, badRequest } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { generate, generateStream } from '@/lib/ai/provider'
-import { getModel, AI_MODELS } from '@/lib/ai/models'
+import { resolveModel } from '@/lib/ai/models'
 import { parseGeneratedContent } from '@/lib/ai/parse'
 import { getStyleContext, buildGeneratePrompt } from '@/lib/ai/system-prompt'
 import { wordCount } from '@/lib/markdown'
@@ -35,16 +35,15 @@ export async function POST(request: NextRequest) {
   const targetWords = LENGTH_TARGETS[length] || 1000
   const shouldStream = body.stream === true
 
-  // Get model - use provided, or fall back to settings default
-  let modelId = body.modelId
-  if (!modelId) {
-    const settings = await prisma.aISettings.findUnique({ where: { id: 'default' } })
-    modelId = settings?.defaultModel || 'claude-sonnet'
-  }
-
-  const model = getModel(modelId)
-  if (!model) {
-    return badRequest(`Unknown model: ${modelId}. Available: ${AI_MODELS.map(m => m.id).join(', ')}`)
+  // Resolve model (provided or default from DB)
+  let model
+  try {
+    model = await resolveModel(body.modelId, async () => {
+      const settings = await prisma.aISettings.findUnique({ where: { id: 'default' } })
+      return settings?.defaultModel || null
+    })
+  } catch (err) {
+    return badRequest(err instanceof Error ? err.message : 'Invalid model')
   }
 
   const context = await getStyleContext()
@@ -62,7 +61,7 @@ ${body.prompt.trim()}`
       const stream = new ReadableStream({
         async start(controller) {
           try {
-            for await (const chunk of generateStream(modelId!, systemPrompt, userPrompt)) {
+            for await (const chunk of generateStream(model.id, systemPrompt, userPrompt)) {
               controller.enqueue(encoder.encode(chunk))
             }
             controller.close()
@@ -96,7 +95,7 @@ ${body.prompt.trim()}`
 
   // Non-streaming response (original behavior)
   try {
-    const result = await generate(modelId, systemPrompt, userPrompt)
+    const result = await generate(model.id, systemPrompt, userPrompt)
 
     // Parse out title/subtitle from the generated markdown
     const parsed = parseGeneratedContent(result.text)

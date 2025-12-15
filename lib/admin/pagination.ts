@@ -56,3 +56,20 @@ export async function parsePaginationParams(
   return { currentPage, skip, take: perPage }
 }
 
+/**
+ * Paginate an in-memory array.
+ * Useful when data needs to be aggregated/sorted in JS before pagination.
+ * Used by visitor pages that aggregate leads by company/person.
+ */
+export function paginateArray<T>(
+  items: T[],
+  currentPage: number,
+  perPage: number = ITEMS_PER_PAGE
+): { items: T[]; total: number; totalPages: number } {
+  const skip = (currentPage - 1) * perPage
+  return {
+    items: items.slice(skip, skip + perPage),
+    total: items.length,
+    totalPages: Math.ceil(items.length / perPage),
+  }
+}

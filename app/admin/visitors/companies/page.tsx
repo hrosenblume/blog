@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/db'
-import { ITEMS_PER_PAGE, parsePaginationParams } from '@/lib/admin'
+import { parsePaginationParams, paginateArray } from '@/lib/admin'
 import { Pagination } from '@/components/admin/Pagination'
 import { AdminTable, AdminTableRow } from '@/components/admin/AdminTable'
 
@@ -73,10 +73,7 @@ export default async function CompanyVisitorsPage({ searchParams }: PageProps) {
   const allCompanies = Array.from(companyMap.values())
     .sort((a, b) => b.lastVisit.getTime() - a.lastVisit.getTime())
   
-  const totalCount = allCompanies.length
-  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)
-  const skip = (currentPage - 1) * ITEMS_PER_PAGE
-  const companies = allCompanies.slice(skip, skip + ITEMS_PER_PAGE)
+  const { items: companies, total: totalCount, totalPages } = paginateArray(allCompanies, currentPage)
 
   const columns = [
     { header: 'Company', maxWidth: 'max-w-[200px]' },

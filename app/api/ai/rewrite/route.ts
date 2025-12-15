@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireSession, unauthorized, badRequest } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { generate } from '@/lib/ai/provider'
-import { getModel, AI_MODELS } from '@/lib/ai/models'
+import { resolveModel } from '@/lib/ai/models'
 import { getStyleContext, buildRewritePrompt } from '@/lib/ai/system-prompt'
 
 interface RewriteRequest {
@@ -21,16 +21,15 @@ export async function POST(request: NextRequest) {
     return badRequest('Text is required')
   }
 
-  // Get model - use provided, or fall back to settings default
-  let modelId = body.modelId
-  if (!modelId) {
-    const settings = await prisma.aISettings.findUnique({ where: { id: 'default' } })
-    modelId = settings?.defaultModel || 'claude-sonnet'
-  }
-
-  const model = getModel(modelId)
-  if (!model) {
-    return badRequest(`Unknown model: ${modelId}. Available: ${AI_MODELS.map(m => m.id).join(', ')}`)
+  // Resolve model (provided or default from DB)
+  let model
+  try {
+    model = await resolveModel(body.modelId, async () => {
+      const settings = await prisma.aISettings.findUnique({ where: { id: 'default' } })
+      return settings?.defaultModel || null
+    })
+  } catch (err) {
+    return badRequest(err instanceof Error ? err.message : 'Invalid model')
   }
 
   // Build system prompt with style context
@@ -42,7 +41,7 @@ export async function POST(request: NextRequest) {
 "${body.text.trim()}"`
 
   try {
-    const result = await generate(modelId, systemPrompt, userPrompt)
+    const result = await generate(model.id, systemPrompt, userPrompt)
 
     // Clean up the response - remove quotes if the model added them
     let rewrittenText = result.text.trim()

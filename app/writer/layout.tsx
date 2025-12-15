@@ -18,35 +18,15 @@ import {
 import { ExternalLinkIcon, ChatIcon } from '@/components/Icons'
 import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
 
-// #region agent log
-console.log('[DEBUG] WriterLayout module loaded')
-// #endregion
-
 function WriterLayoutContent({
   children,
 }: {
   children: React.ReactNode
 }) {
-  // #region agent log
-  console.log('[DEBUG] WriterLayoutContent rendering')
-  // #endregion
-  
   const { data: session, status } = useSession()
-  // #region agent log
-  console.log('[DEBUG] WriterLayout: useSession status:', status)
-  // #endregion
-  
   const router = useRouter()
   const pathname = usePathname()
-  
-  // #region agent log
-  console.log('[DEBUG] WriterLayout: About to call useChatContext()')
-  // #endregion
   const { isOpen: chatOpen, setIsOpen: setChatOpen } = useChatContext()
-  // #region agent log
-  console.log('[DEBUG] WriterLayout: useChatContext() returned')
-  // #endregion
-  
   const isEditor = pathname?.startsWith('/writer/editor')
 
   // Redirect unauthenticated users

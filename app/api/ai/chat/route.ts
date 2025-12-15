@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { requireSession, unauthorized, badRequest } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { generateChatStream, ChatMessage } from '@/lib/ai/provider'
-import { getModel, AI_MODELS } from '@/lib/ai/models'
+import { resolveModel } from '@/lib/ai/models'
 import { getStyleContext, buildChatPromptWithEssay, EssayContext } from '@/lib/ai/system-prompt'
 
 interface ChatRequest {
@@ -22,16 +22,15 @@ export async function POST(request: NextRequest) {
     return badRequest('Messages are required')
   }
 
-  // Get model - use provided, or fall back to settings default
-  let modelId = body.modelId
-  if (!modelId) {
-    const settings = await prisma.aISettings.findUnique({ where: { id: 'default' } })
-    modelId = settings?.defaultModel || 'claude-sonnet'
-  }
-
-  const model = getModel(modelId)
-  if (!model) {
-    return badRequest(`Unknown model: ${modelId}. Available: ${AI_MODELS.map(m => m.id).join(', ')}`)
+  // Resolve model (provided or default from DB)
+  let model
+  try {
+    model = await resolveModel(body.modelId, async () => {
+      const settings = await prisma.aISettings.findUnique({ where: { id: 'default' } })
+      return settings?.defaultModel || null
+    })
+  } catch (err) {
+    return badRequest(err instanceof Error ? err.message : 'Invalid model')
   }
 
   // Build system prompt with style context and optional essay context
@@ -44,7 +43,7 @@ export async function POST(request: NextRequest) {
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          for await (const chunk of generateChatStream(modelId!, systemPrompt, body.messages)) {
+          for await (const chunk of generateChatStream(model.id, systemPrompt, body.messages)) {
             controller.enqueue(encoder.encode(chunk))
           }
           controller.close()
