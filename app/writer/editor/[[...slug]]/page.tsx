@@ -22,6 +22,10 @@ import { CheckIcon } from '@/components/Icons'
 import { formatSavedTime } from '@/lib/utils/format'
 import { HOMEPAGE } from '@/lib/homepage'
 
+// #region agent log
+console.log('[DEBUG] Editor module loaded')
+// #endregion
+
 // Success screen shown after publishing
 function PublishSuccess() {
   return (
@@ -38,12 +42,27 @@ function PublishSuccess() {
 }
 
 export default function Editor() {
+  // #region agent log
+  console.log('[DEBUG] Editor component rendering')
+  // #endregion
+  
   const router = useRouter()
   const params = useParams()
   const postSlug = params.slug?.[0] as string | undefined
+  
+  // #region agent log
+  console.log('[DEBUG] H1: About to call useSession()')
+  // #endregion
   const { data: session } = useSession()
+  // #region agent log
+  console.log('[DEBUG] H1: useSession() returned, session:', !!session)
+  // #endregion
+  
   const userCanPublish = canPublish(session?.user?.role)
 
+  // #region agent log
+  console.log('[DEBUG] H2: About to call usePostEditor()')
+  // #endregion
   const {
     post,
     setTitle,
@@ -66,9 +85,18 @@ export default function Editor() {
     revisions,
     ai,
   } = usePostEditor(postSlug)
+  // #region agent log
+  console.log('[DEBUG] H2: usePostEditor() returned, loading:', ui?.loading)
+  // #endregion
 
   // Chat context - sync essay content for AI awareness
+  // #region agent log
+  console.log('[DEBUG] H3: About to call useChatContext()')
+  // #endregion
   const { setEssayContext, setIsOpen: setShowChatPanel } = useChatContext()
+  // #region agent log
+  console.log('[DEBUG] H3: useChatContext() returned')
+  // #endregion
 
   // Keep essay context in sync with current post content
   useEffect(() => {
