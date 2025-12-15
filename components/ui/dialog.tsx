@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import * as DialogPrimitive from "@radix-ui/react-alert-dialog"
+import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils/cn"
@@ -72,10 +72,10 @@ const DialogHeader = ({
     <div className="flex flex-col space-y-1.5 text-center sm:text-left flex-1">
       {children}
     </div>
-    <DialogPrimitive.Cancel className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none -mt-1 -mr-1">
+    <DialogPrimitive.Close className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none -mt-1 -mr-1">
       <X className="h-4 w-4" />
       <span className="sr-only">Close</span>
-    </DialogPrimitive.Cancel>
+    </DialogPrimitive.Close>
   </div>
 )
 DialogHeader.displayName = "DialogHeader"
@@ -135,7 +135,7 @@ const DialogDescription = React.forwardRef<
 ))
 DialogDescription.displayName = DialogPrimitive.Description.displayName
 
-const DialogClose = DialogPrimitive.Cancel
+const DialogClose = DialogPrimitive.Close
 
 export {
   Dialog,
