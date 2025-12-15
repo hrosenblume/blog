@@ -17,6 +17,7 @@ function capitalize(str: string): string {
 function IntegrationField({
   integration,
   hasValue,
+  source,
   displayValue,
   onSave,
   onClear,
@@ -24,6 +25,7 @@ function IntegrationField({
 }: {
   integration: Integration
   hasValue: boolean
+  source: 'db' | 'env' | null
   displayValue: string
   onSave: (value: string) => void
   onClear: () => void
@@ -46,13 +48,16 @@ function IntegrationField({
     }
   }
 
+  const isFromEnv = source === 'env'
+
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
         <Label>{integration.label}</Label>
         {hasValue ? (
           <span className="flex items-center gap-1 text-sm text-green-600 dark:text-green-400">
-            <Check className="h-4 w-4" /> Configured
+            <Check className="h-4 w-4" /> 
+            {isFromEnv ? 'Configured via env' : 'Configured'}
           </span>
         ) : (
           <span className="flex items-center gap-1 text-sm text-muted-foreground">
@@ -62,12 +67,13 @@ function IntegrationField({
       </div>
       <p className="text-sm text-muted-foreground">
         {integration.description}
+        {isFromEnv && ' Set a value here to override the environment variable.'}
       </p>
       <div className="flex gap-2">
         <Input
           type={integration.inputType}
           placeholder={hasValue && integration.inputType === 'password' 
-            ? `Enter new ${integration.label.toLowerCase()} to replace...` 
+            ? `Enter new ${integration.label.toLowerCase()} to ${isFromEnv ? 'override' : 'replace'}...` 
             : integration.placeholder}
           value={inputValue}
           onChange={e => setInputValue(e.target.value)}
@@ -79,9 +85,9 @@ function IntegrationField({
           disabled={disabled || !inputValue.trim()}
           size="sm"
         >
-          {hasValue ? 'Update' : 'Add'}
+          {hasValue && !isFromEnv ? 'Update' : isFromEnv ? 'Override' : 'Add'}
         </Button>
-        {hasValue && (
+        {hasValue && !isFromEnv && (
           <Button
             variant="outline"
             size="sm"
@@ -174,17 +180,22 @@ export default function IntegrationsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {integrations.map((integration) => (
-            <IntegrationField
-              key={integration.key}
-              integration={integration}
-              hasValue={!!settings[`has${capitalize(integration.key)}`]}
-              displayValue={integration.inputType !== 'password' ? (settings[integration.key] as string || '') : ''}
-              onSave={(value) => handleSave(integration.key, value)}
-              onClear={() => handleClear(integration.key, integration.label)}
-              disabled={saving}
-            />
-          ))}
+          {integrations.map((integration) => {
+            const sourceKey = `${integration.key}Source`
+            const source = settings[sourceKey] as 'db' | 'env' | '' | undefined
+            return (
+              <IntegrationField
+                key={integration.key}
+                integration={integration}
+                hasValue={!!settings[`has${capitalize(integration.key)}`]}
+                source={source === 'db' || source === 'env' ? source : null}
+                displayValue={integration.inputType !== 'password' ? (settings[integration.key] as string || '') : ''}
+                onSave={(value) => handleSave(integration.key, value)}
+                onClear={() => handleClear(integration.key, integration.label)}
+                disabled={saving}
+              />
+            )
+          })}
 
           {saved && (
             <span className="text-sm text-green-600 dark:text-green-400">

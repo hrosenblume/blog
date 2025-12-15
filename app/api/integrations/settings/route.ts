@@ -9,14 +9,20 @@ function capitalize(str: string): string {
 }
 
 // Build response object from settings using integrations config
+// Checks both DB values and env var fallbacks
 function buildResponse(settings: Record<string, unknown> | null): Record<string, boolean | string> {
   const response: Record<string, boolean | string> = {}
-  for (const { key, inputType } of integrations) {
-    const value = settings?.[key] as string | null | undefined
-    response[`has${capitalize(key)}`] = !!value
+  for (const { key, inputType, envFallback } of integrations) {
+    const dbValue = settings?.[key] as string | null | undefined
+    const envValue = envFallback ? process.env[envFallback] : undefined
+    const hasValue = !!(dbValue || envValue)
+    const source = dbValue ? 'db' : envValue ? 'env' : null
+    
+    response[`has${capitalize(key)}`] = hasValue
+    response[`${key}Source`] = source || ''
     // Only include actual values for non-password fields
     if (inputType !== 'password') {
-      response[key] = value || ''
+      response[key] = dbValue || envValue || ''
     }
   }
   return response
