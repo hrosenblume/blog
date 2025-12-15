@@ -190,6 +190,19 @@ model IntegrationSettings {
   contactEmail        String?  // Public contact email
   updatedAt           DateTime @updatedAt
 }
+
+model TopicIdeaSource {
+  id          String   @id @default(uuid())
+  title       String              // AI-generated topic title
+  description String?             // Optional description/angle
+  status      String   @default("pending")  // pending, approved, rejected, used
+  sourceTitle String?             // Original RSS article title
+  sourceLink  String?             // Link to source article
+  sourcePubDate DateTime?         // Publication date of source
+  feedUrl     String?             // RSS feed URL
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
 ```
 
 ## Key Systems
@@ -218,6 +231,20 @@ Components:
 Change `lib/article-layout.ts` or `ArticleLayout` → both essay and editor update automatically.
 
 ### Admin Pagination
+Uses standard shadcn pagination primitives (`components/ui/pagination.tsx`):
+- `Pagination`, `PaginationContent`, `PaginationItem`, `PaginationLink`
+- `PaginationPrevious`, `PaginationNext`, `PaginationEllipsis`
+
+Admin wrapper in `components/admin/Pagination.tsx`:
+- Accepts `currentPage`, `totalPages`, `baseUrl`, `position`
+- Smart page number display with ellipsis for many pages
+- Returns `null` when `totalPages <= 1`
+
+`AdminPageHeader` component for consistent page headers:
+- Props: `title`, `subtitle`, `action` (ReactNode)
+- Pagination goes in `action` slot (right-aligned, bottom-aligned)
+- All paginated admin pages use this pattern
+
 Shared utilities in `lib/admin/`:
 - `ITEMS_PER_PAGE` — Default pagination size (25)
 - `getPaginatedData()` — Async helper that handles params, fetching, counting
@@ -354,6 +381,27 @@ Admin-managed third-party integrations with env var fallbacks:
   4. UI and API handle it automatically
 - **Current integrations**: Google Analytics, RB2B, Contact Email
 
+### Topics & Auto-Draft System
+Topic idea generation from RSS feeds:
+- **Admin UI**: `/admin/topics` — Manage topic ideas with status (pending/approved/rejected/used)
+- **Database**: `TopicIdeaSource` model stores RSS source info (title, link, pubDate, feedUrl)
+- **Auto-draft library**: `lib/auto-draft/` — RSS parsing, keyword matching, slug generation
+- **Script**: `scripts/auto-draft.ts` — CLI to generate topic ideas from configured RSS feeds
+- **API**: `/api/admin/topics` — CRUD for topic ideas
+- **Flow**:
+  1. Run `npx tsx scripts/auto-draft.ts` with RSS feed URLs
+  2. System fetches feeds, matches keywords from `lib/auto-draft/keywords.ts`
+  3. Generates topic ideas with AI-suggested titles
+  4. Admin reviews/approves in `/admin/topics`
+  5. Approved topics appear in writer inbox
+
+### Writer Inbox
+Suggested posts queue for writers:
+- **Page**: `/writer/inbox` — View pending topic suggestions
+- **Preview modal**: Click to preview topic details before creating post
+- **Actions**: Create post from suggestion, dismiss, or mark as used
+- **Integration**: Links to editor with pre-filled topic data
+
 ### Route Protection
 Auth checks happen in layout components (client-side):
 - `/writer/*` — `useSession()` hook redirects unauthenticated users to signin (all roles: admin, writer, drafter)
@@ -380,6 +428,8 @@ This approach avoids Edge runtime limitations with Prisma.
 | `/api/posts/[id]` | CRUD single post |
 | `/api/admin/users` | User management (admin) |
 | `/api/admin/revisions` | Revision management (admin) |
+| `/api/admin/topics` | Topic ideas CRUD (admin) |
+| `/api/admin/topics/generate` | Generate topic from RSS item |
 | `/api/webhooks/rb2b` | RB2B webhook receiver |
 | `/api/upload` | Image upload |
 | `/api/ai/generate` | Generate essay content with AI |
