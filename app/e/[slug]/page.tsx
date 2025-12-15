@@ -13,6 +13,7 @@ import { ArticleBody } from '@/components/ArticleBody'
 import { HOMEPAGE } from '@/lib/homepage'
 import { getBaseUrl, OG_STYLE, OG_SIZE_SQUARE } from '@/lib/metadata'
 import { getPostSeoValues, getSiteSettings, getEffectiveOgImage } from '@/lib/seo'
+import { getIntegrationSettings } from '@/lib/integrations'
 
 export const revalidate = 60
 
@@ -118,7 +119,10 @@ export default async function EssayPage({ params }: Props) {
     notFound()
   }
 
-  const { prev, next, isFirst, isLast } = await getAdjacentPosts(post.slug)
+  const [{ prev, next, isFirst, isLast }, integrations] = await Promise.all([
+    getAdjacentPosts(post.slug),
+    getIntegrationSettings(),
+  ])
   const htmlContent = renderMarkdown(post.markdown)
   const baseUrl = await getBaseUrl()
   const siteSettings = await getSiteSettings()
@@ -175,7 +179,7 @@ export default async function EssayPage({ params }: Props) {
           isLast={isLast} 
         />
 
-        <HomepageFooter />
+        <HomepageFooter contactEmail={integrations.contactEmail} />
       </PageContainer>
     </div>
   )

@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import OpenAI from 'openai'
 import { getModel } from './models'
+import { prisma } from '@/lib/db'
 
 interface GenerateResult {
   text: string
@@ -12,6 +13,21 @@ interface GenerateResult {
 export interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
+}
+
+/**
+ * Get API key for a provider, checking DB first then falling back to env var.
+ */
+async function getApiKey(provider: 'anthropic' | 'openai'): Promise<string | null> {
+  // Try IntegrationSettings DB first
+  const settings = await prisma.integrationSettings.findUnique({
+    where: { id: 'default' },
+  })
+  
+  if (provider === 'anthropic') {
+    return settings?.anthropicApiKey || process.env.ANTHROPIC_API_KEY || null
+  }
+  return settings?.openaiApiKey || process.env.OPENAI_API_KEY || null
 }
 
 /**
@@ -42,12 +58,13 @@ async function generateWithAnthropic(
   userPrompt: string,
   maxTokens: number
 ): Promise<GenerateResult> {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    throw new Error('ANTHROPIC_API_KEY is not configured. Add it to .env.local and restart the server.')
+  const apiKey = await getApiKey('anthropic')
+  if (!apiKey) {
+    throw new Error('Anthropic API key is not configured. Add it at /admin/integrations')
   }
 
   const client = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY,
+    apiKey,
   })
 
   const response = await client.messages.create({
@@ -77,12 +94,13 @@ async function generateWithOpenAI(
   userPrompt: string,
   maxTokens: number
 ): Promise<GenerateResult> {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY is not configured. Add it to .env.local and restart the server.')
+  const apiKey = await getApiKey('openai')
+  if (!apiKey) {
+    throw new Error('OpenAI API key is not configured. Add it at /admin/integrations')
   }
 
   const client = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+    apiKey,
   })
 
   const response = await client.chat.completions.create({
@@ -156,11 +174,12 @@ async function* streamWithAnthropic(
   userPrompt: string,
   maxTokens: number
 ): AsyncGenerator<string, void, unknown> {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    throw new Error('ANTHROPIC_API_KEY is not configured.')
+  const apiKey = await getApiKey('anthropic')
+  if (!apiKey) {
+    throw new Error('Anthropic API key is not configured. Add it at /admin/integrations')
   }
 
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  const client = new Anthropic({ apiKey })
 
   const stream = client.messages.stream({
     model,
@@ -182,11 +201,12 @@ async function* streamWithOpenAI(
   userPrompt: string,
   maxTokens: number
 ): AsyncGenerator<string, void, unknown> {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY is not configured.')
+  const apiKey = await getApiKey('openai')
+  if (!apiKey) {
+    throw new Error('OpenAI API key is not configured. Add it at /admin/integrations')
   }
 
-  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  const client = new OpenAI({ apiKey })
 
   const stream = await client.chat.completions.create({
     model,
@@ -212,11 +232,12 @@ async function* chatStreamWithAnthropic(
   messages: ChatMessage[],
   maxTokens: number
 ): AsyncGenerator<string, void, unknown> {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    throw new Error('ANTHROPIC_API_KEY is not configured.')
+  const apiKey = await getApiKey('anthropic')
+  if (!apiKey) {
+    throw new Error('Anthropic API key is not configured. Add it at /admin/integrations')
   }
 
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  const client = new Anthropic({ apiKey })
 
   const stream = client.messages.stream({
     model,
@@ -238,11 +259,12 @@ async function* chatStreamWithOpenAI(
   messages: ChatMessage[],
   maxTokens: number
 ): AsyncGenerator<string, void, unknown> {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY is not configured.')
+  const apiKey = await getApiKey('openai')
+  if (!apiKey) {
+    throw new Error('OpenAI API key is not configured. Add it at /admin/integrations')
   }
 
-  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  const client = new OpenAI({ apiKey })
 
   const stream = await client.chat.completions.create({
     model,

@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
 import { usePostEditor } from '@/lib/editor/usePostEditor'
 import { useChatContext } from '@/lib/chat'
+import { canPublish } from '@/lib/auth'
 import { PageLoader } from '@/components/PageLoader'
 import { CenteredPage } from '@/components/CenteredPage'
 import { TiptapEditor, EditorToolbar } from '@/components/TiptapEditor'
@@ -39,6 +41,8 @@ export default function Editor() {
   const router = useRouter()
   const params = useParams()
   const postSlug = params.slug?.[0] as string | undefined
+  const { data: session } = useSession()
+  const userCanPublish = canPublish(session?.user?.role)
 
   const {
     post,
@@ -155,6 +159,7 @@ export default function Editor() {
           onRestore: revisions.restore,
         } : undefined}
         onOpenChat={() => setShowChatPanel(true)}
+        canPublish={userCanPublish}
       />
 
       {/* Preview info line when viewing a revision */}

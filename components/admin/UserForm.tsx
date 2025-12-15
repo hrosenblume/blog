@@ -114,6 +114,7 @@ export function UserFormPage({ userId }: { userId?: string }) {
                 <SelectValue placeholder="Select a role" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="drafter">Drafter</SelectItem>
                 <SelectItem value="writer">Writer</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
               </SelectContent>

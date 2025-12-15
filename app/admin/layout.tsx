@@ -47,7 +47,22 @@ export default function AdminLayout({
 
   // Only admins can access /admin
   if (session.user?.role !== 'admin') {
-    redirect('/writer')
+    return (
+      <CenteredPage>
+        <div className="text-center">
+          <h1 className="text-title font-bold mb-4">Admin Access Required</h1>
+          <p className="text-muted-foreground mb-6">
+            You need admin privileges to access this page.
+          </p>
+          <Link 
+            href="/writer" 
+            className="text-primary hover:underline"
+          >
+            ← Back to Writer
+          </Link>
+        </div>
+      </CenteredPage>
+    )
   }
 
   return (

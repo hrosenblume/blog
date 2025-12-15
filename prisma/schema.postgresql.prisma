@@ -86,11 +86,15 @@ model LeadVisit {
 }
 
 model AISettings {
-  id           String   @id @default("default")
-  rules        String   @default("")
-  chatRules    String   @default("")
-  defaultModel String   @default("claude-sonnet")
-  updatedAt    DateTime @updatedAt
+  id               String   @id @default("default")
+  rules            String   @default("")
+  chatRules        String   @default("")
+  defaultModel     String   @default("claude-sonnet")
+  anthropicApiKey  String?
+  openaiApiKey     String?
+  generateTemplate String?  // Custom generate prompt template
+  chatTemplate     String?  // Custom chat prompt template
+  updatedAt        DateTime @updatedAt
 }
 
 model SiteSettings {
@@ -116,5 +120,15 @@ model PageSettings {
   noIndex     Boolean  @default(false)
   ogImage     String?                // Custom Open Graph image URL
   updatedAt   DateTime @updatedAt
+}
+
+model IntegrationSettings {
+  id                  String   @id @default("default")
+  googleAnalyticsId   String?  // GA4 measurement ID (G-XXXXXXXXXX)
+  rb2bApiKey          String?  // RB2B tracking key
+  contactEmail        String?  // Public contact email
+  anthropicApiKey     String?  // Anthropic API key for Claude models
+  openaiApiKey        String?  // OpenAI API key for GPT models
+  updatedAt           DateTime @updatedAt
 }
 

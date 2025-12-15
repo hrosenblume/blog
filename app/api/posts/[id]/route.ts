@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { withSession, notFound, badRequest } from '@/lib/auth'
+import { withSession, notFound, badRequest, forbidden, requireSession, canPublish } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { wordCount } from '@/lib/markdown'
 import { updatePost, deletePost } from '@/lib/posts'
@@ -28,7 +28,15 @@ export const PATCH = withSession(async (request: NextRequest, { params }: { para
   const post = await prisma.post.findUnique({ where: { id } })
   if (!post) return notFound()
 
-  const result = await updatePost(post, await request.json())
+  const body = await request.json()
+  
+  // Check if user can publish (drafters cannot)
+  if (body.status === 'published') {
+    const session = await requireSession()
+    if (!canPublish(session?.user?.role)) return forbidden()
+  }
+
+  const result = await updatePost(post, body)
   if (!result.success) return badRequest(result.error)
 
   return NextResponse.json({ id: result.post.id, slug: result.post.slug, status: result.post.status })

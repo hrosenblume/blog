@@ -7,6 +7,7 @@ import { getBaseUrl, TWITTER_HANDLE, OG_STYLE, OG_SIZE_SQUARE } from '@/lib/meta
 import { RB2BScript } from '@/components/RB2BScript'
 import { GoogleAnalytics } from '@/components/GoogleAnalytics'
 import { getSiteSettings, getEffectiveSiteTitle, getEffectiveSiteDescription, getEffectiveSiteKeywords, getTitleTemplate } from '@/lib/seo'
+import { getIntegrationSettings } from '@/lib/integrations'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -64,17 +65,19 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const integrations = await getIntegrationSettings()
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <Providers>{children}</Providers>
-        <RB2BScript />
-        <GoogleAnalytics />
+        <RB2BScript apiKey={integrations.rb2bApiKey} />
+        <GoogleAnalytics gaId={integrations.googleAnalyticsId} />
       </body>
     </html>
   )

@@ -57,6 +57,7 @@ interface EditorNavbarProps {
   onSave: (status: SaveStatus) => void
   previewMode?: PreviewModeProps
   onOpenChat?: () => void
+  canPublish?: boolean
 }
 
 export function EditorNavbar({
@@ -66,6 +67,7 @@ export function EditorNavbar({
   onSave,
   previewMode,
   onOpenChat,
+  canPublish = true,
 }: EditorNavbarProps) {
   const router = useRouter()
   const [showRestoreConfirm, setShowRestoreConfirm] = useState(false)
@@ -165,14 +167,16 @@ export function EditorNavbar({
             />
           )}
 
-          <SaveButton
-            target="published"
-            label="Publish"
-            savedLabel="Published"
-            savingAs={savingAs}
-            disabled={status === 'published' && !hasUnsavedChanges}
-            onSave={onSave}
-          />
+          {canPublish && (
+            <SaveButton
+              target="published"
+              label="Publish"
+              savedLabel="Published"
+              savingAs={savingAs}
+              disabled={status === 'published' && !hasUnsavedChanges}
+              onSave={onSave}
+            />
+          )}
         </div>
       </div>
     </header>

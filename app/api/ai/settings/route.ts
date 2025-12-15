@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { withSession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { AI_MODELS } from '@/lib/ai/models'
+import { DEFAULT_GENERATE_TEMPLATE, DEFAULT_CHAT_TEMPLATE } from '@/lib/ai/system-prompt'
 
 // GET /api/ai/settings - Get current AI settings
 export const GET = withSession(async () => {
@@ -21,6 +22,10 @@ export const GET = withSession(async () => {
     rules: settings.rules,
     chatRules: settings.chatRules,
     defaultModel: settings.defaultModel,
+    generateTemplate: settings.generateTemplate,
+    chatTemplate: settings.chatTemplate,
+    defaultGenerateTemplate: DEFAULT_GENERATE_TEMPLATE,
+    defaultChatTemplate: DEFAULT_CHAT_TEMPLATE,
     availableModels: AI_MODELS.map(m => ({
       id: m.id,
       name: m.name,
@@ -33,7 +38,13 @@ export const GET = withSession(async () => {
 export const PATCH = withSession(async (request: NextRequest) => {
   const body = await request.json()
   
-  const updateData: { rules?: string; chatRules?: string; defaultModel?: string } = {}
+  const updateData: { 
+    rules?: string
+    chatRules?: string
+    defaultModel?: string
+    generateTemplate?: string | null
+    chatTemplate?: string | null
+  } = {}
 
   if (typeof body.rules === 'string') {
     updateData.rules = body.rules
@@ -55,6 +66,15 @@ export const PATCH = withSession(async (request: NextRequest) => {
     updateData.defaultModel = body.defaultModel
   }
 
+  // Template fields: null means reset to default, string means custom
+  if (body.generateTemplate !== undefined) {
+    updateData.generateTemplate = body.generateTemplate
+  }
+
+  if (body.chatTemplate !== undefined) {
+    updateData.chatTemplate = body.chatTemplate
+  }
+
   const settings = await prisma.aISettings.upsert({
     where: { id: 'default' },
     update: updateData,
@@ -63,6 +83,8 @@ export const PATCH = withSession(async (request: NextRequest) => {
       rules: updateData.rules || '',
       chatRules: updateData.chatRules || '',
       defaultModel: updateData.defaultModel || 'claude-sonnet',
+      generateTemplate: updateData.generateTemplate,
+      chatTemplate: updateData.chatTemplate,
     },
   })
 
@@ -70,5 +92,7 @@ export const PATCH = withSession(async (request: NextRequest) => {
     rules: settings.rules,
     chatRules: settings.chatRules,
     defaultModel: settings.defaultModel,
+    generateTemplate: settings.generateTemplate,
+    chatTemplate: settings.chatTemplate,
   })
 })

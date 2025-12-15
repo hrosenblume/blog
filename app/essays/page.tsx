@@ -9,6 +9,7 @@ import { HOMEPAGE } from '@/lib/homepage'
 import { ESSAYS_PAGE } from '@/lib/essays'
 import { getBaseUrl, OG_STYLE, OG_SIZE_SQUARE } from '@/lib/metadata'
 import { getPageSeoValues, getSiteSettings, getEffectiveOgImage } from '@/lib/seo'
+import { getIntegrationSettings } from '@/lib/integrations'
 
 export async function generateMetadata(): Promise<Metadata> {
   const baseUrl = await getBaseUrl()
@@ -51,17 +52,20 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function EssaysPage() {
-  const essays = await prisma.post.findMany({
-    where: { status: 'published' },
-    orderBy: { publishedAt: 'desc' },
-    select: {
-      id: true,
-      title: true,
-      subtitle: true,
-      slug: true,
-      polyhedraShape: true,
-    },
-  })
+  const [essays, integrations] = await Promise.all([
+    prisma.post.findMany({
+      where: { status: 'published' },
+      orderBy: { publishedAt: 'desc' },
+      select: {
+        id: true,
+        title: true,
+        subtitle: true,
+        slug: true,
+        polyhedraShape: true,
+      },
+    }),
+    getIntegrationSettings(),
+  ])
 
   return (
     <div className="min-h-screen">
@@ -95,7 +99,7 @@ export default async function EssaysPage() {
           </div>
         )}
 
-        <HomepageFooter />
+        <HomepageFooter contactEmail={integrations.contactEmail} />
       </PageContainer>
     </div>
   )

@@ -16,13 +16,14 @@ export const adminNavItems: AdminNavItem[] = [
   { label: 'Persons', href: '/admin/visitors/persons', countKey: 'persons' },
   { label: 'AI', href: '/admin/ai' },
   { label: 'SEO', href: '/admin/seo' },
+  { label: 'Integrations', href: '/admin/integrations' },
 ]
 
 // For navbar grouping - items listed here will appear in dropdowns
 export const adminNavGroups = [
   { label: 'Content', items: ['Posts', 'Revisions'] },
   { label: 'Analytics', items: ['Visits', 'Companies', 'Persons'] },
-  { label: 'Settings', items: ['AI', 'SEO'] },
+  { label: 'Settings', items: ['AI', 'SEO', 'Integrations'] },
 ]
 
 // Items not in any group (shown as direct links in navbar)

@@ -3,20 +3,22 @@
 import { usePathname } from 'next/navigation'
 import Script from 'next/script'
 
-const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
+type GoogleAnalyticsProps = {
+  gaId: string | null
+}
 
-export function GoogleAnalytics() {
+export function GoogleAnalytics({ gaId }: GoogleAnalyticsProps) {
   const pathname = usePathname()
 
   // Only track public-facing pages (not admin/writer/auth)
-  if (!GA_MEASUREMENT_ID || pathname?.startsWith('/admin') || pathname?.startsWith('/writer') || pathname?.startsWith('/auth')) {
+  if (!gaId || pathname?.startsWith('/admin') || pathname?.startsWith('/writer') || pathname?.startsWith('/auth')) {
     return null
   }
 
   return (
     <>
       <Script
-        src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+        src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
         strategy="afterInteractive"
       />
       <Script
@@ -27,7 +29,7 @@ export function GoogleAnalytics() {
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', '${GA_MEASUREMENT_ID}');
+            gtag('config', '${gaId}');
           `,
         }}
       />

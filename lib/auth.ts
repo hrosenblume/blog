@@ -65,6 +65,11 @@ export async function isAdmin(email: string | null | undefined): Promise<boolean
   return user?.role === 'admin'
 }
 
+// Helper to check if user can publish (admin or writer, not drafter)
+export function canPublish(role: string | undefined): boolean {
+  return role === 'admin' || role === 'writer'
+}
+
 // API Response helpers
 export const unauthorized = () => NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 export const forbidden = () => NextResponse.json({ error: 'Admin access required' }, { status: 403 })

@@ -22,7 +22,7 @@ export default async function UsersPage() {
     cells: [
       user.email,
       <span key="name" className="text-muted-foreground">{user.name || '—'}</span>,
-      <Badge key="role" variant={user.role === 'admin' ? 'default' : 'secondary'}>{user.role}</Badge>,
+      <Badge key="role" variant={user.role === 'admin' ? 'default' : user.role === 'drafter' ? 'outline' : 'secondary'}>{user.role}</Badge>,
       <span key="created" className="text-muted-foreground">{new Date(user.createdAt).toLocaleDateString()}</span>,
     ],
     actions: (
@@ -33,7 +33,7 @@ export default async function UsersPage() {
       />
     ),
     mobileLabel: user.email,
-    mobileBadge: <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>{user.role}</Badge>,
+    mobileBadge: <Badge variant={user.role === 'admin' ? 'default' : user.role === 'drafter' ? 'outline' : 'secondary'}>{user.role}</Badge>,
     mobileMeta: `${user.name || 'No name'} · Created ${new Date(user.createdAt).toLocaleDateString()}`,
   }))
 

@@ -3,9 +3,12 @@
 import { usePathname } from 'next/navigation'
 import Script from 'next/script'
 
-export function RB2BScript() {
+type RB2BScriptProps = {
+  apiKey: string | null
+}
+
+export function RB2BScript({ apiKey }: RB2BScriptProps) {
   const pathname = usePathname()
-  const apiKey = process.env.NEXT_PUBLIC_RB2B_API_KEY
 
   // Only track public-facing pages (not admin/writer/auth)
   if (!apiKey || pathname?.startsWith('/admin') || pathname?.startsWith('/writer') || pathname?.startsWith('/auth')) {

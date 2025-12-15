@@ -54,6 +54,7 @@ Use CSS variables from `globals.css`:
 | Keyboard shortcuts | `lib/keyboard/shortcuts.ts` |
 | Post CRUD logic | `lib/posts.ts` |
 | SVG icons | `components/Icons.tsx` |
+| Integrations config | `lib/integrations/config.ts` |
 
 **NEVER** hardcode author name, email, or bio — use `lib/homepage.ts`
 
@@ -89,6 +90,7 @@ Use CSS variables from `globals.css`:
 - Handle loading and error states
 - Check existing abstractions before creating new ones
 - Update `.env.example` when adding env vars
+- When adding third-party integrations, use `lib/integrations/config.ts`
 
 ## Git Workflow
 

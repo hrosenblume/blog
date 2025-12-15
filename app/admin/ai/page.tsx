@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Loader2 } from 'lucide-react'
+import Link from 'next/link'
+import { Loader2, ChevronDown, RotateCcw } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -13,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import type { AIModelOption } from '@/lib/ai/models'
 
 export default function AISettingsPage() {
@@ -20,6 +22,10 @@ export default function AISettingsPage() {
   const [chatRules, setChatRules] = useState('')
   const [defaultModel, setDefaultModel] = useState('claude-sonnet')
   const [models, setModels] = useState<AIModelOption[]>([])
+  const [generateTemplate, setGenerateTemplate] = useState<string | null>(null)
+  const [chatTemplate, setChatTemplate] = useState<string | null>(null)
+  const [defaultGenerateTemplate, setDefaultGenerateTemplate] = useState('')
+  const [defaultChatTemplate, setDefaultChatTemplate] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -33,6 +39,10 @@ export default function AISettingsPage() {
         setChatRules(data.chatRules || '')
         setDefaultModel(data.defaultModel || 'claude-sonnet')
         setModels(data.availableModels || [])
+        setGenerateTemplate(data.generateTemplate)
+        setChatTemplate(data.chatTemplate)
+        setDefaultGenerateTemplate(data.defaultGenerateTemplate || '')
+        setDefaultChatTemplate(data.defaultChatTemplate || '')
       })
       .catch(console.error)
       .finally(() => setLoading(false))
@@ -45,7 +55,13 @@ export default function AISettingsPage() {
       await fetch('/api/ai/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rules, chatRules, defaultModel }),
+        body: JSON.stringify({ 
+          rules, 
+          chatRules, 
+          defaultModel,
+          generateTemplate,
+          chatTemplate,
+        }),
       })
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
@@ -57,6 +73,14 @@ export default function AISettingsPage() {
     }
   }
 
+  // Get the effective template (custom or default)
+  const effectiveGenerateTemplate = generateTemplate ?? defaultGenerateTemplate
+  const effectiveChatTemplate = chatTemplate ?? defaultChatTemplate
+
+  // Check if using custom template
+  const isCustomGenerateTemplate = generateTemplate !== null
+  const isCustomChatTemplate = chatTemplate !== null
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -66,14 +90,18 @@ export default function AISettingsPage() {
   }
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-8">AI Settings</h1>
+    <div className="space-y-8">
+      <h1 className="text-2xl font-bold">AI Settings</h1>
 
       <Card>
         <CardHeader>
           <CardTitle>AI Settings</CardTitle>
           <CardDescription>
             Configure your AI writing assistant. Writing rules apply to essay generation; chat rules control how the assistant behaves during brainstorming.
+            To configure API keys, go to{' '}
+            <Link href="/admin/integrations" className="underline hover:text-foreground">
+              Integrations
+            </Link>.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -111,6 +139,38 @@ export default function AISettingsPage() {
               className="min-h-[180px] font-mono text-sm resize-none"
               disabled={saving}
             />
+            <Collapsible>
+              <CollapsibleTrigger className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground cursor-pointer">
+                <ChevronDown className="h-4 w-4 transition-transform [[data-state=open]>&]:rotate-180" />
+                {isCustomGenerateTemplate ? 'Edit prompt template (customized)' : 'Edit prompt template'}
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="mt-2 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">
+                      Placeholders: <code className="bg-muted px-1 rounded">{'{{RULES}}'}</code>, <code className="bg-muted px-1 rounded">{'{{STYLE_EXAMPLES}}'}</code>
+                    </p>
+                    {isCustomGenerateTemplate && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setGenerateTemplate(null)}
+                        className="h-7 text-xs"
+                      >
+                        <RotateCcw className="h-3 w-3 mr-1" />
+                        Reset to default
+                      </Button>
+                    )}
+                  </div>
+                  <Textarea
+                    value={effectiveGenerateTemplate}
+                    onChange={e => setGenerateTemplate(e.target.value)}
+                    className="min-h-[250px] font-mono text-xs resize-none"
+                    disabled={saving}
+                  />
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
           </div>
 
           <div className="space-y-2">
@@ -130,6 +190,38 @@ export default function AISettingsPage() {
               className="min-h-[140px] font-mono text-sm resize-none"
               disabled={saving}
             />
+            <Collapsible>
+              <CollapsibleTrigger className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground cursor-pointer">
+                <ChevronDown className="h-4 w-4 transition-transform [[data-state=open]>&]:rotate-180" />
+                {isCustomChatTemplate ? 'Edit prompt template (customized)' : 'Edit prompt template'}
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="mt-2 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">
+                      Placeholders: <code className="bg-muted px-1 rounded">{'{{RULES}}'}</code>, <code className="bg-muted px-1 rounded">{'{{CHAT_RULES}}'}</code>, <code className="bg-muted px-1 rounded">{'{{STYLE_EXAMPLES}}'}</code>
+                    </p>
+                    {isCustomChatTemplate && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setChatTemplate(null)}
+                        className="h-7 text-xs"
+                      >
+                        <RotateCcw className="h-3 w-3 mr-1" />
+                        Reset to default
+                      </Button>
+                    )}
+                  </div>
+                  <Textarea
+                    value={effectiveChatTemplate}
+                    onChange={e => setChatTemplate(e.target.value)}
+                    className="min-h-[300px] font-mono text-xs resize-none"
+                    disabled={saving}
+                  />
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
           </div>
 
           <div className="flex items-center gap-3">

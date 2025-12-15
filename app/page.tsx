@@ -9,6 +9,7 @@ import { TapLink } from '@/components/TapLink'
 import { HOMEPAGE } from '@/lib/homepage'
 import { getBaseUrl, OG_STYLE, OG_SIZE_SQUARE } from '@/lib/metadata'
 import { getSiteSettings, getOrgName, getOrgSocialUrls, getPageSeoValues, getEffectiveOgImage } from '@/lib/seo'
+import { getIntegrationSettings } from '@/lib/integrations'
 
 // Revalidate every hour (homepage content changes rarely)
 export const revalidate = 3600
@@ -80,6 +81,7 @@ export default async function Home() {
   const siteSettings = await getSiteSettings()
   const orgName = getOrgName(siteSettings)
   const socialUrls = getOrgSocialUrls(siteSettings)
+  const integrations = await getIntegrationSettings()
 
   return (
     <main className="max-w-2xl mx-auto px-6 py-16">
@@ -144,7 +146,7 @@ export default async function Home() {
         )}
       </section>
 
-      <HomepageFooter />
+      <HomepageFooter contactEmail={integrations.contactEmail} />
     </main>
   )
 }

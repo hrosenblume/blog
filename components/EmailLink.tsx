@@ -3,9 +3,17 @@
 import { TapLink } from '@/components/TapLink'
 import { HOMEPAGE } from '@/lib/homepage'
 
-export function EmailLink({ className }: { className?: string }) {
+type EmailLinkProps = {
+  className?: string
+  email?: string | null
+}
+
+export function EmailLink({ className, email }: EmailLinkProps) {
+  const emailAddress = email || HOMEPAGE.email
+  if (!emailAddress) return null
+
   return (
-    <TapLink href={`mailto:${HOMEPAGE.email}`} className={className}>
+    <TapLink href={`mailto:${emailAddress}`} className={className}>
       Email
     </TapLink>
   )
