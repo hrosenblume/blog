@@ -2,10 +2,6 @@
 
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
 
-// #region agent log
-console.log('[DEBUG] ChatContext module loaded')
-// #endregion
-
 export interface Message {
   role: 'user' | 'assistant'
   content: string
@@ -34,10 +30,6 @@ interface ChatContextValue {
 const ChatContext = createContext<ChatContextValue | null>(null)
 
 export function ChatProvider({ children }: { children: ReactNode }) {
-  // #region agent log
-  console.log('[DEBUG] ChatProvider rendering')
-  // #endregion
-  
   const [messages, setMessages] = useState<Message[]>([])
   const [essayContext, setEssayContext] = useState<EssayContext | null>(null)
   const [isStreaming, setIsStreaming] = useState(false)
@@ -132,20 +124,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 }
 
 export function useChatContext() {
-  // #region agent log
-  console.log('[DEBUG] useChatContext() called')
-  // #endregion
-  
   const context = useContext(ChatContext)
-  
-  // #region agent log
-  console.log('[DEBUG] useChatContext() context exists:', !!context)
-  // #endregion
-  
   if (!context) {
-    // #region agent log
-    console.error('[DEBUG] H2-CONFIRMED: useChatContext called outside ChatProvider!')
-    // #endregion
     throw new Error('useChatContext must be used within a ChatProvider')
   }
   return context

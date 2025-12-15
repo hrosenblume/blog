@@ -19,7 +19,6 @@ export type {
   RevisionFull, 
   StashedContent,
   RevisionState,
-  AIPreview,
   AIState 
 } from './types'
 

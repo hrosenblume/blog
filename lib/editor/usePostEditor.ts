@@ -7,7 +7,7 @@ import { generateSlug } from '@/lib/markdown'
 import { getRandomShape } from '@/lib/polyhedra/shapes'
 import { confirmPublish, confirmUnpublish } from '@/lib/utils/confirm'
 import { useContentStash } from './useContentStash'
-import type { RevisionSummary, RevisionFull, RevisionState, AIPreview, AIState } from './types'
+import type { RevisionSummary, RevisionFull, RevisionState, AIState } from './types'
 
 export interface PostContent {
   title: string
@@ -135,12 +135,11 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
   const [previewLoading, setPreviewLoading] = useState(false)
   const [previewingRevision, setPreviewingRevision] = useState<RevisionFull | null>(null)
   
-  // Shared stash for preview modes (revision preview and AI generation)
+  // Stash for revision preview mode
   const stash = useContentStash()
 
   // AI generation state
   const [aiGenerating, setAiGenerating] = useState(false)
-  const [aiPreview, setAiPreview] = useState<AIPreview | null>(null)
   const aiAbortController = useRef<AbortController | null>(null)
 
   // Load existing post
@@ -206,7 +205,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
 
   // Track unsaved changes (skip during preview mode)
   useEffect(() => {
-    if (previewingRevision || aiPreview) return
+    if (previewingRevision) return
     
     const saved = lastSavedContent.current
     const contentChanged =
@@ -222,7 +221,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
       ogImage !== saved.ogImage
     // Include edit flag to catch whitespace changes that get normalized away
     setHasUnsavedChanges(contentChanged || hasEditedSinceLastSave)
-  }, [title, subtitle, slug, markdown, polyhedraShape, seoTitle, seoDescription, seoKeywords, noIndex, ogImage, previewingRevision, aiPreview, hasEditedSinceLastSave])
+  }, [title, subtitle, slug, markdown, polyhedraShape, seoTitle, seoDescription, seoKeywords, noIndex, ogImage, previewingRevision, hasEditedSinceLastSave])
 
   // Browser back/refresh warning for unsaved changes
   useEffect(() => {
@@ -365,12 +364,12 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
 
   // Autosave drafts after 3 seconds of inactivity (silent - no button spinner)
   useEffect(() => {
-    if (previewingRevision || aiPreview) return
+    if (previewingRevision) return
     if (!postSlug || !title.trim() || status === 'published') return
 
     const timeout = setTimeout(() => handleSave('draft', { silent: true }), 3000)
     return () => clearTimeout(timeout)
-  }, [markdown, title, postSlug, status, handleSave, previewingRevision, aiPreview])
+  }, [markdown, title, postSlug, status, handleSave, previewingRevision])
 
   // Unpublish handler
   const handleUnpublish = useCallback(async () => {
@@ -526,10 +525,17 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
     const signal = aiAbortController.current.signal
     
     try {
-      // 1. Stash current content
-      stash.save({ title, subtitle, markdown, polyhedraShape })
+      // 1. If existing post with content, save a revision first (so user can restore via history)
+      const hasExistingContent = !!(title.trim() || markdown.trim())
+      if (postSlug && hasExistingContent) {
+        await fetch(`/api/posts/by-slug/${urlSlugRef.current}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, subtitle, markdown, polyhedraShape }),
+        })
+      }
 
-      // 2. Clear current content and disable editing
+      // 2. Clear current content and disable editing during generation
       setTitle('')
       setSubtitle('')
       setMarkdown('')
@@ -554,14 +560,12 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
       const reader = res.body?.getReader()
       if (!reader) throw new Error('No response body')
 
-      const modelName = res.headers.get('X-Model-Name') || 'AI'
       const decoder = new TextDecoder()
       let fullContent = ''
 
       // 4. Stream content and update progressively
       const { parseGeneratedContent } = await import('@/lib/ai/parse')
       const { markdownToHtml } = await import('@/lib/markdown')
-      const { wordCount } = await import('@/lib/markdown')
 
       while (true) {
         // Check if aborted before reading
@@ -593,56 +597,19 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
         }
       }
 
-      // 5. Final parse and set AI preview state (even if stopped early)
-      const finalParsed = parseGeneratedContent(fullContent)
-      
-      // Only show preview if we have some content
-      if (finalParsed.body.trim()) {
-        setAiPreview({
-          title: finalParsed.title,
-          subtitle: finalParsed.subtitle,
-          markdown: finalParsed.body,
-          model: modelName,
-          wordCount: wordCount(finalParsed.body),
-        })
-      } else {
-        // No content generated, restore stash
-        const stashed = stash.restore()
-        if (stashed) {
-          setTitle(stashed.title)
-          setSubtitle(stashed.subtitle)
-          setMarkdown(stashed.markdown)
-          setPolyhedraShape(stashed.polyhedraShape)
-          
-          if (editor) {
-            const html = markdownToHtml(stashed.markdown)
-            editor.commands.setContent(html, { emitUpdate: false })
-          }
-        }
-        editor?.setEditable(true)
-      }
+      // 5. Generation complete - content is already in place, enable editing
+      editor?.setEditable(true)
+      setHasEditedSinceLastSave(true)
     } catch (err) {
       // Handle abort gracefully - not an error
       if (err instanceof Error && err.name === 'AbortError') {
-        // User stopped generation - keep whatever content was streamed
-        // The content was already set during streaming, no need to rollback
+        // User stopped generation - keep whatever content was streamed, enable editing
+        editor?.setEditable(true)
+        setHasEditedSinceLastSave(true)
         return
       }
       
-      // Rollback stash on error
-      const stashed = stash.restore()
-      if (stashed) {
-        setTitle(stashed.title)
-        setSubtitle(stashed.subtitle)
-        setMarkdown(stashed.markdown)
-        setPolyhedraShape(stashed.polyhedraShape)
-        
-        if (editor) {
-          const { markdownToHtml } = await import('@/lib/markdown')
-          const html = markdownToHtml(stashed.markdown)
-          editor.commands.setContent(html, { emitUpdate: false })
-        }
-      }
+      // On error, re-enable editing (revision was already saved if there was content)
       editor?.setEditable(true)
       alert(err instanceof Error ? err.message : 'Generation failed')
       console.error(err)
@@ -650,42 +617,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
       setAiGenerating(false)
       aiAbortController.current = null
     }
-  }, [title, subtitle, markdown, polyhedraShape, editor, stash])
-
-  // Accept AI-generated content
-  const acceptAiDraft = useCallback(() => {
-    // Clear stash and preview state, keep the content
-    stash.clear()
-    setAiPreview(null)
-    editor?.setEditable(true)
-    // Mark as having unsaved changes so it will save
-    setHasEditedSinceLastSave(true)
-  }, [editor, stash])
-
-  // Discard AI-generated content and restore original
-  const discardAiDraft = useCallback(async () => {
-    const stashed = stash.restore()
-    if (!stashed) return
-
-    // Restore stashed content
-    setTitle(stashed.title)
-    setSubtitle(stashed.subtitle)
-    setMarkdown(stashed.markdown)
-    setPolyhedraShape(stashed.polyhedraShape)
-
-    // Directly update editor content
-    if (editor) {
-      const { markdownToHtml } = await import('@/lib/markdown')
-      const html = markdownToHtml(stashed.markdown)
-      editor.commands.setContent(html, { emitUpdate: false })
-    }
-
-    // Clear AI preview state
-    setAiPreview(null)
-
-    // Re-enable editing
-    editor?.setEditable(true)
-  }, [editor, stash])
+  }, [postSlug, title, subtitle, markdown, polyhedraShape, editor])
 
   // Stop AI generation in progress
   const stopAiGeneration = useCallback(() => {
@@ -740,11 +672,8 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
     
     ai: {
       generating: aiGenerating,
-      previewing: aiPreview,
       generate: generateWithAI,
       stop: stopAiGeneration,
-      accept: acceptAiDraft,
-      discard: discardAiDraft,
     },
   }
 }

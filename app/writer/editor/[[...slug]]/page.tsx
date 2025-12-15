@@ -15,16 +15,11 @@ import { EditorNavbar } from '@/components/editor/EditorNavbar'
 import { PostMetadataFooter } from '@/components/editor/PostMetadataFooter'
 import { RevisionPreviewBanner } from '@/components/editor/RevisionPreviewBanner'
 import { GenerateModal } from '@/components/editor/GenerateModal'
-import { AIPreviewBanner } from '@/components/editor/AIPreviewBanner'
 import { ArticleLayout } from '@/components/ArticleLayout'
 import { ArticleHeader } from '@/components/ArticleHeader'
 import { CheckIcon } from '@/components/Icons'
 import { formatSavedTime } from '@/lib/utils/format'
 import { HOMEPAGE } from '@/lib/homepage'
-
-// #region agent log
-console.log('[DEBUG] Editor module loaded')
-// #endregion
 
 // Success screen shown after publishing
 function PublishSuccess() {
@@ -42,27 +37,13 @@ function PublishSuccess() {
 }
 
 export default function Editor() {
-  // #region agent log
-  console.log('[DEBUG] Editor component rendering')
-  // #endregion
-  
   const router = useRouter()
   const params = useParams()
   const postSlug = params.slug?.[0] as string | undefined
   
-  // #region agent log
-  console.log('[DEBUG] H1: About to call useSession()')
-  // #endregion
   const { data: session } = useSession()
-  // #region agent log
-  console.log('[DEBUG] H1: useSession() returned, session:', !!session)
-  // #endregion
-  
   const userCanPublish = canPublish(session?.user?.role)
 
-  // #region agent log
-  console.log('[DEBUG] H2: About to call usePostEditor()')
-  // #endregion
   const {
     post,
     setTitle,
@@ -85,18 +66,9 @@ export default function Editor() {
     revisions,
     ai,
   } = usePostEditor(postSlug)
-  // #region agent log
-  console.log('[DEBUG] H2: usePostEditor() returned, loading:', ui?.loading)
-  // #endregion
 
   // Chat context - sync essay content for AI awareness
-  // #region agent log
-  console.log('[DEBUG] H3: About to call useChatContext()')
-  // #endregion
   const { setEssayContext, setIsOpen: setShowChatPanel } = useChatContext()
-  // #region agent log
-  console.log('[DEBUG] H3: useChatContext() returned')
-  // #endregion
 
   // Keep essay context in sync with current post content
   useEffect(() => {
@@ -128,7 +100,7 @@ export default function Editor() {
     { 
       ...SHORTCUTS.PREV, 
       handler: () => { 
-        if (ai.generating || ai.previewing || revisions.previewing) return
+        if (ai.generating || revisions.previewing) return
         if (ui.hasUnsavedChanges && !confirm('You have unsaved changes. Leave anyway?')) return
         if (nav.prevSlug) router.push(`/writer/editor/${nav.prevSlug}`) 
       } 
@@ -136,7 +108,7 @@ export default function Editor() {
     { 
       ...SHORTCUTS.NEXT, 
       handler: () => { 
-        if (ai.generating || ai.previewing || revisions.previewing) return
+        if (ai.generating || revisions.previewing) return
         if (ui.hasUnsavedChanges && !confirm('You have unsaved changes. Leave anyway?')) return
         if (nav.nextSlug) router.push(`/writer/editor/${nav.nextSlug}`) 
       } 
@@ -147,11 +119,6 @@ export default function Editor() {
         // If generating, stop the generation
         if (ai.generating) {
           ai.stop()
-          return
-        }
-        // If in AI preview mode, discard first
-        if (ai.previewing) {
-          ai.discard()
           return
         }
         // If in revision preview mode, cancel preview first
@@ -195,17 +162,8 @@ export default function Editor() {
         <RevisionPreviewBanner revision={revisions.previewing} />
       )}
 
-      {/* AI preview banner */}
-      {ai.previewing && (
-        <AIPreviewBanner
-          preview={ai.previewing}
-          onAccept={ai.accept}
-          onDiscard={ai.discard}
-        />
-      )}
-
       {/* Fixed toolbar below header - hidden in preview mode */}
-      {!revisions.previewing && !ai.previewing && (
+      {!revisions.previewing && (
         <EditorToolbar
           editor={ui.showMarkdown ? null : editor}
           textareaRef={ui.showMarkdown ? textareaRef : undefined}
@@ -230,13 +188,13 @@ export default function Editor() {
               subtitle={post.subtitle}
               byline={HOMEPAGE.name}
               editable
-              disabled={!!revisions.previewing || !!ai.previewing}
+              disabled={!!revisions.previewing}
               onTitleChange={setTitle}
               onSubtitleChange={setSubtitle}
             />
           }
           footer={
-            !revisions.previewing && !ai.previewing && (
+            !revisions.previewing && (
               <PostMetadataFooter
                 slug={post.slug}
                 status={post.status}
@@ -261,6 +219,14 @@ export default function Editor() {
             )
           }
         >
+          {/* Loading indicator during AI generation */}
+          {ai.generating && !post.markdown && (
+            <div className="flex items-center gap-2 text-muted-foreground py-8">
+              <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              <span>Generating...</span>
+            </div>
+          )}
+
           {/* Toggle between WYSIWYG and raw markdown */}
           {ui.showMarkdown ? (
             <textarea
@@ -268,7 +234,7 @@ export default function Editor() {
               value={post.markdown}
               onChange={(e) => setMarkdown(e.target.value)}
               placeholder="Write your story in Markdown..."
-              readOnly={!!revisions.previewing || !!ai.previewing}
+              readOnly={!!revisions.previewing}
               className="w-full min-h-[500px] bg-transparent border-none outline-none resize-none placeholder-gray-400 leading-relaxed overflow-hidden font-mono text-sm"
             />
           ) : (
@@ -286,8 +252,6 @@ export default function Editor() {
         <div className="flex items-center justify-end text-sm text-muted-foreground">
           {ai.generating ? (
             <span>Press Esc to stop generating</span>
-          ) : ai.previewing ? (
-            <span>Press Esc to discard AI draft</span>
           ) : revisions.previewing ? (
             <span>Press Esc to cancel</span>
           ) : ui.lastSaved ? (
