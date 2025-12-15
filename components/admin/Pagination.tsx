@@ -1,6 +1,13 @@
-import Link from 'next/link'
 import { cn } from '@/lib/utils/cn'
-import { Button } from '@/components/ui/button'
+import {
+  Pagination as PaginationRoot,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination'
 
 interface PaginationProps {
   currentPage: number
@@ -12,13 +19,14 @@ interface PaginationProps {
 export function Pagination({ currentPage, totalPages, baseUrl, position = 'top' }: PaginationProps) {
   if (totalPages <= 1) return null
 
-  const spacingClass = position === 'top' ? 'mb-4' : 'mt-4'
+  // Only add spacing for bottom position (top is inline with header)
+  const spacingClass = position === 'bottom' ? 'mt-4' : ''
 
   const getPageUrl = (page: number) => `${baseUrl}?page=${page}`
 
   // Generate page numbers to show
   const getPageNumbers = () => {
-    const pages: (number | 'ellipsis')[] = []
+    const pages: (number | 'ellipsis-start' | 'ellipsis-end')[] = []
     
     if (totalPages <= 7) {
       // Show all pages
@@ -28,7 +36,7 @@ export function Pagination({ currentPage, totalPages, baseUrl, position = 'top' 
       pages.push(1)
       
       if (currentPage > 3) {
-        pages.push('ellipsis')
+        pages.push('ellipsis-start')
       }
       
       // Show pages around current
@@ -40,7 +48,7 @@ export function Pagination({ currentPage, totalPages, baseUrl, position = 'top' 
       }
       
       if (currentPage < totalPages - 2) {
-        pages.push('ellipsis')
+        pages.push('ellipsis-end')
       }
       
       // Always show last page
@@ -51,50 +59,39 @@ export function Pagination({ currentPage, totalPages, baseUrl, position = 'top' 
   }
 
   return (
-    <div className={cn("flex items-center justify-between px-4 py-3 bg-card rounded-lg shadow", spacingClass)}>
-      <div className="text-sm text-muted-foreground">
-        Page {currentPage} of {totalPages}
-      </div>
-      
-      <nav className="flex items-center gap-1">
-        {/* Previous button */}
-        {currentPage > 1 ? (
-          <Button variant="ghost" size="sm" asChild>
-            <Link href={getPageUrl(currentPage - 1)}>← Prev</Link>
-          </Button>
-        ) : (
-          <Button variant="ghost" size="sm" disabled>← Prev</Button>
-        )}
+    <PaginationRoot className={cn("justify-end", spacingClass)}>
+      <PaginationContent>
+        <PaginationItem>
+          <PaginationPrevious 
+            href={currentPage > 1 ? getPageUrl(currentPage - 1) : undefined}
+            className={cn(currentPage <= 1 && "pointer-events-none opacity-50")}
+          />
+        </PaginationItem>
         
-        {/* Page numbers */}
-        {getPageNumbers().map((page, i) => 
-          page === 'ellipsis' ? (
-            <span key={`ellipsis-${i}`} className="px-2 text-muted-foreground">…</span>
+        {getPageNumbers().map((page) => 
+          typeof page === 'string' ? (
+            <PaginationItem key={page}>
+              <PaginationEllipsis />
+            </PaginationItem>
           ) : (
-            <Button
-              key={page}
-              variant={page === currentPage ? 'default' : 'ghost'}
-              size="sm"
-              asChild={page !== currentPage}
-            >
-              {page === currentPage ? (
-                <span>{page}</span>
-              ) : (
-                <Link href={getPageUrl(page)}>{page}</Link>
-              )}
-            </Button>
+            <PaginationItem key={page}>
+              <PaginationLink 
+                href={getPageUrl(page)} 
+                isActive={page === currentPage}
+              >
+                {page}
+              </PaginationLink>
+            </PaginationItem>
           )
         )}
         
-        {/* Next button */}
-        {currentPage < totalPages ? (
-          <Button variant="ghost" size="sm" asChild>
-            <Link href={getPageUrl(currentPage + 1)}>Next →</Link>
-          </Button>
-        ) : (
-          <Button variant="ghost" size="sm" disabled>Next →</Button>
-        )}
-      </nav>
-    </div>
+        <PaginationItem>
+          <PaginationNext 
+            href={currentPage < totalPages ? getPageUrl(currentPage + 1) : undefined}
+            className={cn(currentPage >= totalPages && "pointer-events-none opacity-50")}
+          />
+        </PaginationItem>
+      </PaginationContent>
+    </PaginationRoot>
   )
 }

@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
+import { Switch } from '@/components/ui/switch'
 import { integrations, type Integration } from '@/lib/integrations/config'
 
 // Helper to capitalize first letter for hasXxx keys
@@ -102,6 +103,36 @@ function IntegrationField({
   )
 }
 
+// Toggle field component for boolean settings
+function ToggleField({
+  integration,
+  checked,
+  onToggle,
+  disabled,
+}: {
+  integration: Integration
+  checked: boolean
+  onToggle: (value: boolean) => void
+  disabled: boolean
+}) {
+  return (
+    <div className="flex items-center justify-between py-2">
+      <div className="space-y-0.5">
+        <Label htmlFor={integration.key}>{integration.label}</Label>
+        <p className="text-sm text-muted-foreground">
+          {integration.description}
+        </p>
+      </div>
+      <Switch
+        id={integration.key}
+        checked={checked}
+        onCheckedChange={onToggle}
+        disabled={disabled}
+      />
+    </div>
+  )
+}
+
 export default function IntegrationsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -160,6 +191,27 @@ export default function IntegrationsPage() {
     }
   }
 
+  const handleToggle = async (key: string, value: boolean) => {
+    setSaving(true)
+    setSaved(false)
+    try {
+      const res = await fetch('/api/integrations/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [key]: value }),
+      })
+      const data = await res.json()
+      setSettings(data)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch (err) {
+      console.error('Failed to save:', err)
+      alert('Failed to save setting')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -180,30 +232,57 @@ export default function IntegrationsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {integrations.map((integration) => {
-            const sourceKey = `${integration.key}Source`
-            const source = settings[sourceKey] as 'db' | 'env' | '' | undefined
-            return (
-              <IntegrationField
-                key={integration.key}
-                integration={integration}
-                hasValue={!!settings[`has${capitalize(integration.key)}`]}
-                source={source === 'db' || source === 'env' ? source : null}
-                displayValue={integration.inputType !== 'password' ? (settings[integration.key] as string || '') : ''}
-                onSave={(value) => handleSave(integration.key, value)}
-                onClear={() => handleClear(integration.key, integration.label)}
-                disabled={saving}
-              />
-            )
-          })}
-
-          {saved && (
-            <span className="text-sm text-green-600 dark:text-green-400">
-              Saved!
-            </span>
-          )}
+          {integrations
+            .filter((i) => i.inputType !== 'toggle')
+            .map((integration) => {
+              const sourceKey = `${integration.key}Source`
+              const source = settings[sourceKey] as 'db' | 'env' | '' | undefined
+              return (
+                <IntegrationField
+                  key={integration.key}
+                  integration={integration}
+                  hasValue={!!settings[`has${capitalize(integration.key)}`]}
+                  source={source === 'db' || source === 'env' ? source : null}
+                  displayValue={integration.inputType !== 'password' ? (settings[integration.key] as string || '') : ''}
+                  onSave={(value) => handleSave(integration.key, value)}
+                  onClear={() => handleClear(integration.key, integration.label)}
+                  disabled={saving}
+                />
+              )
+            })}
         </CardContent>
       </Card>
+
+      {/* Feature Toggles */}
+      {integrations.some((i) => i.inputType === 'toggle') && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Features</CardTitle>
+            <CardDescription>
+              Enable or disable optional features.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {integrations
+              .filter((i) => i.inputType === 'toggle')
+              .map((integration) => (
+                <ToggleField
+                  key={integration.key}
+                  integration={integration}
+                  checked={!!settings[integration.key]}
+                  onToggle={(value) => handleToggle(integration.key, value)}
+                  disabled={saving}
+                />
+              ))}
+
+            {saved && (
+              <span className="text-sm text-green-600 dark:text-green-400">
+                Saved!
+              </span>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

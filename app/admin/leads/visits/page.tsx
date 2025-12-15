@@ -2,6 +2,7 @@ import { prisma } from '@/lib/db'
 import { getPaginatedData } from '@/lib/admin'
 import { getLeadDisplayName } from '@/lib/leads'
 import { Pagination } from '@/components/admin/Pagination'
+import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminTable, AdminTableRow } from '@/components/admin/AdminTable'
 import { ViewPayloadButton } from '@/components/admin/ViewPayloadButton'
 
@@ -57,16 +58,11 @@ export default async function LeadVisitsPage({ searchParams }: PageProps) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-section font-bold">Visits</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {totalCount} total visit{totalCount !== 1 ? 's' : ''}
-          </p>
-        </div>
-      </div>
-
-      <Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/admin/leads/visits" position="top" />
+      <AdminPageHeader
+        title="Visits"
+        subtitle={`${totalCount} total visit${totalCount !== 1 ? 's' : ''}`}
+        action={<Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/admin/leads/visits" position="top" />}
+      />
 
       <AdminTable
         columns={columns}

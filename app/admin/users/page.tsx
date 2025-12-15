@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/db'
 import Link from 'next/link'
 import { AdminTable, AdminTableRow } from '@/components/admin/AdminTable'
-import { AdminActionsMenu } from '@/components/admin/AdminActionsMenu'
+import { SimpleActionsMenu } from '@/components/admin/AdminActionsMenu'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
@@ -26,7 +26,7 @@ export default async function UsersPage() {
       <span key="created" className="text-muted-foreground">{new Date(user.createdAt).toLocaleDateString()}</span>,
     ],
     actions: (
-      <AdminActionsMenu
+      <SimpleActionsMenu
         editHref={`/admin/users/${user.id}`}
         deleteEndpoint={`/api/admin/users/${user.id}`}
         deleteConfirmMessage={`Delete user "${user.email}"?`}

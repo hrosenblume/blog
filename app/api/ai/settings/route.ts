@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { withSession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { AI_MODELS } from '@/lib/ai/models'
-import { DEFAULT_GENERATE_TEMPLATE, DEFAULT_CHAT_TEMPLATE, DEFAULT_REWRITE_TEMPLATE } from '@/lib/ai/system-prompt'
+import { 
+  DEFAULT_GENERATE_TEMPLATE, 
+  DEFAULT_CHAT_TEMPLATE, 
+  DEFAULT_REWRITE_TEMPLATE,
+  DEFAULT_AUTO_DRAFT_TEMPLATE,
+} from '@/lib/ai/system-prompt'
 
 // GET /api/ai/settings - Get current AI settings
 export const GET = withSession(async () => {
@@ -22,13 +27,17 @@ export const GET = withSession(async () => {
     rules: settings.rules,
     chatRules: settings.chatRules,
     rewriteRules: settings.rewriteRules,
+    autoDraftRules: settings.autoDraftRules,
+    autoDraftWordCount: settings.autoDraftWordCount ?? 800,
     defaultModel: settings.defaultModel,
     generateTemplate: settings.generateTemplate,
     chatTemplate: settings.chatTemplate,
     rewriteTemplate: settings.rewriteTemplate,
+    autoDraftTemplate: settings.autoDraftTemplate,
     defaultGenerateTemplate: DEFAULT_GENERATE_TEMPLATE,
     defaultChatTemplate: DEFAULT_CHAT_TEMPLATE,
     defaultRewriteTemplate: DEFAULT_REWRITE_TEMPLATE,
+    defaultAutoDraftTemplate: DEFAULT_AUTO_DRAFT_TEMPLATE,
     availableModels: AI_MODELS.map(m => ({
       id: m.id,
       name: m.name,
@@ -45,10 +54,13 @@ export const PATCH = withSession(async (request: NextRequest) => {
     rules?: string
     chatRules?: string
     rewriteRules?: string
+    autoDraftRules?: string
+    autoDraftWordCount?: number
     defaultModel?: string
     generateTemplate?: string | null
     chatTemplate?: string | null
     rewriteTemplate?: string | null
+    autoDraftTemplate?: string | null
   } = {}
 
   if (typeof body.rules === 'string') {
@@ -61,6 +73,14 @@ export const PATCH = withSession(async (request: NextRequest) => {
 
   if (typeof body.rewriteRules === 'string') {
     updateData.rewriteRules = body.rewriteRules
+  }
+
+  if (typeof body.autoDraftRules === 'string') {
+    updateData.autoDraftRules = body.autoDraftRules
+  }
+
+  if (typeof body.autoDraftWordCount === 'number') {
+    updateData.autoDraftWordCount = body.autoDraftWordCount
   }
 
   if (typeof body.defaultModel === 'string') {
@@ -88,6 +108,10 @@ export const PATCH = withSession(async (request: NextRequest) => {
     updateData.rewriteTemplate = body.rewriteTemplate
   }
 
+  if (body.autoDraftTemplate !== undefined) {
+    updateData.autoDraftTemplate = body.autoDraftTemplate
+  }
+
   const settings = await prisma.aISettings.upsert({
     where: { id: 'default' },
     update: updateData,
@@ -96,10 +120,13 @@ export const PATCH = withSession(async (request: NextRequest) => {
       rules: updateData.rules || '',
       chatRules: updateData.chatRules || '',
       rewriteRules: updateData.rewriteRules,
+      autoDraftRules: updateData.autoDraftRules,
+      autoDraftWordCount: updateData.autoDraftWordCount,
       defaultModel: updateData.defaultModel || 'claude-sonnet',
       generateTemplate: updateData.generateTemplate,
       chatTemplate: updateData.chatTemplate,
       rewriteTemplate: updateData.rewriteTemplate,
+      autoDraftTemplate: updateData.autoDraftTemplate,
     },
   })
 
@@ -107,9 +134,12 @@ export const PATCH = withSession(async (request: NextRequest) => {
     rules: settings.rules,
     chatRules: settings.chatRules,
     rewriteRules: settings.rewriteRules,
+    autoDraftRules: settings.autoDraftRules,
+    autoDraftWordCount: settings.autoDraftWordCount ?? 800,
     defaultModel: settings.defaultModel,
     generateTemplate: settings.generateTemplate,
     chatTemplate: settings.chatTemplate,
     rewriteTemplate: settings.rewriteTemplate,
+    autoDraftTemplate: settings.autoDraftTemplate,
   })
 })

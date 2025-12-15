@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db'
 import { parsePaginationParams, paginateArray } from '@/lib/admin'
 import { Pagination } from '@/components/admin/Pagination'
+import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminTable, AdminTableRow } from '@/components/admin/AdminTable'
 
 export const dynamic = 'force-dynamic'
@@ -128,16 +129,11 @@ export default async function CompanyVisitorsPage({ searchParams }: PageProps) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-section font-bold">Company Visitors</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {totalCount} compan{totalCount !== 1 ? 'ies' : 'y'}
-          </p>
-        </div>
-      </div>
-
-      <Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/admin/visitors/companies" position="top" />
+      <AdminPageHeader
+        title="Company Visitors"
+        subtitle={`${totalCount} compan${totalCount !== 1 ? 'ies' : 'y'}`}
+        action={<Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/admin/visitors/companies" position="top" />}
+      />
 
       <AdminTable
         columns={columns}

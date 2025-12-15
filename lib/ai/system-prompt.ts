@@ -43,14 +43,42 @@ export const DEFAULT_REWRITE_TEMPLATE = `You are a writing assistant that rewrit
 
 Your task is to rewrite the given text to be cleaner and more in line with the author's style. Output ONLY the rewritten text. No preamble, no "Here is...", no explanations. Just the rewritten text.`
 
+export const DEFAULT_AUTO_DRAFT_TEMPLATE = `You are a writing assistant that writes thought-provoking essays inspired by current news.
+
+## Auto-Draft Rules (Follow these for news-inspired essays)
+{{AUTO_DRAFT_RULES}}
+
+## Topic-Specific Focus
+{{ESSAY_FOCUS}}
+
+## General Writing Rules
+{{RULES}}
+
+## Style Reference (Write in this voice)
+{{STYLE_EXAMPLES}}
+
+---
+
+Write an essay of approximately {{AUTO_DRAFT_WORD_COUNT}} words inspired by this news article. Offer an original perspective and personal insights - don't just summarize the news.
+
+TOPIC: {{TOPIC_NAME}}
+ARTICLE TITLE: {{ARTICLE_TITLE}}
+ARTICLE SUMMARY: {{ARTICLE_SUMMARY}}
+SOURCE: {{ARTICLE_URL}}
+
+Output ONLY markdown. No preamble, no "Here is...", no explanations. Start with a compelling title using markdown # heading.`
+
 export interface StyleContext {
   customRules: string
   chatRules: string
   rewriteRules: string
+  autoDraftRules: string
   styleExamples: string
   generateTemplate: string | null
   chatTemplate: string | null
   rewriteTemplate: string | null
+  autoDraftTemplate: string | null
+  autoDraftWordCount: number
 }
 
 /**
@@ -77,7 +105,7 @@ function applyPlaceholders(
 
 /**
  * Fetch AI settings and published posts to build style context.
- * Shared by generate, chat, and rewrite APIs.
+ * Shared by generate, chat, rewrite, and auto-draft APIs.
  */
 export async function getStyleContext(): Promise<StyleContext> {
   // Fetch AI settings for custom rules and templates
@@ -85,9 +113,12 @@ export async function getStyleContext(): Promise<StyleContext> {
   const customRules = settings?.rules || ''
   const chatRules = settings?.chatRules || ''
   const rewriteRules = settings?.rewriteRules || ''
+  const autoDraftRules = settings?.autoDraftRules || ''
   const generateTemplate = settings?.generateTemplate || null
   const chatTemplate = settings?.chatTemplate || null
   const rewriteTemplate = settings?.rewriteTemplate || null
+  const autoDraftTemplate = settings?.autoDraftTemplate || null
+  const autoDraftWordCount = settings?.autoDraftWordCount || 800
 
   // Fetch all published posts for style context
   const publishedPosts = await prisma.post.findMany({
@@ -104,7 +135,18 @@ export async function getStyleContext(): Promise<StyleContext> {
     })
     .join('\n\n---\n\n')
 
-  return { customRules, chatRules, rewriteRules, styleExamples, generateTemplate, chatTemplate, rewriteTemplate }
+  return { 
+    customRules, 
+    chatRules, 
+    rewriteRules, 
+    autoDraftRules,
+    styleExamples, 
+    generateTemplate, 
+    chatTemplate, 
+    rewriteTemplate,
+    autoDraftTemplate,
+    autoDraftWordCount,
+  }
 }
 
 /**
@@ -165,4 +207,34 @@ ${essay.markdown}`
 export function buildRewritePrompt(context: StyleContext): string {
   const template = context.rewriteTemplate || DEFAULT_REWRITE_TEMPLATE
   return applyPlaceholders(template, context.customRules, context.chatRules, context.rewriteRules, context.styleExamples)
+}
+
+/**
+ * Build a system prompt for generating essays from news articles.
+ * Used by auto-draft feature to create suggested posts from RSS feeds.
+ */
+export function buildNewsEssayPrompt(
+  article: { title: string; summary: string; url: string },
+  topicName: string,
+  context: StyleContext,
+  essayFocus?: string | null
+): string {
+  const template = context.autoDraftTemplate || DEFAULT_AUTO_DRAFT_TEMPLATE
+  
+  // Get values for placeholders
+  const rulesValue = context.customRules || 'No specific rules provided. Match the style of the examples.'
+  const autoDraftRulesValue = context.autoDraftRules || 'Write original perspectives on news. Be thought-provoking. Avoid summarizing.'
+  const styleValue = context.styleExamples || 'No published essays available. Write in a clear, personal essay style.'
+  const essayFocusValue = essayFocus || 'No specific focus provided. Write with a general perspective on this topic.'
+  
+  return template
+    .replace(/\{\{AUTO_DRAFT_RULES\}\}/g, autoDraftRulesValue)
+    .replace(/\{\{AUTO_DRAFT_WORD_COUNT\}\}/g, String(context.autoDraftWordCount))
+    .replace(/\{\{ESSAY_FOCUS\}\}/g, essayFocusValue)
+    .replace(/\{\{RULES\}\}/g, rulesValue)
+    .replace(/\{\{STYLE_EXAMPLES\}\}/g, styleValue)
+    .replace(/\{\{TOPIC_NAME\}\}/g, topicName)
+    .replace(/\{\{ARTICLE_TITLE\}\}/g, article.title)
+    .replace(/\{\{ARTICLE_SUMMARY\}\}/g, article.summary || 'No summary available')
+    .replace(/\{\{ARTICLE_URL\}\}/g, article.url)
 }

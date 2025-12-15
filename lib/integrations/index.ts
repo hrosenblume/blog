@@ -35,3 +35,5 @@ export async function getIntegrationSettings(): Promise<IntegrationSettingsData>
 
   return result as IntegrationSettingsData
 }
+
+

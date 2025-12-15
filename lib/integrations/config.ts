@@ -12,8 +12,8 @@ export type Integration = {
   key: string                     // DB field: 'googleAnalyticsId'
   label: string                   // UI label: 'Google Analytics'
   description: string             // Helper text
-  placeholder: string             // Input placeholder
-  inputType: 'text' | 'password' | 'email'
+  placeholder?: string            // Input placeholder (optional for toggles)
+  inputType: 'text' | 'password' | 'email' | 'toggle'
   envFallback?: string            // Env var name
 }
 
@@ -58,4 +58,12 @@ export const integrations: Integration[] = [
     inputType: 'password',
     envFallback: 'OPENAI_API_KEY',
   },
+  {
+    key: 'autoDraftEnabled',
+    label: 'Auto-Draft Essays',
+    description: 'Enable automatic essay drafting from RSS feeds. When off, Topics admin page and Inbox are hidden.',
+    inputType: 'toggle',
+  },
 ]
+
+

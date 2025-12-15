@@ -5,6 +5,7 @@ export type AdminNavItem = {
   label: string
   href: string
   countKey?: string  // optional for settings pages
+  featureFlag?: 'autoDraftEnabled'  // only show when this feature is enabled
 }
 
 export const adminNavItems: AdminNavItem[] = [
@@ -14,6 +15,7 @@ export const adminNavItems: AdminNavItem[] = [
   { label: 'Visits', href: '/admin/leads/visits', countKey: 'visits' },
   { label: 'Companies', href: '/admin/visitors/companies', countKey: 'companies' },
   { label: 'Persons', href: '/admin/visitors/persons', countKey: 'persons' },
+  { label: 'Topics', href: '/admin/topics', countKey: 'topics', featureFlag: 'autoDraftEnabled' },
   { label: 'AI', href: '/admin/ai' },
   { label: 'SEO', href: '/admin/seo' },
   { label: 'Integrations', href: '/admin/integrations' },
@@ -21,7 +23,7 @@ export const adminNavItems: AdminNavItem[] = [
 
 // For navbar grouping - items listed here will appear in dropdowns
 export const adminNavGroups = [
-  { label: 'Content', items: ['Posts', 'Revisions'] },
+  { label: 'Content', items: ['Posts', 'Revisions', 'Topics'] },
   { label: 'Analytics', items: ['Visits', 'Companies', 'Persons'] },
   { label: 'Settings', items: ['AI', 'SEO', 'Integrations'] },
 ]
@@ -44,4 +46,17 @@ export function getDirectLinkItems(): AdminNavItem[] {
     .map(label => adminNavItems.find(item => item.label === label))
     .filter((item): item is AdminNavItem => item !== undefined)
 }
+
+// Filter items based on feature flags
+export function filterByFeatureFlags(
+  items: AdminNavItem[],
+  enabledFlags: Record<string, boolean>
+): AdminNavItem[] {
+  return items.filter(item => {
+    if (!item.featureFlag) return true
+    return enabledFlags[item.featureFlag] === true
+  })
+}
+
+
 

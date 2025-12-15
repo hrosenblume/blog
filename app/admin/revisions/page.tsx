@@ -2,6 +2,7 @@ import { prisma } from '@/lib/db'
 import { getPaginatedData } from '@/lib/admin'
 import Link from 'next/link'
 import { Pagination } from '@/components/admin/Pagination'
+import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminTable, AdminTableRow } from '@/components/admin/AdminTable'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -58,16 +59,11 @@ export default async function RevisionsPage({ searchParams }: PageProps) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-section font-bold">Revisions</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {totalCount} total revision{totalCount !== 1 ? 's' : ''}
-          </p>
-        </div>
-      </div>
-
-      <Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/admin/revisions" position="top" />
+      <AdminPageHeader
+        title="Revisions"
+        subtitle={`${totalCount} total revision${totalCount !== 1 ? 's' : ''}`}
+        action={<Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/admin/revisions" position="top" />}
+      />
 
       <AdminTable
         columns={columns}

@@ -8,8 +8,8 @@ interface AdminPageHeaderProps {
 
 export function AdminPageHeader({ title, subtitle, action }: AdminPageHeaderProps) {
   return (
-    <div className="flex items-center justify-between mb-6 md:mb-8">
-      <div>
+    <div className="flex items-end justify-between gap-4 mb-6">
+      <div className="shrink-0">
         <h1 className="text-section font-bold">{title}</h1>
         {subtitle && (
           <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
@@ -19,4 +19,7 @@ export function AdminPageHeader({ title, subtitle, action }: AdminPageHeaderProp
     </div>
   )
 }
+
+
+
 

@@ -2,8 +2,9 @@ import { prisma } from '@/lib/db'
 import { getPaginatedData } from '@/lib/admin'
 import Link from 'next/link'
 import { Pagination } from '@/components/admin/Pagination'
+import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminTable, AdminTableRow } from '@/components/admin/AdminTable'
-import { AdminActionsMenu } from '@/components/admin/AdminActionsMenu'
+import { SimpleActionsMenu } from '@/components/admin/AdminActionsMenu'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
@@ -43,7 +44,7 @@ export default async function PostsPage({ searchParams }: PageProps) {
       <span key="updated" className="text-muted-foreground">{new Date(post.updatedAt).toLocaleDateString()}</span>,
     ],
     actions: (
-      <AdminActionsMenu
+      <SimpleActionsMenu
         editHref={`/writer/editor/${post.slug}`}
         viewHref={post.status === 'published' ? `/e/${post.slug}` : undefined}
         deleteEndpoint={`/api/posts/${post.id}`}
@@ -57,19 +58,18 @@ export default async function PostsPage({ searchParams }: PageProps) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6 md:mb-8">
-        <div>
-          <h1 className="text-section font-bold">Posts</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {totalCount} total post{totalCount !== 1 ? 's' : ''}
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/writer/editor">New Post</Link>
-        </Button>
-      </div>
-
-      <Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/admin/posts" position="top" />
+      <AdminPageHeader
+        title="Posts"
+        subtitle={`${totalCount} total post${totalCount !== 1 ? 's' : ''}`}
+        action={
+          <div className="flex items-center gap-4">
+            <Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/admin/posts" position="top" />
+            <Button asChild>
+              <Link href="/writer/editor">New Post</Link>
+            </Button>
+          </div>
+        }
+      />
 
       <AdminTable
         columns={columns}

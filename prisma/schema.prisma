@@ -12,7 +12,7 @@ model Post {
   title          String
   slug           String     @unique
   markdown       String
-  status         String     @default("draft")
+  status         String     @default("draft") // "draft", "published", "suggested", "deleted"
   polyhedraShape String?
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
@@ -26,6 +26,12 @@ model Post {
   seoKeywords    String?
   noIndex        Boolean    @default(false)
   ogImage        String?    // Custom Open Graph image URL
+  
+  // Auto-draft fields (for suggested posts)
+  sourceUrl      String?    // Original article URL
+  topicId        String?    // TopicSubscription that generated this
+  topic          TopicSubscription? @relation(fields: [topicId], references: [id])
+  newsItem       NewsItem?  // Reverse relation to source news item
 }
 
 model Revision {
@@ -96,6 +102,9 @@ model AISettings {
   chatTemplate     String?  // Custom chat prompt template
   rewriteRules     String?  // Specific rules for magic pencil rewrites
   rewriteTemplate  String?  // Custom rewrite prompt template
+  autoDraftRules     String?   // Rules for news-based essay generation
+  autoDraftTemplate  String?   // Custom prompt template for auto-draft
+  autoDraftWordCount Int?      // Target word count (default: 800)
   updatedAt        DateTime @updatedAt
 }
 
@@ -131,5 +140,41 @@ model IntegrationSettings {
   contactEmail        String?  // Public contact email
   anthropicApiKey     String?  // Anthropic API key for Claude models
   openaiApiKey        String?  // OpenAI API key for GPT models
+  autoDraftEnabled    Boolean  @default(false)  // Master toggle for auto-draft feature
   updatedAt           DateTime @updatedAt
+}
+
+// Auto-draft topic subscriptions
+model TopicSubscription {
+  id            String     @id @default(uuid())
+  name          String                              // "School Lunch Policy"
+  keywords      String                              // JSON array: ["school lunch", "USDA"]
+  rssFeeds      String                              // JSON array of feed URLs
+  isActive      Boolean    @default(true)
+  frequency     String     @default("daily")        // "daily", "weekly", "manual"
+  maxPerPeriod  Int        @default(3)              // Max essays per run
+  essayFocus    String?                             // Per-topic essay direction/angle
+  lastRunAt     DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  newsItems     NewsItem[]
+  posts         Post[]                              // Posts generated from this topic
+}
+
+// News items fetched from RSS feeds
+model NewsItem {
+  id            String            @id @default(uuid())
+  topicId       String
+  topic         TopicSubscription @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  url           String            @unique           // Dedup key
+  title         String
+  summary       String?                             // RSS description
+  publishedAt   DateTime?
+  status        String            @default("pending") // "pending", "generated", "skipped"
+  postId        String?           @unique           // Generated Post (1:1)
+  post          Post?             @relation(fields: [postId], references: [id])
+  createdAt     DateTime          @default(now())
+
+  @@index([topicId])
+  @@index([status])
 }

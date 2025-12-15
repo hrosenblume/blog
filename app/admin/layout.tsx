@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { redirect, usePathname } from 'next/navigation'
 import Link from 'next/link'
@@ -15,9 +15,9 @@ import {
 import { Button } from '@/components/ui/button'
 import { ChevronDownIcon, MenuIcon } from '@/components/Icons'
 import { cn } from '@/lib/utils/cn'
-import { adminNavGroups, getDirectLinkItems, getGroupItems } from '@/lib/admin-nav'
+import { adminNavGroups, getDirectLinkItems, getGroupItems, filterByFeatureFlags } from '@/lib/admin-nav'
 
-// Derive nav data from shared config
+// Derive nav data from shared config (will be filtered by feature flags in component)
 const directLinks = getDirectLinkItems()
 const navGroups = adminNavGroups.map(group => ({
   label: group.label,
@@ -32,6 +32,19 @@ export default function AdminLayout({
   const { data: session, status } = useSession()
   const pathname = usePathname()
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const [featureFlags, setFeatureFlags] = useState<Record<string, boolean>>({})
+
+  // Fetch feature flags for conditional nav items
+  useEffect(() => {
+    fetch('/api/integrations/settings')
+      .then(res => res.json())
+      .then(data => {
+        setFeatureFlags({
+          autoDraftEnabled: !!data.autoDraftEnabled,
+        })
+      })
+      .catch(() => {})
+  }, [])
 
   if (status === 'loading') {
     return (
@@ -91,7 +104,9 @@ export default function AdminLayout({
               
               {/* Dropdown groups */}
               {navGroups.map((group) => {
-                const isActive = group.items.some(item => pathname === item.href || pathname.startsWith(item.href + '/'))
+                const filteredItems = filterByFeatureFlags(group.items, featureFlags)
+                if (filteredItems.length === 0) return null
+                const isActive = filteredItems.some(item => pathname === item.href || pathname.startsWith(item.href + '/'))
                 return (
                   <DropdownMenu key={group.label}>
                     <DropdownMenuTrigger asChild>
@@ -105,7 +120,7 @@ export default function AdminLayout({
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start">
-                      {group.items.map((item) => (
+                      {filteredItems.map((item) => (
                         <DropdownMenuItem key={item.href} asChild>
                           <Link href={item.href}>
                             {item.label}
@@ -172,7 +187,7 @@ export default function AdminLayout({
                   {link.label}
                 </Link>
               ))}
-              {navGroups.flatMap((group) => group.items).map((item) => (
+              {navGroups.flatMap((group) => filterByFeatureFlags(group.items, featureFlags)).map((item) => (
                 <Link 
                   key={item.href} 
                   href={item.href}

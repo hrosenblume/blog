@@ -27,9 +27,10 @@ interface PostItemProps {
   onDelete: (id: string) => void
   onUnpublish: (id: string) => void
   onPublish: (id: string) => void
+  showStatus?: boolean
 }
 
-export function PostItem({ post, onDelete, onUnpublish, onPublish }: PostItemProps) {
+export function PostItem({ post, onDelete, onUnpublish, onPublish, showStatus }: PostItemProps) {
   return (
     <div className="flex items-center justify-between py-4 border-b border-border group">
       <div className="flex-1 min-w-0">
@@ -37,8 +38,17 @@ export function PostItem({ post, onDelete, onUnpublish, onPublish }: PostItemPro
           <h3 className="font-medium truncate group-hover:text-muted-foreground">
             {post.title || 'Untitled'}
           </h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            {formatRelativeTime(post.updatedAt)} · {post.wordCount} words
+          <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
+            {showStatus && (
+              <span className={`text-xs px-1.5 py-0.5 rounded uppercase font-medium ${
+                post.status === 'draft' 
+                  ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400'
+                  : 'bg-green-500/20 text-green-600 dark:text-green-400'
+              }`}>
+                {post.status}
+              </span>
+            )}
+            <span>{formatRelativeTime(post.updatedAt)} · {post.wordCount} words</span>
           </p>
         </Link>
       </div>
@@ -80,4 +90,7 @@ export function PostItem({ post, onDelete, onUnpublish, onPublish }: PostItemPro
     </div>
   )
 }
+
+
+
 
