@@ -189,6 +189,7 @@ Three sections by priority:
 - Promote items by moving them up (Later → Soon → Now)
 - Add new ideas to the Later section
 - Use `plans/tmp/` for messy drafts (gitignored)
+- **Capture unfinished ideas:** When the user mentions a bug, feature, or improvement they want but don't implement in the current session, add it to the Roadmap (Soon for bugs, Later for features/ideas)
 
 ## Terminal Commands
 Before running dev servers or long-running processes:
