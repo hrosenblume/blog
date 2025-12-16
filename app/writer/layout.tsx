@@ -135,7 +135,7 @@ function WriterLayoutContent({
       
       <main 
         className={isEditor ? '' : 'pt-14'}
-        inert={chatOpen ? true : undefined}
+        inert={chatOpen && !isEditor ? true : undefined}
       >
         {children}
       </main>

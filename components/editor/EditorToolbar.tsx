@@ -50,6 +50,7 @@ export function EditorToolbar({
         textareaRef={textareaRef}
         markdown={markdown}
         onMarkdownChange={onMarkdownChange}
+        aiGenerating={aiGenerating}
       />
 
       <Divider />

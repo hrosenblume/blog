@@ -60,6 +60,7 @@ export const POST = withAdmin(async (request: NextRequest) => {
       keywords: JSON.stringify(keywords),
       rssFeeds: JSON.stringify(rssFeeds),
       isActive: data.isActive ?? true,
+      useKeywordFilter: data.useKeywordFilter ?? true,
       frequency: data.frequency ?? 'daily',
       maxPerPeriod: data.maxPerPeriod ?? 3,
       essayFocus: data.essayFocus?.trim() || null,

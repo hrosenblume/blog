@@ -28,6 +28,7 @@ interface TopicFormProps {
     keywords: string
     rssFeeds: string
     isActive: boolean
+    useKeywordFilter: boolean
     frequency: string
     maxPerPeriod: number
     essayFocus?: string | null
@@ -37,6 +38,7 @@ interface TopicFormProps {
     keywords: string
     rssFeeds: string
     isActive: boolean
+    useKeywordFilter: boolean
     frequency: string
     maxPerPeriod: number
     essayFocus: string
@@ -56,6 +58,7 @@ export function TopicForm({ topic, onSubmit, onClose }: TopicFormProps) {
   const [keywords, setKeywords] = useState(initialKeywords)
   const [rssFeeds, setRssFeeds] = useState(initialFeeds)
   const [isActive, setIsActive] = useState(topic?.isActive ?? true)
+  const [useKeywordFilter, setUseKeywordFilter] = useState(topic?.useKeywordFilter ?? true)
   const [frequency, setFrequency] = useState(topic?.frequency ?? 'daily')
   const [maxPerPeriod, setMaxPerPeriod] = useState(topic?.maxPerPeriod ?? 3)
   const [submitting, setSubmitting] = useState(false)
@@ -70,6 +73,7 @@ export function TopicForm({ topic, onSubmit, onClose }: TopicFormProps) {
         keywords,
         rssFeeds,
         isActive,
+        useKeywordFilter,
         frequency,
         maxPerPeriod,
         essayFocus,
@@ -116,18 +120,41 @@ export function TopicForm({ topic, onSubmit, onClose }: TopicFormProps) {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="keywords">Keywords (one per line)</Label>
-              <textarea
-                id="keywords"
-                className="w-full min-h-[80px] px-3 py-2 text-sm border rounded-md bg-background resize-y"
-                placeholder="school lunch&#10;cafeteria&#10;USDA nutrition"
-                value={keywords}
-                onChange={e => setKeywords(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">
-                Articles will be filtered to include at least one of these keywords
-              </p>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="useKeywordFilter"
+                  checked={useKeywordFilter}
+                  onChange={e => setUseKeywordFilter(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <Label htmlFor="useKeywordFilter" className="font-normal">
+                  Filter articles by keywords
+                </Label>
+              </div>
+              
+              {useKeywordFilter && (
+                <div className="space-y-2">
+                  <Label htmlFor="keywords">Keywords (one per line)</Label>
+                  <textarea
+                    id="keywords"
+                    className="w-full min-h-[80px] px-3 py-2 text-sm border rounded-md bg-background resize-y"
+                    placeholder="school lunch&#10;cafeteria&#10;USDA nutrition"
+                    value={keywords}
+                    onChange={e => setKeywords(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Articles matching ANY of these keywords will be included
+                  </p>
+                </div>
+              )}
+              
+              {!useKeywordFilter && (
+                <p className="text-xs text-muted-foreground">
+                  All articles from the RSS feeds will be processed
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">

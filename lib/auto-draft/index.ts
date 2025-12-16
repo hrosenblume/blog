@@ -120,9 +120,11 @@ export async function runAutoDraft(
       const feedUrls: string[] = JSON.parse(topic.rssFeeds)
       const articles = await fetchRssFeeds(feedUrls)
 
-      // 2. Filter by keywords
+      // 2. Filter by keywords (if enabled)
       const keywords: string[] = JSON.parse(topic.keywords)
-      const relevant = filterByKeywords(articles, keywords)
+      const relevant = topic.useKeywordFilter
+        ? filterByKeywords(articles, keywords)
+        : articles
 
       // 3. Deduplicate (skip URLs already in NewsItem)
       const newArticles = await deduplicateArticles(relevant, topic.id)

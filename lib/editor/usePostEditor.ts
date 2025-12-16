@@ -192,7 +192,9 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
   // Set random shape for new posts (after mount to avoid hydration mismatch)
   useEffect(() => {
     if (!postSlug) {
-      setPolyhedraShape(getRandomShape())
+      const shape = getRandomShape()
+      setPolyhedraShape(shape)
+      lastSavedContent.current.polyhedraShape = shape
     }
   }, [postSlug])
 

@@ -146,19 +146,20 @@ model IntegrationSettings {
 
 // Auto-draft topic subscriptions
 model TopicSubscription {
-  id            String     @id @default(uuid())
-  name          String                              // "School Lunch Policy"
-  keywords      String                              // JSON array: ["school lunch", "USDA"]
-  rssFeeds      String                              // JSON array of feed URLs
-  isActive      Boolean    @default(true)
-  frequency     String     @default("daily")        // "daily", "weekly", "manual"
-  maxPerPeriod  Int        @default(3)              // Max essays per run
-  essayFocus    String?                             // Per-topic essay direction/angle
-  lastRunAt     DateTime?
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
-  newsItems     NewsItem[]
-  posts         Post[]                              // Posts generated from this topic
+  id               String     @id @default(uuid())
+  name             String                              // "School Lunch Policy"
+  keywords         String                              // JSON array: ["school lunch", "USDA"]
+  rssFeeds         String                              // JSON array of feed URLs
+  isActive         Boolean    @default(true)
+  useKeywordFilter Boolean    @default(true)           // Enable/disable keyword filtering
+  frequency        String     @default("daily")        // "daily", "weekly", "manual"
+  maxPerPeriod     Int        @default(3)              // Max essays per run
+  essayFocus       String?                             // Per-topic essay direction/angle
+  lastRunAt        DateTime?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  newsItems        NewsItem[]
+  posts            Post[]                              // Posts generated from this topic
 }
 
 // News items fetched from RSS feeds

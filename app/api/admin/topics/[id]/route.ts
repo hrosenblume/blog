@@ -67,6 +67,7 @@ export const PATCH = withAdmin(async (request: NextRequest, context: RouteContex
   }
 
   if (data.isActive !== undefined) updates.isActive = data.isActive
+  if (data.useKeywordFilter !== undefined) updates.useKeywordFilter = data.useKeywordFilter
   if (data.frequency !== undefined) updates.frequency = data.frequency
   if (data.maxPerPeriod !== undefined) updates.maxPerPeriod = data.maxPerPeriod
   if (data.essayFocus !== undefined) updates.essayFocus = data.essayFocus?.trim() || null

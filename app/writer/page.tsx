@@ -283,8 +283,9 @@ export default function Dashboard() {
       )}
 
       {/* Tabs and Search */}
-      <div className="flex items-center justify-between border-b border-border mb-6">
-        <div className="flex">
+      <div className="relative flex items-center justify-between border-b border-border mb-6">
+        {/* Tabs - hidden on mobile when search is open */}
+        <div className={`flex ${searchOpen ? 'invisible sm:visible' : ''}`}>
           <button
             onClick={() => setActiveTab('all')}
             className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${
@@ -317,7 +318,8 @@ export default function Dashboard() {
           </button>
         </div>
         
-        <div className="flex items-center gap-2 pb-2">
+        {/* Search - overlays tabs on mobile when open */}
+        <div className={`flex items-center gap-2 pb-2 ${searchOpen ? 'absolute inset-x-0 sm:relative sm:inset-auto' : ''}`}>
           <Link
             href="/writer/editor"
             className="hidden sm:flex p-2 text-muted-foreground hover:text-foreground rounded-md hover:bg-accent"
@@ -326,15 +328,23 @@ export default function Dashboard() {
             <PlusIcon className="w-4 h-4" />
           </Link>
           {searchOpen ? (
-            <input
-              type="search"
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              onBlur={() => !searchQuery && setSearchOpen(false)}
-              autoFocus
-              className="w-48 px-3 py-1.5 text-sm bg-transparent border border-border rounded-md outline-none focus:border-ring placeholder:text-muted-foreground"
-            />
+            <div className="flex items-center gap-2 flex-1 sm:flex-initial">
+              <input
+                type="search"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                autoFocus
+                className="flex-1 sm:w-48 px-3 py-1.5 text-base bg-background border border-border rounded-md outline-none focus:border-ring placeholder:text-muted-foreground"
+              />
+              <button
+                onClick={() => { setSearchOpen(false); setSearchQuery('') }}
+                className="p-2 text-muted-foreground hover:text-foreground rounded-md hover:bg-accent sm:hidden"
+                aria-label="Close search"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
           ) : (
             <button
               onClick={() => setSearchOpen(true)}

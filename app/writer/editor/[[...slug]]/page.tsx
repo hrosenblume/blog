@@ -248,7 +248,7 @@ export default function Editor() {
               onChange={(e) => setMarkdown(e.target.value)}
               placeholder="Write your story in Markdown..."
               readOnly={!!revisions.previewing}
-              className="w-full min-h-[500px] bg-transparent border-none outline-none resize-none placeholder-gray-400 leading-relaxed overflow-hidden font-mono text-sm"
+              className="w-full min-h-[500px] bg-transparent border-none outline-none resize-none placeholder-gray-400 leading-relaxed overflow-hidden font-mono text-base"
             />
           ) : (
             <TiptapEditor
