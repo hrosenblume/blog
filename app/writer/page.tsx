@@ -200,6 +200,7 @@ export default function Dashboard() {
           <Button 
             type="submit" 
             size="icon" 
+            variant="secondary"
             className="absolute bottom-3 right-3 rounded-full w-10 h-10"
           >
             <ArrowUp className="w-5 h-5" />
