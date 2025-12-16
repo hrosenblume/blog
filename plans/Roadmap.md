@@ -184,3 +184,39 @@ Make the AI chat panel more actionable — not just brainstorming, but actually 
 - Maybe a "suggested edit" inline in the essay with accept/reject
 - Consider undo/revision integration so changes are reversible
 
+---
+
+### Persistent Chat History Per User
+
+Save chat conversations to the database so users can resume previous sessions. Currently chat history is session-level only and lost on page refresh.
+
+**Features:**
+- Store chat messages in a `ChatMessage` model linked to `User`
+- Optionally link messages to a specific `Post` for essay-aware context
+- Load previous messages when returning to the chat panel
+- Allow clearing/archiving old conversations
+
+**Technical considerations:**
+- New Prisma model: `ChatMessage` with `userId`, `postId` (optional), `role`, `content`, `createdAt`
+- API route to fetch/store messages
+- Consider pagination for long chat histories
+- May want conversation grouping (multiple distinct chats)
+
+---
+
+### User Contacts / CRM Lite
+
+Allow users to maintain a list of contacts associated with their account. Useful for tracking relationships, networking, or lead management.
+
+**Features:**
+- Simple contact model: name, email, company, notes, tags
+- Link contacts to the `User` who created them
+- List view with search/filter in the writer dashboard
+- Optional: associate contacts with essays (who you shared it with, feedback received)
+
+**Technical considerations:**
+- New Prisma model: `Contact` with `userId`, basic fields, timestamps
+- CRUD API routes
+- Consider importing from LinkedIn or CSV
+- Could integrate with existing `Lead` model or keep separate
+
