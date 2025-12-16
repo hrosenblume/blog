@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { Loader2, X } from 'lucide-react'
+import { Loader2, X, Copy, Check, ArrowUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils/cn'
@@ -22,10 +22,17 @@ export function ChatPanel() {
   const [isAnimating, setIsAnimating] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   
   const onClose = useCallback(() => setIsOpen(false), [setIsOpen])
+  
+  const copyToClipboard = useCallback(async (text: string, index: number) => {
+    await navigator.clipboard.writeText(text)
+    setCopiedIndex(index)
+    setTimeout(() => setCopiedIndex(null), 2000)
+  }, [])
   
   // Client-side only for portal
   useEffect(() => {
@@ -169,13 +176,13 @@ export function ChatPanel() {
                 <div
                   key={index}
                   className={cn(
-                    'flex gap-3',
+                    'flex gap-3 group',
                     message.role === 'user' ? 'justify-end' : 'justify-start'
                   )}
                 >
                   <div
                     className={cn(
-                      'max-w-[85%] rounded-2xl px-3 py-2 text-sm',
+                      'max-w-[85%] rounded-2xl px-3 py-2 text-sm relative',
                       message.role === 'user'
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-muted'
@@ -187,6 +194,20 @@ export function ChatPanel() {
                         <span className="inline-block w-1.5 h-3 bg-current ml-0.5 animate-pulse" />
                       )}
                     </div>
+                    {/* Copy button for assistant messages */}
+                    {message.role === 'assistant' && !isStreaming && (
+                      <button
+                        onClick={() => copyToClipboard(message.content, index)}
+                        className="absolute -bottom-6 left-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground p-1 rounded"
+                        aria-label="Copy message"
+                      >
+                        {copiedIndex === index ? (
+                          <Check className="w-3.5 h-3.5 text-green-500" />
+                        ) : (
+                          <Copy className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -200,7 +221,7 @@ export function ChatPanel() {
           onSubmit={(e) => { e.preventDefault(); sendMessage(); }}
           className="flex-shrink-0 border-t border-border bg-background p-3 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]"
         >
-          <div className="flex gap-2">
+          <div className="flex items-end gap-2">
             <Textarea
               ref={textareaRef}
               value={input}
@@ -215,13 +236,14 @@ export function ChatPanel() {
             <Button
               type="submit"
               disabled={!input.trim() || isStreaming}
-              size="sm"
-              className="h-auto px-4"
+              size="icon"
+              variant="secondary"
+              className="rounded-full w-10 h-10 flex-shrink-0 border border-input"
             >
               {isStreaming ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
-                'Send'
+                <ArrowUp className="h-5 w-5" />
               )}
             </Button>
           </div>
