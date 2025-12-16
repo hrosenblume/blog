@@ -8,27 +8,6 @@
 
 ## Soon
 
-### 🐛 Chat Panel Inert Bug
-
-Chat panel open + error = entire UI frozen. Toggle button is inside `inert` header.
-
-| File | Issue |
-|------|-------|
-| `app/writer/layout.tsx` | Header/main get `inert={chatOpen}` |
-| `components/ChatPanel.tsx:106` | Returns `null` if `!isVisible \|\| !mounted` |
-
-**Fixes:** Move toggle outside inert container, or remove `inert` from header, or add error boundary.
-
----
-
-### 🐛 Mobile Editor Rotation/Zoom
-
-Device rotation triggers unwanted zoom in editor.
-
-**Try:** `viewport` meta tag, `touch-action` CSS, `orientationchange` listener, Tiptap touch handlers.
-
----
-
 ### 🐛 Admin Panel Bottom White Bar
 
 White space at bottom of admin panel.

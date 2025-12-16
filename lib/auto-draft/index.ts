@@ -33,14 +33,14 @@ function shouldRunTopic(topic: { frequency: string; lastRunAt: Date | null }): b
 }
 
 /**
- * Deduplicate articles against existing NewsItems.
+ * Deduplicate articles against existing NewsItems (global, across all topics).
  */
 async function deduplicateArticles(
-  articles: RssArticle[],
-  topicId: string
+  articles: RssArticle[]
 ): Promise<RssArticle[]> {
+  const articleUrls = articles.map(a => a.url)
   const existingUrls = await prisma.newsItem.findMany({
-    where: { topicId },
+    where: { url: { in: articleUrls } },
     select: { url: true },
   })
   
@@ -126,8 +126,8 @@ export async function runAutoDraft(
         ? filterByKeywords(articles, keywords)
         : articles
 
-      // 3. Deduplicate (skip URLs already in NewsItem)
-      const newArticles = await deduplicateArticles(relevant, topic.id)
+      // 3. Deduplicate (skip URLs already processed globally)
+      const newArticles = await deduplicateArticles(relevant)
 
       // 4. Generate essays (up to maxPerPeriod)
       const toGenerate = newArticles.slice(0, topic.maxPerPeriod)
