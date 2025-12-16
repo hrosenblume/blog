@@ -1,41 +1,10 @@
 import { prisma } from '@/lib/db'
 import Link from 'next/link'
 import { adminNavItems, filterByFeatureFlags } from '@/lib/admin-nav'
+import { getAdminCounts } from '@/lib/admin'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 
 export const dynamic = 'force-dynamic'
-
-// Fetch counts for each nav item based on countKey
-async function getCounts(): Promise<Record<string, number>> {
-  const [userCount, postCount, revisionCount, visitCount, companies, personCount] = await Promise.all([
-    prisma.user.count(),
-    prisma.post.count(),
-    prisma.revision.count(),
-    prisma.lead.count(),
-    prisma.lead.findMany({
-      where: { company: { not: null } },
-      select: { company: true },
-      distinct: ['company'],
-    }),
-    prisma.lead.count({
-      where: {
-        OR: [
-          { email: { not: null } },
-          { firstName: { not: null } },
-        ],
-      },
-    }),
-  ])
-
-  return {
-    users: userCount,
-    posts: postCount,
-    revisions: revisionCount,
-    visits: visitCount,
-    companies: companies.length,
-    persons: personCount,
-  }
-}
 
 // Fetch feature flags for conditional nav items
 async function getFeatureFlags(): Promise<Record<string, boolean>> {
@@ -50,7 +19,7 @@ async function getFeatureFlags(): Promise<Record<string, boolean>> {
 
 export default async function AdminDashboard() {
   const [counts, featureFlags] = await Promise.all([
-    getCounts(),
+    getAdminCounts(),
     getFeatureFlags(),
   ])
 

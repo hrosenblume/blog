@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import type { Editor } from '@tiptap/react'
 import type { RefObject } from 'react'
 import { Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { ToolbarButton, Divider } from './ToolbarButton'
 import { setHeadingAtCursor, insertAtCursor } from '@/lib/editor/markdown-helpers'
 import { WandIcon } from '@/components/Icons'
@@ -71,7 +72,7 @@ export function FormatButtons({ editor, textareaRef, markdown, onMarkdownChange,
       editor.chain().focus().deleteSelection().insertContent(result.text).run()
     } catch (err) {
       console.error('Rewrite error:', err)
-      alert(err instanceof Error ? err.message : 'Failed to rewrite text')
+      toast.error(err instanceof Error ? err.message : 'Failed to rewrite text')
     } finally {
       setIsRewriting(false)
     }

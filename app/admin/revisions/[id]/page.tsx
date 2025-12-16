@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
@@ -48,14 +49,14 @@ export default function RevisionDetailPage() {
     try {
       const res = await fetch(`/api/admin/revisions/${params.id}/restore`, { method: 'POST' })
       if (res.ok) {
-        alert('Revision restored successfully!')
+        toast.success('Revision restored successfully!')
         router.push('/admin/revisions')
       } else {
         const data = await res.json()
-        alert(data.error || 'Failed to restore')
+        toast.error(data.error || 'Failed to restore')
       }
     } catch {
-      alert('Failed to restore')
+      toast.error('Failed to restore')
     } finally {
       setRestoring(false)
     }

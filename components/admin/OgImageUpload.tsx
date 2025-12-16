@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { Upload, X, Loader2, ImageIcon } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -25,12 +26,12 @@ export function OgImageUpload({
 
   const handleFileSelect = async (file: File) => {
     if (!file.type.startsWith('image/')) {
-      alert('Please select an image file')
+      toast.error('Please select an image file')
       return
     }
 
     if (file.size > 4 * 1024 * 1024) {
-      alert('File too large. Maximum size is 4MB.')
+      toast.error('File too large. Maximum size is 4MB.')
       return
     }
 
@@ -53,7 +54,7 @@ export function OgImageUpload({
       onChange(url)
     } catch (error) {
       console.error('Upload error:', error)
-      alert(error instanceof Error ? error.message : 'Failed to upload image')
+      toast.error(error instanceof Error ? error.message : 'Failed to upload image')
     } finally {
       setUploading(false)
     }

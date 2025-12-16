@@ -3,6 +3,7 @@
 import { useRef, useCallback } from 'react'
 import type { Editor } from '@tiptap/react'
 import type { RefObject } from 'react'
+import { toast } from 'sonner'
 import { ToolbarButton } from './ToolbarButton'
 import { clearMarkdownFormatting } from '@/lib/editor/markdown-helpers'
 import { LinkIcon, ImageIcon, ClearFormattingIcon } from '@/components/Icons'
@@ -49,14 +50,14 @@ export function MediaButtons({ editor, textareaRef, markdown, onMarkdownChange }
     // Client-side validation
     const maxSize = 4 * 1024 * 1024 // 4MB
     if (file.size > maxSize) {
-      alert(`Image too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum size is 4MB.`)
+      toast.error(`Image too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum size is 4MB.`)
       e.target.value = ''
       return
     }
 
     const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
     if (!validTypes.includes(file.type)) {
-      alert(`Invalid file type: ${file.type}. Supported types: JPEG, PNG, GIF, WebP.`)
+      toast.error(`Invalid file type: ${file.type}. Supported types: JPEG, PNG, GIF, WebP.`)
       e.target.value = ''
       return
     }
@@ -73,7 +74,7 @@ export function MediaButtons({ editor, textareaRef, markdown, onMarkdownChange }
       const data = await res.json()
       
       if (!res.ok) {
-        alert(data.error || 'Failed to upload image')
+        toast.error(data.error || 'Failed to upload image')
         e.target.value = ''
         return
       }
@@ -89,10 +90,10 @@ export function MediaButtons({ editor, textareaRef, markdown, onMarkdownChange }
           requestAnimationFrame(() => textarea.focus())
         }
       } else {
-        alert('Upload succeeded but no URL returned')
+        toast.error('Upload succeeded but no URL returned')
       }
     } catch (err) {
-      alert('Failed to upload image. Please try again.')
+      toast.error('Failed to upload image. Please try again.')
       console.error('Image upload error:', err)
     }
 

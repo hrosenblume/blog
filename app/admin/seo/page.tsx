@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Loader2, ChevronDown, ChevronRight } from 'lucide-react'
+import { toast } from 'sonner'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -88,7 +89,7 @@ export default function SEOSettingsPage() {
       setTimeout(() => setSaved(false), 2000)
     } catch (err) {
       console.error('Failed to save settings:', err)
-      alert('Failed to save settings')
+      toast.error('Failed to save settings')
     } finally {
       setSaving(false)
     }
@@ -116,7 +117,7 @@ export default function SEOSettingsPage() {
       setTimeout(() => setPageSaved(null), 2000)
     } catch (err) {
       console.error('Failed to save page settings:', err)
-      alert('Failed to save page settings')
+      toast.error('Failed to save page settings')
     } finally {
       setPageSaving(null)
     }

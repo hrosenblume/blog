@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Loader2, Plus, Play, Trash2, Pencil } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { AdminTable, type AdminTableColumn, type AdminTableRow } from '@/components/admin/AdminTable'
 import { AdminActionsMenu } from '@/components/admin/AdminActionsMenu'
@@ -61,13 +62,17 @@ export default function TopicsPage() {
       const data = await res.json()
       if (data.success) {
         const total = data.results.reduce((sum: number, r: { generated: number }) => sum + r.generated, 0)
-        alert(`Generated ${total} essays across ${data.results.length} topics`)
+        if (total > 0) {
+          toast.success(`Generated ${total} essays across ${data.results.length} topics`)
+        } else {
+          toast('Generation completed — no new essays were created')
+        }
         fetchTopics()
       } else {
-        alert(data.error || 'Generation failed')
+        toast.error(data.error || 'Generation failed')
       }
     } catch (error) {
-      alert('Generation failed')
+      toast.error('Generation failed')
       console.error(error)
     } finally {
       setGenerating(null)
@@ -79,14 +84,19 @@ export default function TopicsPage() {
     try {
       const res = await fetch(`/api/admin/topics/generate/${topicId}`, { method: 'POST' })
       const data = await res.json()
-      if (data.success && data.results[0]) {
-        alert(`Generated ${data.results[0].generated} essays for ${data.results[0].topicName}`)
+      if (data.success) {
+        const result = data.results?.[0]
+        if (result?.generated > 0) {
+          toast.success(`Generated ${result.generated} essays for ${result.topicName}`)
+        } else {
+          toast('Generation completed — no new essays were created')
+        }
         fetchTopics()
       } else {
-        alert(data.error || 'Generation failed')
+        toast.error(data.error || 'Generation failed')
       }
     } catch (error) {
-      alert('Generation failed')
+      toast.error('Generation failed')
       console.error(error)
     } finally {
       setGenerating(null)
@@ -100,7 +110,7 @@ export default function TopicsPage() {
       await fetch(`/api/admin/topics/${topicId}`, { method: 'DELETE' })
       setTopics(topics.filter(t => t.id !== topicId))
     } catch (error) {
-      alert('Failed to delete topic')
+      toast.error('Failed to delete topic')
       console.error(error)
     }
   }
@@ -137,7 +147,7 @@ export default function TopicsPage() {
       setEditingTopic(null)
       fetchTopics()
     } catch (error) {
-      alert(editingTopic ? 'Failed to update topic' : 'Failed to create topic')
+      toast.error(editingTopic ? 'Failed to update topic' : 'Failed to create topic')
       console.error(error)
     }
   }

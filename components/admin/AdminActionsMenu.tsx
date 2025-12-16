@@ -3,6 +3,7 @@
 import { ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { toast } from 'sonner'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -98,7 +99,7 @@ export function SimpleActionsMenu({
     if (res.ok) {
       router.refresh()
     } else {
-      alert('Failed to delete')
+      toast.error('Failed to delete')
     }
   }
 

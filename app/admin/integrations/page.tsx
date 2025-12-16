@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Loader2, Check, X } from 'lucide-react'
+import { toast } from 'sonner'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -165,7 +166,7 @@ export default function IntegrationsPage() {
       setTimeout(() => setSaved(false), 2000)
     } catch (err) {
       console.error('Failed to save:', err)
-      alert('Failed to save setting')
+      toast.error('Failed to save setting')
     } finally {
       setSaving(false)
     }
@@ -185,7 +186,7 @@ export default function IntegrationsPage() {
       setSettings(data)
     } catch (err) {
       console.error('Failed to clear:', err)
-      alert('Failed to clear setting')
+      toast.error('Failed to clear setting')
     } finally {
       setSaving(false)
     }
@@ -206,7 +207,7 @@ export default function IntegrationsPage() {
       setTimeout(() => setSaved(false), 2000)
     } catch (err) {
       console.error('Failed to save:', err)
-      alert('Failed to save setting')
+      toast.error('Failed to save setting')
     } finally {
       setSaving(false)
     }

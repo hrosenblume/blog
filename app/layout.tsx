@@ -6,6 +6,7 @@ import { HOMEPAGE } from '@/lib/homepage'
 import { getBaseUrl, TWITTER_HANDLE, OG_STYLE, OG_SIZE_SQUARE } from '@/lib/metadata'
 import { RB2BScript } from '@/components/RB2BScript'
 import { GoogleAnalytics } from '@/components/GoogleAnalytics'
+import { Toaster } from '@/components/ui/sonner'
 import { getSiteSettings, getEffectiveSiteTitle, getEffectiveSiteDescription, getEffectiveSiteKeywords, getTitleTemplate } from '@/lib/seo'
 import { getIntegrationSettings } from '@/lib/integrations'
 
@@ -76,6 +77,7 @@ export default async function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <Providers>{children}</Providers>
+        <Toaster />
         <RB2BScript apiKey={integrations.rb2bApiKey} />
         <GoogleAnalytics gaId={integrations.googleAnalyticsId} />
       </body>

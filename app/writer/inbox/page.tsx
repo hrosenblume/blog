@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2, Check, X, ExternalLink, Eye } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { PreviewModal } from './_components/PreviewModal'
 
@@ -57,10 +58,10 @@ export default function InboxPage() {
         // Redirect to editor
         router.push(`/writer/editor/${post.slug}`)
       } else {
-        alert('Failed to accept post')
+        toast.error('Failed to accept post')
       }
     } catch (error) {
-      alert('Failed to accept post')
+      toast.error('Failed to accept post')
       console.error(error)
     } finally {
       setActionLoading(null)
@@ -77,10 +78,10 @@ export default function InboxPage() {
       if (res.ok) {
         setPosts(posts.filter(p => p.id !== post.id))
       } else {
-        alert('Failed to reject post')
+        toast.error('Failed to reject post')
       }
     } catch (error) {
-      alert('Failed to reject post')
+      toast.error('Failed to reject post')
       console.error(error)
     } finally {
       setActionLoading(null)

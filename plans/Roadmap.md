@@ -135,3 +135,22 @@ Personal contact list in writer dashboard.
 **Schema:** `Contact` (userId, name, email, company, notes, tags)
 
 **Features:** Search/filter, link to essays, import from LinkedIn/CSV.
+
+---
+
+### ✨ Social Post Generator from Essays
+
+Generate social media posts from published essays for Twitter/X and LinkedIn.
+
+**UI:** Button on essay page or in writer dashboard → modal with format picker → generated content → copy to clipboard.
+
+**Formats:**
+- **Tweet:** Single tweet (key insight or hook)
+- **Thread:** Essay summary in 3-5 tweets
+- **LinkedIn:** Longer-form post with hooks, line breaks, engagement-style formatting
+
+**Features:**
+- Tone options: professional, casual, provocative
+- Edit before copying
+- Character count indicators
+- Uses existing AI system (`lib/ai/`) with platform-specific prompts
