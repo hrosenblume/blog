@@ -13,6 +13,7 @@ interface Topic {
   keywords: string
   rssFeeds: string
   isActive: boolean
+  useKeywordFilter: boolean
   frequency: string
   maxPerPeriod: number
   essayFocus: string | null
