@@ -3,14 +3,14 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronDown, Check, X, ExternalLink, Search } from 'lucide-react'
+import { ChevronDown, Check, X, ExternalLink, Search, ArrowUp } from 'lucide-react'
 import { PageLoader } from '@/components/PageLoader'
 import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { PlusIcon } from '@/components/Icons'
 import { confirmPublish, confirmUnpublish } from '@/lib/utils/confirm'
 import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
-import { HOMEPAGE } from '@/lib/homepage'
 import { PostItem, type Post } from '@/components/writer/PostItem'
 
 interface SuggestedPost {
@@ -31,7 +31,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState<TabType>('drafts')
+  const [activeTab, setActiveTab] = useState<TabType>('all')
   const [suggestedPosts, setSuggestedPosts] = useState<SuggestedPost[]>([])
   const [autoDraftEnabled, setAutoDraftEnabled] = useState(false)
   const [suggestedOpen, setSuggestedOpen] = useState(false)
@@ -170,26 +170,42 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-16">
-      {/* Header */}
-      <header className="mb-8">
-        <div className="flex items-center justify-between">
-          <h1 className="text-title font-bold">{HOMEPAGE.name}</h1>
-          <Button asChild className="hidden sm:inline-flex gap-2">
-            <Link href="/writer/editor">
-              <PlusIcon />
-              New Essay
-            </Link>
-          </Button>
-        </div>
-      </header>
-
+    <div className="max-w-5xl mx-auto px-6 py-8">
       {/* Mobile FAB */}
       <Button asChild size="icon" className="sm:hidden fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-lg z-50">
         <Link href="/writer/editor" aria-label="New Essay">
           <PlusIcon className="w-6 h-6" />
         </Link>
       </Button>
+
+      {/* Idea Input */}
+      <div className="mb-8">
+        <h2 className="text-section font-semibold mb-4">What's on your mind?</h2>
+        <form 
+          onSubmit={(e) => {
+            e.preventDefault()
+            const idea = (e.target as HTMLFormElement).idea.value.trim()
+            if (idea) {
+              router.push(`/writer/editor?idea=${encodeURIComponent(idea)}`)
+            }
+          }}
+          className="relative"
+        >
+          <Textarea
+            name="idea"
+            placeholder="Describe your idea..."
+            className="min-h-[100px] pr-14 resize-none text-base"
+            rows={3}
+          />
+          <Button 
+            type="submit" 
+            size="icon" 
+            className="absolute bottom-3 right-3 rounded-full w-10 h-10"
+          >
+            <ArrowUp className="w-5 h-5" />
+          </Button>
+        </form>
+      </div>
 
       {/* Suggested posts section - only when auto-draft is enabled */}
       {autoDraftEnabled && (
@@ -301,6 +317,13 @@ export default function Dashboard() {
         </div>
         
         <div className="flex items-center gap-2 pb-2">
+          <Link
+            href="/writer/editor"
+            className="hidden sm:flex p-2 text-muted-foreground hover:text-foreground rounded-md hover:bg-accent"
+            aria-label="New Essay"
+          >
+            <PlusIcon className="w-4 h-4" />
+          </Link>
           {searchOpen ? (
             <input
               type="search"

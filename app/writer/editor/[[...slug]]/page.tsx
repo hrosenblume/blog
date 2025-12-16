@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
+import { useState, useEffect, useRef } from 'react'
+import { useParams, useSearchParams } from 'next/navigation'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
@@ -39,7 +39,10 @@ function PublishSuccess() {
 export default function Editor() {
   const router = useRouter()
   const params = useParams()
+  const searchParams = useSearchParams()
   const postSlug = params.slug?.[0] as string | undefined
+  const ideaParam = searchParams.get('idea')
+  const hasTriggeredGeneration = useRef(false)
   
   const { data: session } = useSession()
   const userCanPublish = canPublish(session?.user?.role)
@@ -82,6 +85,16 @@ export default function Editor() {
     // Clear context when leaving the editor
     return () => setEssayContext(null)
   }, [post.title, post.subtitle, post.markdown, ui.loading, setEssayContext])
+
+  // Auto-generate from idea param (from dashboard input)
+  useEffect(() => {
+    if (ideaParam && !postSlug && !ui.loading && !hasTriggeredGeneration.current) {
+      hasTriggeredGeneration.current = true
+      ai.generate(ideaParam, 'medium')
+      // Clear the URL param so refresh doesn't re-trigger
+      router.replace('/writer/editor', { scroll: false })
+    }
+  }, [ideaParam, postSlug, ui.loading, ai, router])
 
   // Generate modal state
   const [showGenerateModal, setShowGenerateModal] = useState(false)
