@@ -179,7 +179,7 @@ export default function Dashboard() {
       </Button>
 
       {/* Idea Input */}
-      <div className="mb-8">
+      <div className="mt-4 mb-8">
         <h2 className="text-section font-semibold mb-4">What's on your mind?</h2>
         <form 
           onSubmit={(e) => {
