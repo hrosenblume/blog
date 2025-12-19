@@ -313,6 +313,7 @@ Adding an item to the config automatically shows it in both places.
 Defined in `lib/keyboard/shortcuts.ts`:
 - `Cmd + .` — Toggle theme
 - `Cmd + /` — Toggle view (essay↔editor)
+- `Cmd + '` — Open admin in new window (from non-admin pages)
 - `←`/`→` — Prev/Next essay
 - `n` — New article
 - `Escape` — Back to dashboard
@@ -324,6 +325,7 @@ Defined in `lib/keyboard/shortcuts.ts`:
 - Slug generation
 - Unsaved changes warning
 - AI generation with preview/accept/discard flow
+- Visual feedback during generation (editor disabled with opacity change)
 
 ### AI Writing System
 Generate essays using Anthropic (Claude) or OpenAI (GPT-4):
@@ -343,6 +345,8 @@ Generate essays using Anthropic (Claude) or OpenAI (GPT-4):
   - `{{REWRITE_RULES}}` — Replaced with rewrite-specific rules
   - `{{STYLE_EXAMPLES}}` — Replaced with all published essays as style reference
 - **API**: `/api/ai/generate` (generate content), `/api/ai/settings` (CRUD settings)
+- **Generation params**: `wordCount: number` (explicit word target), `useWebSearch: boolean` (research-enhanced generation)
+- **Web search**: When enabled, first gathers facts via `buildSearchOnlyPrompt()`, then injects research context into generation
 - **Admin UI**: `/admin/ai` — Configure essay writing rules, chat behavior rules, rewrite rules, default model, and editable prompt templates
 - **Flow**: Dashboard idea input → new editor → API call → streaming content
 - **Context injection**: System prompt includes custom rules first (override everything), then all published posts as style examples
