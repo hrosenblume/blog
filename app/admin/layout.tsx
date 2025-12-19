@@ -46,19 +46,15 @@ export default function AdminLayout({
       .catch(() => {})
   }, [])
 
-  // App-like feel: disable overscroll bounce, match bg, responsive scrollbar
+  // Set admin background color and prevent body scroll
   useEffect(() => {
-    document.documentElement.style.overscrollBehavior = 'none'
-    document.body.style.overscrollBehavior = 'none'
     document.body.style.backgroundColor = 'hsl(var(--muted))'
-    document.documentElement.classList.add('app-scrollbar')
-    document.body.classList.add('app-scrollbar')
+    document.documentElement.style.overflow = 'hidden'
+    document.body.style.overflow = 'hidden'
     return () => {
-      document.documentElement.style.overscrollBehavior = ''
-      document.body.style.overscrollBehavior = ''
       document.body.style.backgroundColor = ''
-      document.documentElement.classList.remove('app-scrollbar')
-      document.body.classList.remove('app-scrollbar')
+      document.documentElement.style.overflow = ''
+      document.body.style.overflow = ''
     }
   }, [])
 
@@ -95,8 +91,8 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-muted">
-      <header className="sticky top-0 z-10 border-b border-border bg-card shadow">
+    <div className="h-dvh bg-muted flex flex-col overflow-hidden">
+      <header className="shrink-0 border-b border-border bg-card shadow">
         <div className="max-w-5xl mx-auto px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
           <div className="flex items-center gap-4 md:gap-6">
             <Link href="/admin" className="text-section font-bold">
@@ -240,7 +236,7 @@ export default function AdminLayout({
         )}
       </header>
 
-      <main>
+      <main className="flex-1 overflow-auto">
         <div className="max-w-5xl mx-auto px-4 md:px-6 py-6 md:py-8">
           {children}
         </div>

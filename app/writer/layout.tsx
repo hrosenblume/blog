@@ -27,19 +27,18 @@ function WriterLayoutContent({
     }
   }, [status, router])
 
-  // App-like feel: disable overscroll bounce, responsive scrollbar
+  // Prevent body scroll for app-like feel
   useEffect(() => {
-    document.documentElement.style.overscrollBehavior = 'none'
-    document.body.style.overscrollBehavior = 'none'
-    document.documentElement.classList.add('app-scrollbar')
-    document.body.classList.add('app-scrollbar')
-    return () => {
-      document.documentElement.style.overscrollBehavior = ''
-      document.body.style.overscrollBehavior = ''
-      document.documentElement.classList.remove('app-scrollbar')
-      document.body.classList.remove('app-scrollbar')
+    if (!isEditor) {
+      document.documentElement.style.overflow = 'hidden'
+      document.body.style.overflow = 'hidden'
+      return () => {
+        document.documentElement.style.overflow = ''
+        document.body.style.overflow = ''
+      }
     }
-  }, [])
+  }, [isEditor])
+
 
   // Keyboard shortcuts for writer layout
   useKeyboard([
@@ -80,18 +79,19 @@ function WriterLayoutContent({
   }
 
   return (
-    <div className={isEditor ? 'fixed inset-0' : 'min-h-screen'}>
+    <div className={isEditor ? 'fixed inset-0' : 'h-dvh flex flex-col overflow-hidden'}>
       {!isEditor && (
         <WriterNavbar
           session={session}
           chatOpen={chatOpen}
           onChatToggle={() => setChatOpen(!chatOpen)}
           inert={chatOpen}
+          fixed={false}
         />
       )}
       
       <main 
-        className={isEditor ? '' : 'pt-14'}
+        className={isEditor ? '' : 'flex-1 overflow-auto'}
         inert={chatOpen && !isEditor ? true : undefined}
       >
         {children}
