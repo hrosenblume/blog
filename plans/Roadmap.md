@@ -36,24 +36,6 @@ Add 3D shapes to essay pages (already assigned via `polyhedraShape`).
 
 ## Later
 
-### ✨ Essay Tags / Categories
-
-Organize essays by topic.
-
-**Phase 1 (Admin/Writer):**
-- CRUD tags in `/admin/tags`
-- Assign in editor (multi-select)
-- Show in writer dashboard
-
-**Phase 2 (Public):**
-- Display on essay pages
-- Filter by tag
-- Archive pages `/tag/[slug]`
-
-**Schema:** `Tag` (id, name, slug, color?) ↔ `Post` (many-to-many)
-
----
-
 ### ✨ Voice-to-Essay
 
 Long-press "+" on mobile → record → transcribe → generate draft.
