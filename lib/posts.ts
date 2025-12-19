@@ -18,6 +18,8 @@ interface CreatePostData {
   seoKeywords?: string | null
   noIndex?: boolean
   ogImage?: string | null
+  // Tags
+  tagIds?: string[]
 }
 
 interface UpdatePostData {
@@ -211,6 +213,16 @@ export async function createPost(data: CreatePostData): Promise<PostResult> {
       },
     },
   })
+
+  // Sync tags if provided
+  if (data.tagIds?.length) {
+    for (const tagId of data.tagIds) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (prisma as any).postTag.create({
+        data: { postId: post.id, tagId }
+      })
+    }
+  }
 
   // Invalidate homepage cache
   revalidatePath('/')

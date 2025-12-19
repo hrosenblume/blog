@@ -400,7 +400,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
         setSavingAs(null)
       }
     }
-  }, [postSlug, title, subtitle, slug, markdown, polyhedraShape, seoTitle, seoDescription, seoKeywords, noIndex, ogImage, router])
+  }, [postSlug, title, subtitle, slug, markdown, polyhedraShape, seoTitle, seoDescription, seoKeywords, noIndex, ogImage, tags, router])
 
   // Autosave drafts after 3 seconds of inactivity (silent - no button spinner)
   useEffect(() => {
