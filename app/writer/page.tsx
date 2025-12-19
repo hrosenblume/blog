@@ -120,7 +120,7 @@ export default function Dashboard() {
   // Loading state - MUST be after all hooks
   if (loading) {
     return (
-      <div className="max-w-5xl mx-auto px-6 pt-8 pb-[calc(2rem+env(safe-area-inset-bottom,0px))]">
+      <div className="max-w-5xl mx-auto px-6 pt-8 pb-24">
         <div className="mt-4 mb-8">
           <Skeleton className="h-6 w-48 mb-4" />
           <Skeleton className="h-24 w-full rounded-md" />
@@ -199,7 +199,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-6 pt-8 pb-[calc(2rem+env(safe-area-inset-bottom,0px))]">
+    <div className="max-w-5xl mx-auto px-6 pt-8 pb-24">
       {/* Mobile FAB */}
       <Button asChild size="icon" className="sm:hidden fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-lg z-50">
         <Link href="/writer/editor" aria-label="New Essay">
