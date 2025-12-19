@@ -27,13 +27,17 @@ function WriterLayoutContent({
     }
   }, [status, router])
 
-  // Disable overscroll bounce for app-like feel
+  // App-like feel: disable overscroll bounce, responsive scrollbar
   useEffect(() => {
     document.documentElement.style.overscrollBehavior = 'none'
     document.body.style.overscrollBehavior = 'none'
+    document.documentElement.classList.add('app-scrollbar')
+    document.body.classList.add('app-scrollbar')
     return () => {
       document.documentElement.style.overscrollBehavior = ''
       document.body.style.overscrollBehavior = ''
+      document.documentElement.classList.remove('app-scrollbar')
+      document.body.classList.remove('app-scrollbar')
     }
   }, [])
 

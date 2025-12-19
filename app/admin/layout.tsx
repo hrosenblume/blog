@@ -46,13 +46,19 @@ export default function AdminLayout({
       .catch(() => {})
   }, [])
 
-  // Disable overscroll bounce for app-like feel
+  // App-like feel: disable overscroll bounce, match bg, responsive scrollbar
   useEffect(() => {
     document.documentElement.style.overscrollBehavior = 'none'
     document.body.style.overscrollBehavior = 'none'
+    document.body.style.backgroundColor = 'hsl(var(--muted))'
+    document.documentElement.classList.add('app-scrollbar')
+    document.body.classList.add('app-scrollbar')
     return () => {
       document.documentElement.style.overscrollBehavior = ''
       document.body.style.overscrollBehavior = ''
+      document.body.style.backgroundColor = ''
+      document.documentElement.classList.remove('app-scrollbar')
+      document.body.classList.remove('app-scrollbar')
     }
   }, [])
 
