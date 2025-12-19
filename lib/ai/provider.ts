@@ -34,8 +34,8 @@ async function getApiKey(provider: 'anthropic' | 'openai'): Promise<string | nul
  * Generate text using the specified model.
  * Abstracts away the differences between Anthropic and OpenAI APIs.
  * 
- * @param modelId - Can be either a model ID from AI_MODELS (e.g., 'gpt-4o') 
- *                  or a raw model name (e.g., 'gpt-4o-search-preview')
+ * @param modelId - Can be either a model ID from AI_MODELS (e.g., 'gpt-5.2') 
+ *                  or a raw model name (e.g., 'gpt-5.2-search-preview')
  */
 export async function generate(
   modelId: string,
@@ -160,8 +160,8 @@ export async function* generateStream(
  * Stream chat messages using the specified model.
  * Yields text chunks as they arrive from the API.
  * 
- * @param modelId - Can be either a model ID from AI_MODELS (e.g., 'gpt-4o') 
- *                  or a raw model name (e.g., 'gpt-4o-search-preview')
+ * @param modelId - Can be either a model ID from AI_MODELS (e.g., 'gpt-5.2') 
+ *                  or a raw model name (e.g., 'gpt-5.2-search-preview')
  */
 export async function* generateChatStream(
   modelId: string,

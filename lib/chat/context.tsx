@@ -132,7 +132,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             messages: [{ role: 'user', content: content.trim() }],
-            modelId: 'gpt-4o',
+            modelId: 'gpt-5.2',
             useSearchModel: true, // Tell API to use search variant
             mode: 'search',
           }),

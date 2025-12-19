@@ -6,35 +6,35 @@ export type LengthOption = (typeof LENGTH_OPTIONS)[number]
 export const AI_MODELS = [
   {
     id: 'claude-sonnet',
-    name: 'Sonnet 4',
+    name: 'Sonnet 4.5',
     provider: 'anthropic',
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-4-5-20250929',
     description: 'Fast, capable, best value',
     searchModel: null, // No native search, uses search-first flow
   },
   {
     id: 'claude-opus',
-    name: 'Opus 4',
+    name: 'Opus 4.5',
     provider: 'anthropic',
-    model: 'claude-opus-4-20250514',
+    model: 'claude-opus-4-5-20251101',
     description: 'Highest quality, slower',
     searchModel: null,
   },
   {
-    id: 'gpt-4o',
-    name: 'GPT-4o',
+    id: 'gpt-5.2',
+    name: 'GPT-5.2',
     provider: 'openai',
-    model: 'gpt-4o',
-    description: 'OpenAI flagship',
-    searchModel: 'gpt-4o-search-preview', // Use this when web search enabled
+    model: 'gpt-5.2',
+    description: 'Latest OpenAI flagship',
+    searchModel: null,
   },
   {
-    id: 'gpt-4o-mini',
-    name: 'GPT-4o Mini',
+    id: 'gpt-5-mini',
+    name: 'GPT-5 Mini',
     provider: 'openai',
-    model: 'gpt-4o-mini',
-    description: 'Fast and cheap',
-    searchModel: 'gpt-4o-mini-search-preview',
+    model: 'gpt-5-mini',
+    description: 'Fast and cost-efficient',
+    searchModel: null,
   },
 ] as const
 
