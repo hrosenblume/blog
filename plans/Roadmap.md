@@ -8,14 +8,6 @@
 
 ## Soon
 
-### 🐛 Admin Panel Bottom White Bar
-
-White space at bottom of admin panel.
-
-**Check:** `min-height` vs `height`, body background, `100vh` vs `100dvh`, last element margin.
-
----
-
 ### ✨ Polyhedra on Essay Pages
 
 Add 3D shapes to essay pages (already assigned via `polyhedraShape`).
@@ -112,4 +104,5 @@ Generate social media posts from published essays for Twitter/X and LinkedIn.
 - Edit before copying
 - Character count indicators
 - Uses existing AI system (`lib/ai/`) with platform-specific prompts
+
 

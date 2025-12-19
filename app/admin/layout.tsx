@@ -46,6 +46,16 @@ export default function AdminLayout({
       .catch(() => {})
   }, [])
 
+  // Disable overscroll bounce for app-like feel
+  useEffect(() => {
+    document.documentElement.style.overscrollBehavior = 'none'
+    document.body.style.overscrollBehavior = 'none'
+    return () => {
+      document.documentElement.style.overscrollBehavior = ''
+      document.body.style.overscrollBehavior = ''
+    }
+  }, [])
+
   if (status === 'loading') {
     return (
       <CenteredPage>
@@ -79,8 +89,8 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-muted">
-      <header className="flex-shrink-0 bg-card shadow">
+    <div className="min-h-screen bg-muted">
+      <header className="sticky top-0 z-10 border-b border-border bg-card shadow">
         <div className="max-w-5xl mx-auto px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
           <div className="flex items-center gap-4 md:gap-6">
             <Link href="/admin" className="text-section font-bold">
@@ -224,7 +234,7 @@ export default function AdminLayout({
         )}
       </header>
 
-      <main className="flex-1 overflow-auto bg-muted">
+      <main>
         <div className="max-w-5xl mx-auto px-4 md:px-6 py-6 md:py-8">
           {children}
         </div>

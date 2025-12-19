@@ -27,6 +27,16 @@ function WriterLayoutContent({
     }
   }, [status, router])
 
+  // Disable overscroll bounce for app-like feel
+  useEffect(() => {
+    document.documentElement.style.overscrollBehavior = 'none'
+    document.body.style.overscrollBehavior = 'none'
+    return () => {
+      document.documentElement.style.overscrollBehavior = ''
+      document.body.style.overscrollBehavior = ''
+    }
+  }, [])
+
   // Keyboard shortcuts for writer layout
   useKeyboard([
     { 
