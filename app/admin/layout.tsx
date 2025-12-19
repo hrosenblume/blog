@@ -237,7 +237,7 @@ export default function AdminLayout({
       </header>
 
       <main className="flex-1 overflow-auto">
-        <div className="max-w-5xl mx-auto px-4 md:px-6 py-6 md:py-8">
+        <div className="max-w-5xl mx-auto px-4 md:px-6 pt-6 md:pt-8 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] md:pb-8">
           {children}
         </div>
       </main>
