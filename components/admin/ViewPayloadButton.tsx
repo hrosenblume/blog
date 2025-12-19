@@ -36,7 +36,7 @@ export function ViewPayloadButton({ payload }: ViewPayloadButtonProps) {
 
   return (
     <Dialog>
-      <DropdownMenu>
+      <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="h-8 w-8">
             <MoreVerticalIcon className="text-muted-foreground" />

@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db'
+import type { EssayContext } from '@/lib/chat'
 
 // Default templates exported for UI reset functionality
 export const DEFAULT_GENERATE_TEMPLATE = `You are a writing assistant that writes in the author's voice.
@@ -67,6 +68,73 @@ ARTICLE SUMMARY: {{ARTICLE_SUMMARY}}
 SOURCE: {{ARTICLE_URL}}
 
 Output ONLY markdown. No preamble, no "Here is...", no explanations. Start with a compelling title using markdown # heading.`
+
+export const DEFAULT_AGENT_CHAT_TEMPLATE = `You are an AI writing assistant that can directly edit the user's essay.
+
+## Chat Behavior (How to interact)
+{{CHAT_RULES}}
+
+## Writing Style (When editing content, follow these)
+{{RULES}}
+
+## Style Reference (The author writes like this)
+{{STYLE_EXAMPLES}}
+
+---
+
+## Agent Mode Instructions
+
+You are in AGENT mode. When the user asks you to make changes to their essay, you MUST output edit commands using the special format below. Always explain what you're doing before and after the edit block.
+
+### Edit Command Format
+
+Wrap edit commands in :::edit markers with a JSON object:
+
+\`\`\`
+:::edit
+{"type": "replace_section", "find": "exact text to find", "replace": "new text to replace it with"}
+:::
+\`\`\`
+
+### Available Edit Types
+
+1. **replace_section** - Find and replace specific text
+   \`\`\`
+   :::edit
+   {"type": "replace_section", "find": "The old paragraph text...", "replace": "The new, improved text..."}
+   :::
+   \`\`\`
+
+2. **replace_all** - Replace the entire essay content (use sparingly)
+   \`\`\`
+   :::edit
+   {"type": "replace_all", "title": "New Title", "subtitle": "New Subtitle", "markdown": "Full new essay content..."}
+   :::
+   \`\`\`
+
+3. **insert** - Add text at a specific position
+   \`\`\`
+   :::edit
+   {"type": "insert", "find": "text to find", "position": "after", "replace": "text to insert"}
+   :::
+   \`\`\`
+   position can be: "before", "after", "start" (beginning of essay), "end" (end of essay)
+
+4. **delete** - Remove text
+   \`\`\`
+   :::edit
+   {"type": "delete", "find": "text to remove"}
+   :::
+   \`\`\`
+
+### Important Rules
+
+- The "find" text must EXACTLY match text in the essay (including whitespace)
+- For replace_section, include enough context to uniquely identify the location
+- You can include multiple edit blocks in one response
+- Always explain what you're changing and why
+- If you can't find the text the user mentioned, tell them and ask for clarification
+- For small changes, prefer replace_section over replace_all`
 
 export interface StyleContext {
   customRules: string
@@ -165,12 +233,6 @@ export function buildChatPrompt(context: StyleContext): string {
   return applyPlaceholders(template, context.customRules, context.chatRules, context.rewriteRules, context.styleExamples)
 }
 
-export interface EssayContext {
-  title: string
-  subtitle?: string
-  markdown: string
-}
-
 /**
  * Build a system prompt for chat/brainstorming with the current essay in context.
  * When an essay is being edited, this provides the AI with awareness of its content.
@@ -194,6 +256,44 @@ export function buildChatPromptWithEssay(
 ## Current Essay Draft
 
 When the user refers to "this essay", "this paragraph", "the intro", "the conclusion", or any specific section, they mean the content below. Help them improve, critique, or discuss this draft.
+
+${header}
+
+${essay.markdown}`
+}
+
+/**
+ * Build a system prompt for agent mode chat with essay editing capabilities.
+ * The AI can output structured edit commands that the client will parse and apply.
+ */
+export function buildAgentChatPrompt(
+  context: StyleContext,
+  essay?: EssayContext | null
+): string {
+  const template = DEFAULT_AGENT_CHAT_TEMPLATE
+  const basePrompt = applyPlaceholders(template, context.customRules, context.chatRules, context.rewriteRules, context.styleExamples)
+  
+  if (!essay?.markdown) {
+    return `${basePrompt}
+
+---
+
+## Current Essay
+
+No essay is currently open. Ask the user to open an essay in the editor first, or help them brainstorm ideas.`
+  }
+  
+  const header = essay.subtitle 
+    ? `# ${essay.title}\n*${essay.subtitle}*` 
+    : `# ${essay.title}`
+    
+  return `${basePrompt}
+
+---
+
+## Current Essay Draft
+
+This is the essay you can edit. When matching text for edits, use the EXACT text from this content.
 
 ${header}
 
@@ -237,4 +337,20 @@ export function buildNewsEssayPrompt(
     .replace(/\{\{ARTICLE_TITLE\}\}/g, article.title)
     .replace(/\{\{ARTICLE_SUMMARY\}\}/g, article.summary || 'No summary available')
     .replace(/\{\{ARTICLE_URL\}\}/g, article.url)
+}
+
+/**
+ * Build a system prompt for web search mode.
+ * Returns facts only, no opinions or analysis.
+ * Used when web search is enabled to fetch information before passing to the main model.
+ */
+export function buildSearchOnlyPrompt(): string {
+  return `You are a web search assistant. Search for the requested information and return:
+
+1. A brief factual summary (2-3 sentences)
+2. Key data points or statistics if relevant
+3. Source citations with URLs when available
+
+Do NOT provide opinions, analysis, or recommendations. Just facts.
+Keep your response concise and focused on answering the question with verifiable information.`
 }

@@ -16,18 +16,6 @@ White space at bottom of admin panel.
 
 ---
 
-### 🎨 Standardize Theme Toggle Placement
-
-Toggle appears in different places. Pick one: navbar, footer, or fixed corner. Keyboard shortcut (`Cmd + .`) is primary.
-
----
-
-### 🎨 Standardize Navbar Behavior
-
-Inconsistent across sections: sticky vs static, mobile menu, back button vs logo, active states, animations.
-
----
-
 ### ✨ Polyhedra on Essay Pages
 
 Add 3D shapes to essay pages (already assigned via `polyhedraShape`).
@@ -103,18 +91,6 @@ Manual control over homepage essays instead of most recent.
 ### 🎨 Visual Bio Section
 
 Make homepage bio more engaging. Keep minimal aesthetic, respect motion preferences.
-
----
-
-### ✨ Chat-to-Essay Integration
-
-Chat that can edit the essay, not just brainstorm.
-
-**Features:**
-- Copy button on responses
-- "Insert into essay" action
-- Commands: "update intro to X", "remove paragraph 2"
-- Diff preview → accept/reject
 
 ---
 

@@ -7,7 +7,14 @@ import { updatePostWithAuth, deletePost } from '@/lib/posts'
 // GET /api/posts/by-slug/[slug] - Get single post by slug
 export const GET = withSession(async (request: NextRequest, { params }: { params: Promise<{ slug: string }> }) => {
   const { slug } = await params
-  const post = await prisma.post.findUnique({ where: { slug } })
+  const post = await prisma.post.findUnique({
+    where: { slug },
+    include: {
+      tags: {
+        include: { tag: true }
+      }
+    }
+  })
   if (!post) return notFound()
 
   // Get adjacent posts (same status, ordered by updatedAt desc)
@@ -48,6 +55,9 @@ export const GET = withSession(async (request: NextRequest, { params }: { params
     seoDescription: post.seoDescription,
     seoKeywords: post.seoKeywords,
     noIndex: post.noIndex,
+    ogImage: post.ogImage,
+    // Tags
+    tags: post.tags.map(pt => ({ id: pt.tag.id, name: pt.tag.name })),
   })
 })
 

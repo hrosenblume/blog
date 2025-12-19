@@ -21,8 +21,7 @@ interface EditorToolbarProps {
   // Revision history
   postSlug?: string
   revisions?: RevisionState
-  // AI generation
-  onOpenGenerate?: () => void
+  // AI rewrite (for disabling button during generation)
   aiGenerating?: boolean
 }
 
@@ -35,14 +34,8 @@ export function EditorToolbar({
   setShowMarkdown,
   postSlug,
   revisions,
-  onOpenGenerate,
   aiGenerating,
 }: EditorToolbarProps) {
-  const isMarkdownMode = !editor && textareaRef && markdown !== undefined && onMarkdownChange
-
-  // Don't render if we have neither editor nor markdown mode
-  if (!editor && !isMarkdownMode) return null
-
   return (
     <div className="flex items-center justify-start md:justify-center gap-0.5 px-4 py-2 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-black overflow-x-auto">
       <FormatButtons
@@ -80,8 +73,6 @@ export function EditorToolbar({
         setShowMarkdown={setShowMarkdown}
         postSlug={postSlug}
         revisions={revisions}
-        onOpenGenerate={onOpenGenerate}
-        aiGenerating={aiGenerating}
       />
     </div>
   )

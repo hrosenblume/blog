@@ -1,18 +1,24 @@
+/** Word count options for essay generation */
+export const LENGTH_OPTIONS = [300, 500, 800, 1000] as const
+export type LengthOption = (typeof LENGTH_OPTIONS)[number]
+
 /** Full model definition with provider details */
 export const AI_MODELS = [
   {
     id: 'claude-sonnet',
-    name: 'Claude Sonnet 4',
+    name: 'Sonnet 4',
     provider: 'anthropic',
     model: 'claude-sonnet-4-20250514',
     description: 'Fast, capable, best value',
+    searchModel: null, // No native search, uses search-first flow
   },
   {
     id: 'claude-opus',
-    name: 'Claude Opus 4',
+    name: 'Opus 4',
     provider: 'anthropic',
     model: 'claude-opus-4-20250514',
     description: 'Highest quality, slower',
+    searchModel: null,
   },
   {
     id: 'gpt-4o',
@@ -20,6 +26,7 @@ export const AI_MODELS = [
     provider: 'openai',
     model: 'gpt-4o',
     description: 'OpenAI flagship',
+    searchModel: 'gpt-4o-search-preview', // Use this when web search enabled
   },
   {
     id: 'gpt-4o-mini',
@@ -27,6 +34,7 @@ export const AI_MODELS = [
     provider: 'openai',
     model: 'gpt-4o-mini',
     description: 'Fast and cheap',
+    searchModel: 'gpt-4o-mini-search-preview',
   },
 ] as const
 
@@ -38,10 +46,21 @@ export interface AIModelOption {
   id: string
   name: string
   description: string
+  hasNativeSearch: boolean // True if model has a search variant (GPT models)
 }
 
 export function getModel(id: string): AIModel | undefined {
   return AI_MODELS.find(m => m.id === id)
+}
+
+/** Check if a model has a native search variant (can use search without 2-call flow) */
+export function modelHasNativeSearch(id: string): boolean {
+  return AI_MODELS.find(m => m.id === id)?.searchModel !== null
+}
+
+/** Get the search model variant for a model, or null if it uses 2-call flow */
+export function getSearchModel(id: string): string | null {
+  return AI_MODELS.find(m => m.id === id)?.searchModel ?? null
 }
 
 /**

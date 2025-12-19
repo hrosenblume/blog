@@ -33,6 +33,9 @@ async function getApiKey(provider: 'anthropic' | 'openai'): Promise<string | nul
 /**
  * Generate text using the specified model.
  * Abstracts away the differences between Anthropic and OpenAI APIs.
+ * 
+ * @param modelId - Can be either a model ID from AI_MODELS (e.g., 'gpt-4o') 
+ *                  or a raw model name (e.g., 'gpt-4o-search-preview')
  */
 export async function generate(
   modelId: string,
@@ -40,16 +43,23 @@ export async function generate(
   userPrompt: string,
   maxTokens: number = 4096
 ): Promise<GenerateResult> {
+  // First try to resolve from AI_MODELS
   const model = getModel(modelId)
-  if (!model) {
-    throw new Error(`Unknown model: ${modelId}`)
+  
+  if (model) {
+    // Known model from AI_MODELS
+    if (model.provider === 'anthropic') {
+      return generateWithAnthropic(model.model, systemPrompt, userPrompt, maxTokens)
+    }
+    return generateWithOpenAI(model.model, systemPrompt, userPrompt, maxTokens)
   }
-
-  if (model.provider === 'anthropic') {
-    return generateWithAnthropic(model.model, systemPrompt, userPrompt, maxTokens)
+  
+  // Raw model name - determine provider from name
+  if (modelId.startsWith('claude') || modelId.startsWith('anthropic')) {
+    return generateWithAnthropic(modelId, systemPrompt, userPrompt, maxTokens)
   }
-  // model.provider === 'openai'
-  return generateWithOpenAI(model.model, systemPrompt, userPrompt, maxTokens)
+  // Assume OpenAI for gpt-*, o1-*, etc.
+  return generateWithOpenAI(modelId, systemPrompt, userPrompt, maxTokens)
 }
 
 async function generateWithAnthropic(
@@ -149,6 +159,9 @@ export async function* generateStream(
 /**
  * Stream chat messages using the specified model.
  * Yields text chunks as they arrive from the API.
+ * 
+ * @param modelId - Can be either a model ID from AI_MODELS (e.g., 'gpt-4o') 
+ *                  or a raw model name (e.g., 'gpt-4o-search-preview')
  */
 export async function* generateChatStream(
   modelId: string,
@@ -156,15 +169,24 @@ export async function* generateChatStream(
   messages: ChatMessage[],
   maxTokens: number = 4096
 ): AsyncGenerator<string, void, unknown> {
+  // First try to resolve from AI_MODELS
   const model = getModel(modelId)
-  if (!model) {
-    throw new Error(`Unknown model: ${modelId}`)
-  }
-
-  if (model.provider === 'anthropic') {
-    yield* chatStreamWithAnthropic(model.model, systemPrompt, messages, maxTokens)
+  
+  if (model) {
+    // Known model from AI_MODELS
+    if (model.provider === 'anthropic') {
+      yield* chatStreamWithAnthropic(model.model, systemPrompt, messages, maxTokens)
+    } else {
+      yield* chatStreamWithOpenAI(model.model, systemPrompt, messages, maxTokens)
+    }
   } else {
-    yield* chatStreamWithOpenAI(model.model, systemPrompt, messages, maxTokens)
+    // Raw model name - determine provider from name
+    if (modelId.startsWith('claude') || modelId.startsWith('anthropic')) {
+      yield* chatStreamWithAnthropic(modelId, systemPrompt, messages, maxTokens)
+    } else {
+      // Assume OpenAI for gpt-*, o1-*, etc.
+      yield* chatStreamWithOpenAI(modelId, systemPrompt, messages, maxTokens)
+    }
   }
 }
 

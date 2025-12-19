@@ -9,6 +9,11 @@ import { confirmPublish, confirmUnpublish } from '@/lib/utils/confirm'
 import { useContentStash } from './useContentStash'
 import type { RevisionSummary, RevisionFull, RevisionState, AIState } from './types'
 
+interface Tag {
+  id: string
+  name: string
+}
+
 export interface PostContent {
   title: string
   subtitle: string
@@ -22,6 +27,8 @@ export interface PostContent {
   seoKeywords: string
   noIndex: boolean
   ogImage: string
+  // Tags
+  tags: Tag[]
 }
 
 export interface PostEditorUI {
@@ -59,6 +66,8 @@ export interface UsePostEditorReturn {
   setSeoKeywords: (seoKeywords: string) => void
   setNoIndex: (noIndex: boolean) => void
   setOgImage: (ogImage: string) => void
+  // Tags
+  setTags: (tagIds: string[]) => void
   
   // UI state
   ui: PostEditorUI
@@ -106,6 +115,9 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
   const [noIndex, setNoIndex] = useState(false)
   const [ogImage, setOgImage] = useState('')
 
+  // Tags state
+  const [tags, setTagsState] = useState<Tag[]>([])
+
   // UI state
   const [loading, setLoading] = useState(!!postSlug)
   const [savingAs, setSavingAs] = useState<'draft' | 'published' | null>(null)
@@ -122,7 +134,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
   const [editor, setEditor] = useState<EditorInstance | null>(null)
 
   // Refs
-  const lastSavedContent = useRef({ title: '', subtitle: '', slug: '', markdown: '', polyhedraShape: '', seoTitle: '', seoDescription: '', seoKeywords: '', noIndex: false, ogImage: '' })
+  const lastSavedContent = useRef({ title: '', subtitle: '', slug: '', markdown: '', polyhedraShape: '', seoTitle: '', seoDescription: '', seoKeywords: '', noIndex: false, ogImage: '', tagIds: [] as string[] })
   const urlSlugRef = useRef(postSlug)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   
@@ -169,6 +181,8 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
         setSeoKeywords(data.seoKeywords || '')
         setNoIndex(data.noIndex || false)
         setOgImage(data.ogImage || '')
+        // Tags
+        setTagsState(data.tags || [])
         lastSavedContent.current = {
           title: data.title,
           subtitle: data.subtitle || '',
@@ -180,6 +194,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
           seoKeywords: data.seoKeywords || '',
           noIndex: data.noIndex || false,
           ogImage: data.ogImage || '',
+          tagIds: (data.tags || []).map((t: Tag) => t.id),
         }
         setHasEditedSinceLastSave(false)
         urlSlugRef.current = data.slug
@@ -259,6 +274,26 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
     setMarkdown(value)
   }, [])
 
+  // Handle tags change (takes tagIds, updates state with full tag objects)
+  const handleTagsChange = useCallback(async (tagIds: string[]) => {
+    setHasEditedSinceLastSave(true)
+    // Fetch available tags if we don't have them cached
+    try {
+      const res = await fetch('/api/tags')
+      if (res.ok) {
+        const allTags: Tag[] = await res.json()
+        const selectedTags = allTags.filter(t => tagIds.includes(t.id))
+        setTagsState(selectedTags)
+      }
+    } catch {
+      // If fetch fails, just update with IDs we have
+      setTagsState(prev => {
+        const existing = prev.filter(t => tagIds.includes(t.id))
+        return existing
+      })
+    }
+  }, [])
+
   // Save handler (silent mode skips button spinner for autosave)
   const handleSave = useCallback(async (publishStatus: 'draft' | 'published', options?: { silent?: boolean }) => {
     const silent = options?.silent ?? false
@@ -296,6 +331,8 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
         seoKeywords: seoKeywords.trim() || null,
         noIndex,
         ogImage: ogImage.trim() || null,
+        // Tags
+        tagIds: tags.map(t => t.id),
       }
 
       if (postSlug) {
@@ -337,6 +374,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
         seoKeywords: seoKeywords.trim(),
         noIndex,
         ogImage: ogImage.trim(),
+        tagIds: tags.map(t => t.id),
       }
       setHasEditedSinceLastSave(false)
       setHasUnsavedChanges(false)
@@ -629,7 +667,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
   }, [])
 
   return {
-    post: { title, subtitle, slug, markdown, polyhedraShape, status, seoTitle, seoDescription, seoKeywords, noIndex, ogImage },
+    post: { title, subtitle, slug, markdown, polyhedraShape, status, seoTitle, seoDescription, seoKeywords, noIndex, ogImage, tags },
     setTitle,
     setSubtitle,
     setSlug: handleSlugChange,
@@ -642,6 +680,8 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
     setSeoKeywords,
     setNoIndex,
     setOgImage,
+    // Tags
+    setTags: handleTagsChange,
     
     ui: { loading, savingAs, lastSaved, hasUnsavedChanges, showMarkdown, publishSuccess },
     setShowMarkdown,

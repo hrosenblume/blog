@@ -33,7 +33,7 @@ export function AdminActionsMenu({ actions }: AdminActionsMenuProps) {
   const destructiveActions = actions.filter(a => a.variant === 'destructive')
 
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="h-8 w-8">
           <MoreVerticalIcon className="text-muted-foreground" />

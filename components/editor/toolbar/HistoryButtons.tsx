@@ -5,7 +5,7 @@ import type { Editor } from '@tiptap/react'
 import type { RefObject } from 'react'
 import { ToolbarButton, Divider } from './ToolbarButton'
 import { RevisionHistoryDropdown } from '../RevisionHistoryDropdown'
-import { UndoIcon, RedoIcon, SparklesIcon } from '@/components/Icons'
+import { UndoIcon, RedoIcon } from '@/components/Icons'
 import type { RevisionState } from '@/lib/editor/types'
 
 interface HistoryButtonsProps {
@@ -15,8 +15,6 @@ interface HistoryButtonsProps {
   setShowMarkdown?: (show: boolean) => void
   postSlug?: string
   revisions?: RevisionState
-  onOpenGenerate?: () => void
-  aiGenerating?: boolean
 }
 
 export function HistoryButtons({
@@ -26,8 +24,6 @@ export function HistoryButtons({
   setShowMarkdown,
   postSlug,
   revisions,
-  onOpenGenerate,
-  aiGenerating,
 }: HistoryButtonsProps) {
   const handleUndo = useCallback(() => {
     if (editor) {
@@ -92,20 +88,6 @@ export function HistoryButtons({
             onOpen={revisions.fetch}
             onSelect={revisions.preview}
           />
-        </>
-      )}
-
-      {/* AI Generate */}
-      {onOpenGenerate && (
-        <>
-          <Divider />
-          <ToolbarButton
-            onClick={onOpenGenerate}
-            disabled={aiGenerating}
-            title="Generate with AI"
-          >
-            <SparklesIcon />
-          </ToolbarButton>
         </>
       )}
     </>

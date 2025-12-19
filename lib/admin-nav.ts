@@ -11,6 +11,7 @@ export type AdminNavItem = {
 export const adminNavItems: AdminNavItem[] = [
   { label: 'Users', href: '/admin/users', countKey: 'users' },
   { label: 'Posts', href: '/admin/posts', countKey: 'posts' },
+  { label: 'Tags', href: '/admin/tags', countKey: 'tags' },
   { label: 'Revisions', href: '/admin/revisions', countKey: 'revisions' },
   { label: 'Visits', href: '/admin/leads/visits', countKey: 'visits' },
   { label: 'Companies', href: '/admin/visitors/companies', countKey: 'companies' },
@@ -23,7 +24,7 @@ export const adminNavItems: AdminNavItem[] = [
 
 // For navbar grouping - items listed here will appear in dropdowns
 export const adminNavGroups = [
-  { label: 'Content', items: ['Posts', 'Revisions', 'Topics'] },
+  { label: 'Content', items: ['Posts', 'Tags', 'Revisions', 'Topics'] },
   { label: 'Analytics', items: ['Visits', 'Companies', 'Persons'] },
   { label: 'Settings', items: ['AI', 'SEO', 'Integrations'] },
 ]

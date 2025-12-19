@@ -302,11 +302,8 @@ Generate essays using Anthropic (Claude) or OpenAI (GPT-4):
   - `{{REWRITE_RULES}}` — Replaced with rewrite-specific rules
   - `{{STYLE_EXAMPLES}}` — Replaced with all published essays as style reference
 - **API**: `/api/ai/generate` (generate content), `/api/ai/settings` (CRUD settings)
-- **Components**:
-  - `GenerateModal` — Prompt input, model selection, length picker
-  - `AIPreviewBanner` — Accept/discard generated content
 - **Admin UI**: `/admin/ai` — Configure essay writing rules, chat behavior rules, rewrite rules, default model, and editable prompt templates
-- **Flow**: Toolbar button → GenerateModal → API call → Preview banner → Accept/Discard
+- **Flow**: Dashboard idea input → new editor → API call → streaming content
 - **Context injection**: System prompt includes custom rules first (override everything), then all published posts as style examples
 - **Env vars**: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` (at least one required)
 

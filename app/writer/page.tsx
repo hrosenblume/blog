@@ -3,12 +3,23 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronDown, Check, X, ExternalLink, Search, ArrowUp } from 'lucide-react'
-import { PageLoader } from '@/components/PageLoader'
+import { ChevronDown, Check, X, ExternalLink, Search, ArrowUp, Globe } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
+import { SkeletonPostList } from '@/components/writer/SkeletonPostList'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { ControlButton } from '@/components/ui/control-button'
 import { PlusIcon } from '@/components/Icons'
+import { useAIModels } from '@/lib/ai/useAIModels'
+import { LENGTH_OPTIONS } from '@/lib/ai/models'
+import { ModelSelector } from '@/components/editor/ModelSelector'
 import { confirmPublish, confirmUnpublish } from '@/lib/utils/confirm'
 import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
 import { PostItem, type Post } from '@/components/writer/PostItem'
@@ -36,6 +47,11 @@ export default function Dashboard() {
   const [autoDraftEnabled, setAutoDraftEnabled] = useState(false)
   const [suggestedOpen, setSuggestedOpen] = useState(false)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+  
+  // Idea input controls
+  const { models, selectedModel: modelId, setSelectedModel: setModelId, currentModel } = useAIModels()
+  const [length, setLength] = useState<number>(500)
+  const [webEnabled, setWebEnabled] = useState(false)
 
   // N to create new essay
   useKeyboard([
@@ -103,7 +119,20 @@ export default function Dashboard() {
 
   // Loading state - MUST be after all hooks
   if (loading) {
-    return <PageLoader />
+    return (
+      <div className="max-w-5xl mx-auto px-6 py-8">
+        <div className="mt-4 mb-8">
+          <Skeleton className="h-6 w-48 mb-4" />
+          <Skeleton className="h-24 w-full rounded-md" />
+        </div>
+        <div className="flex border-b border-border mb-6">
+          <Skeleton className="h-10 w-16 mr-4" />
+          <Skeleton className="h-10 w-20 mr-4" />
+          <Skeleton className="h-10 w-24" />
+        </div>
+        <SkeletonPostList count={5} />
+      </div>
+    )
   }
 
   async function handleDelete(id: string) {
@@ -186,25 +215,70 @@ export default function Dashboard() {
             e.preventDefault()
             const idea = (e.target as HTMLFormElement).idea.value.trim()
             if (idea) {
-              router.push(`/writer/editor?idea=${encodeURIComponent(idea)}`)
+              const params = new URLSearchParams({
+                idea,
+                model: modelId,
+                length: String(length),
+                ...(webEnabled && { web: '1' })
+              })
+              router.push(`/writer/editor?${params}`)
             }
           }}
-          className="relative"
         >
-          <Textarea
-            name="idea"
-            placeholder="Describe your idea..."
-            className="min-h-[100px] pr-14 resize-none text-base"
-            rows={3}
-          />
-          <Button 
-            type="submit" 
-            size="icon" 
-            variant="secondary"
-            className="absolute bottom-3 right-3 rounded-full w-10 h-10"
-          >
-            <ArrowUp className="w-5 h-5" />
-          </Button>
+          <div className="relative">
+            <Textarea
+              name="idea"
+              placeholder="Describe your idea..."
+              className="min-h-[100px] pr-14 resize-none text-base md:text-base"
+              rows={3}
+            />
+            <Button 
+              type="submit" 
+              size="icon" 
+              variant="secondary"
+              className="absolute bottom-3 right-3 rounded-full w-10 h-10"
+            >
+              <ArrowUp className="w-5 h-5" />
+            </Button>
+          </div>
+          
+          {/* Controls Row */}
+          <div className="mt-2 flex items-center gap-3">
+            {/* Length Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <ControlButton>
+                  {length} words
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </ControlButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                {LENGTH_OPTIONS.map(len => (
+                  <DropdownMenuItem key={len} onClick={() => setLength(len)}>
+                    {len} words
+                    {length === len && <Check className="w-4 h-4 ml-auto" />}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            {/* Web Search Toggle */}
+            <ControlButton
+              onClick={() => setWebEnabled(!webEnabled)}
+              active={webEnabled}
+              title="Search the web for current information"
+            >
+              <Globe className="w-4 h-4" />
+            </ControlButton>
+            
+            {/* Model Dropdown */}
+            <ModelSelector
+              models={models}
+              selectedModel={modelId}
+              onModelChange={setModelId}
+              currentModel={currentModel}
+            />
+          </div>
         </form>
       </div>
 

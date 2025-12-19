@@ -1,22 +1,25 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
+import { Save, Loader2 } from 'lucide-react'
 import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
 import { usePostEditor } from '@/lib/editor/usePostEditor'
-import { useChatContext } from '@/lib/chat'
+import { useChatContext, EssayEdit } from '@/lib/chat'
+import { LENGTH_OPTIONS } from '@/lib/ai/models'
 import { canPublish } from '@/lib/auth/helpers'
-import { PageLoader } from '@/components/PageLoader'
+import { EditorSkeleton } from '@/components/editor/EditorSkeleton'
 import { CenteredPage } from '@/components/CenteredPage'
 import { TiptapEditor, EditorToolbar } from '@/components/TiptapEditor'
-import { EditorNavbar } from '@/components/editor/EditorNavbar'
+import { WriterNavbar } from '@/components/writer/WriterNavbar'
 import { PostMetadataFooter } from '@/components/editor/PostMetadataFooter'
 import { RevisionPreviewBanner } from '@/components/editor/RevisionPreviewBanner'
-import { GenerateModal } from '@/components/editor/GenerateModal'
 import { ArticleLayout } from '@/components/ArticleLayout'
 import { ArticleHeader } from '@/components/ArticleHeader'
+import { GeneratingSkeleton } from '@/components/editor/GeneratingSkeleton'
+import { MagicBackButton } from '@/components/MagicBackButton'
 import { CheckIcon } from '@/components/Icons'
 import { formatSavedTime } from '@/lib/utils/format'
 import { HOMEPAGE } from '@/lib/homepage'
@@ -42,6 +45,8 @@ export default function Editor() {
   const searchParams = useSearchParams()
   const postSlug = params.slug?.[0] as string | undefined
   const ideaParam = searchParams.get('idea')
+  const modelParam = searchParams.get('model')
+  const lengthParam = searchParams.get('length')
   const hasTriggeredGeneration = useRef(false)
   
   const { data: session } = useSession()
@@ -59,6 +64,7 @@ export default function Editor() {
     setSeoKeywords,
     setNoIndex,
     setOgImage,
+    setTags,
     ui,
     setShowMarkdown,
     nav,
@@ -70,8 +76,8 @@ export default function Editor() {
     ai,
   } = usePostEditor(postSlug)
 
-  // Chat context - sync essay content for AI awareness
-  const { setEssayContext, setIsOpen: setShowChatPanel } = useChatContext()
+  // Chat context - sync essay content for AI awareness and navbar
+  const { setEssayContext, isOpen: chatOpen, setIsOpen: setChatOpen, registerEditHandler } = useChatContext()
 
   // Keep essay context in sync with current post content
   useEffect(() => {
@@ -86,18 +92,97 @@ export default function Editor() {
     return () => setEssayContext(null)
   }, [post.title, post.subtitle, post.markdown, ui.loading, setEssayContext])
 
+  // Edit handler for Agent mode - applies AI edits to the essay
+  const handleAgentEdit = useCallback((edit: EssayEdit): boolean => {
+    try {
+      switch (edit.type) {
+        case 'replace_all': {
+          // Replace entire essay content
+          if (edit.title !== undefined) setTitle(edit.title)
+          if (edit.subtitle !== undefined) setSubtitle(edit.subtitle)
+          if (edit.markdown !== undefined) setMarkdown(edit.markdown)
+          return true
+        }
+        
+        case 'replace_section': {
+          // Find and replace specific text
+          if (!edit.find || edit.replace === undefined) return false
+          if (!post.markdown.includes(edit.find)) {
+            console.warn('Agent edit: Could not find text to replace:', edit.find.substring(0, 50))
+            return false
+          }
+          const newMarkdown = post.markdown.replace(edit.find, edit.replace)
+          setMarkdown(newMarkdown)
+          return true
+        }
+        
+        case 'insert': {
+          // Insert text at a specific position
+          if (edit.replace === undefined) return false
+          
+          if (edit.position === 'start') {
+            setMarkdown(edit.replace + '\n\n' + post.markdown)
+            return true
+          }
+          if (edit.position === 'end') {
+            setMarkdown(post.markdown + '\n\n' + edit.replace)
+            return true
+          }
+          if (edit.find && (edit.position === 'before' || edit.position === 'after')) {
+            if (!post.markdown.includes(edit.find)) return false
+            const insertion = edit.position === 'before' 
+              ? edit.replace + '\n\n' + edit.find
+              : edit.find + '\n\n' + edit.replace
+            const newMarkdown = post.markdown.replace(edit.find, insertion)
+            setMarkdown(newMarkdown)
+            return true
+          }
+          return false
+        }
+        
+        case 'delete': {
+          // Remove specific text
+          if (!edit.find) return false
+          if (!post.markdown.includes(edit.find)) return false
+          const newMarkdown = post.markdown.replace(edit.find, '')
+            .replace(/\n{3,}/g, '\n\n') // Clean up extra newlines
+            .trim()
+          setMarkdown(newMarkdown)
+          return true
+        }
+        
+        default:
+          return false
+      }
+    } catch (err) {
+      console.error('Agent edit failed:', err)
+      return false
+    }
+  }, [post.markdown, setTitle, setSubtitle, setMarkdown])
+
+  // Register the edit handler with chat context
+  useEffect(() => {
+    registerEditHandler(handleAgentEdit)
+    return () => registerEditHandler(null)
+  }, [registerEditHandler, handleAgentEdit])
+
   // Auto-generate from idea param (from dashboard input)
   useEffect(() => {
     if (ideaParam && !postSlug && !ui.loading && !hasTriggeredGeneration.current) {
       hasTriggeredGeneration.current = true
-      ai.generate(ideaParam, 'medium')
+      
+      // Convert numeric length to short/medium/long based on LENGTH_OPTIONS thresholds
+      const lengthValue = lengthParam ? parseInt(lengthParam) : LENGTH_OPTIONS[1]
+      const lengthKey = lengthValue <= LENGTH_OPTIONS[0] ? 'short' 
+        : lengthValue <= LENGTH_OPTIONS[1] ? 'medium' 
+        : 'long'
+      
+      ai.generate(ideaParam, lengthKey, modelParam || undefined)
+      
       // Clear the URL param so refresh doesn't re-trigger
       router.replace('/writer/editor', { scroll: false })
     }
-  }, [ideaParam, postSlug, ui.loading, ai, router])
-
-  // Generate modal state
-  const [showGenerateModal, setShowGenerateModal] = useState(false)
+  }, [ideaParam, postSlug, ui.loading, ai, router, modelParam, lengthParam])
 
   // Keyboard shortcuts
   useKeyboard([
@@ -145,9 +230,17 @@ export default function Editor() {
     },
   ])
 
+  // Check for unsaved changes before navigating away (must be before conditional returns)
+  const confirmLeave = useCallback(() => {
+    if (ui.hasUnsavedChanges) {
+      return window.confirm('You have unsaved changes. Leave anyway?')
+    }
+    return true
+  }, [ui.hasUnsavedChanges])
+
   // Loading state
   if (ui.loading) {
-    return <PageLoader />
+    return <EditorSkeleton />
   }
 
   // Success state after publishing
@@ -157,18 +250,38 @@ export default function Editor() {
 
   return (
     <div className="h-screen flex flex-col">
-      <EditorNavbar
-        status={post.status}
-        hasUnsavedChanges={ui.hasUnsavedChanges}
-        savingAs={ui.savingAs}
-        onSave={actions.save}
-        previewMode={revisions.previewing ? {
-          onCancel: revisions.cancel,
-          onRestore: revisions.restore,
-        } : undefined}
-        onOpenChat={() => setShowChatPanel(true)}
-        canPublish={userCanPublish}
-      />
+      {session && (
+        <WriterNavbar
+          session={session}
+          chatOpen={chatOpen}
+          onChatToggle={() => setChatOpen(!chatOpen)}
+          fixed={false}
+          leftSlot={
+            <MagicBackButton 
+              backLink="/writer" 
+              onBeforeNavigate={confirmLeave}
+            />
+          }
+          rightSlot={
+            // Save icon only for drafts, hidden during revision preview
+            !revisions.previewing && post.status === 'draft' && (
+              <button
+                onClick={() => actions.save('draft')}
+                disabled={!ui.hasUnsavedChanges || ui.savingAs !== null}
+                className="w-9 h-9 rounded-md border border-border hover:bg-accent text-muted-foreground flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Save draft"
+                title="Save draft"
+              >
+                {ui.savingAs === 'draft' ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+              </button>
+            )
+          }
+        />
+      )}
 
       {/* Preview info line when viewing a revision */}
       {revisions.previewing && (
@@ -186,8 +299,6 @@ export default function Editor() {
           setShowMarkdown={setShowMarkdown}
           postSlug={postSlug}
           revisions={revisions}
-          onOpenGenerate={() => setShowGenerateModal(true)}
-          aiGenerating={ai.generating}
         />
       )}
 
@@ -202,6 +313,7 @@ export default function Editor() {
               byline={HOMEPAGE.name}
               editable
               disabled={!!revisions.previewing}
+              generating={ai.generating}
               onTitleChange={setTitle}
               onSubtitleChange={setSubtitle}
             />
@@ -220,24 +332,27 @@ export default function Editor() {
                 seoKeywords={post.seoKeywords}
                 noIndex={post.noIndex}
                 ogImage={post.ogImage}
+                tags={post.tags}
                 onSlugChange={setSlug}
                 onShapeRegenerate={regenerateShape}
                 onUnpublish={actions.unpublish}
+                onPublish={() => actions.save('published')}
+                savingAs={ui.savingAs}
+                hasUnsavedChanges={ui.hasUnsavedChanges}
+                canPublish={userCanPublish}
                 onSeoTitleChange={setSeoTitle}
                 onSeoDescriptionChange={setSeoDescription}
                 onSeoKeywordsChange={setSeoKeywords}
                 onNoIndexChange={setNoIndex}
                 onOgImageChange={setOgImage}
+                onTagsChange={setTags}
               />
             )
           }
         >
-          {/* Loading indicator during AI generation */}
+          {/* Skeleton placeholder during AI generation (before content arrives) */}
           {ai.generating && !post.markdown && (
-            <div className="flex items-center gap-2 text-muted-foreground py-8">
-              <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-              <span>Generating...</span>
-            </div>
+            <GeneratingSkeleton />
           )}
 
           {/* Toggle between WYSIWYG and raw markdown */}
@@ -275,14 +390,6 @@ export default function Editor() {
         </div>
       </footer>
 
-      {/* Generate Modal */}
-      <GenerateModal
-        open={showGenerateModal}
-        onOpenChange={setShowGenerateModal}
-        onGenerate={ai.generate}
-        generating={ai.generating}
-        hasExistingContent={!!(post.title.trim() || post.markdown.trim())}
-      />
     </div>
   )
 }

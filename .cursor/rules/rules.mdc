@@ -91,6 +91,7 @@ Use CSS variables from `globals.css`:
 - Check existing abstractions before creating new ones
 - Update `.env.example` when adding env vars
 - When adding third-party integrations, use `lib/integrations/config.ts`
+- Add `loading.tsx` to `/writer/*` routes with a skeleton matching the page layout
 
 ## Git Workflow
 

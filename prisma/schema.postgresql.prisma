@@ -19,6 +19,7 @@ model Post {
   publishedAt    DateTime?
   subtitle       String?
   revisions      Revision[]
+  tags           PostTag[]
   
   // SEO fields (optional overrides)
   seoTitle       String?
@@ -178,5 +179,26 @@ model NewsItem {
 
   @@index([topicId])
   @@index([status])
+}
+
+// Tags for organizing posts
+model Tag {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  posts     PostTag[]
+}
+
+model PostTag {
+  id        String   @id @default(uuid())
+  postId    String
+  tagId     String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([postId, tagId])
+  @@index([postId])
+  @@index([tagId])
 }
 

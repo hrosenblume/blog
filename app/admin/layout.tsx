@@ -146,7 +146,7 @@ export default function AdminLayout({
             </Button>
 
             {/* User dropdown - hidden on mobile */}
-            <DropdownMenu>
+            <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="hidden md:inline-flex">
                   {session.user?.email}

@@ -33,6 +33,8 @@ interface UpdatePostData {
   seoKeywords?: string | null
   noIndex?: boolean
   ogImage?: string | null
+  // Tags
+  tagIds?: string[]
 }
 
 type PostResult = 
@@ -121,6 +123,24 @@ export async function updatePost(post: Post, data: UpdatePostData): Promise<Post
   }
 
   const updated = await prisma.post.update({ where: { id: post.id }, data: updates })
+
+  // Sync tags if provided
+  if (data.tagIds !== undefined) {
+    // Delete existing PostTag records for this post
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (prisma as any).postTag.deleteMany({ where: { postId: post.id } })
+    
+    // Create new PostTag records one by one
+    for (const tagId of data.tagIds) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (prisma as any).postTag.create({
+        data: {
+          postId: post.id,
+          tagId
+        }
+      })
+    }
+  }
 
   // Revalidate cached pages
   revalidatePath('/')

@@ -53,7 +53,7 @@ export function PostItem({ post, onDelete, onUnpublish, onPublish, showStatus }:
         </Link>
       </div>
       
-      <DropdownMenu>
+      <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon">
             <MoreVerticalIcon className="text-muted-foreground" />
@@ -90,7 +90,3 @@ export function PostItem({ post, onDelete, onUnpublish, onPublish, showStatus }:
     </div>
   )
 }
-
-
-
-

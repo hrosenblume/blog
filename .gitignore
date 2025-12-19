@@ -67,3 +67,6 @@ plans/tmp/
 
 # Exported data (contains emails)
 prisma/data/
+
+# Cursor debug logs
+.cursor/debug.log

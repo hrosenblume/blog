@@ -42,6 +42,7 @@ export const GET = withSession(async () => {
       id: m.id,
       name: m.name,
       description: m.description,
+      hasNativeSearch: m.searchModel !== null,
     })),
   })
 })
