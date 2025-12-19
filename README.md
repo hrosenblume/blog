@@ -7,7 +7,9 @@ A personal essay site with AI-powered writing, animated 3D polyhedra, and a full
 ## Features
 
 - **AI Writing** — Generate essays with Claude or GPT-4, brainstorm ideas, rewrite selections
+- **AI Agent Mode** — Chat can directly edit your essay with undo support (Ask mode for discussion, Agent mode for edits)
 - **Rich Text Editor** — Tiptap WYSIWYG with markdown import/export and auto-save
+- **Tags** — Organize posts with tags, managed via admin panel
 - **SEO Management** — Per-post and site-wide SEO with JSON-LD structured data (via next-seo)
 - **3D Polyhedra** — 50+ animated wireframe shapes rendered on Canvas
 - **Post Management** — Drafts, revisions, slug generation, image uploads
@@ -85,6 +87,8 @@ SPACES_SECRET="..."
 | `/admin` | Admin dashboard |
 | `/admin/ai` | AI writing rules & model settings |
 | `/admin/seo` | Site-wide SEO settings |
+| `/admin/tags` | Tag management |
+| `/admin/topics` | Auto-draft topic subscriptions |
 | `/admin/leads` | Lead tracking |
 | `/admin/users` | User management |
 | `/admin/revisions` | Post revision history |

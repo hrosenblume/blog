@@ -95,17 +95,22 @@ model Post {
   subtitle       String?
   slug           String     @unique
   markdown       String
-  status         String     @default("draft")  // "draft" or "published"
+  status         String     @default("draft")  // "draft", "published", "suggested", "deleted"
   polyhedraShape String?
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
   publishedAt    DateTime?
   revisions      Revision[]
+  tags           PostTag[]
   // SEO fields (optional overrides)
   seoTitle       String?
   seoDescription String?
   seoKeywords    String?
   noIndex        Boolean    @default(false)
+  ogImage        String?    // Custom Open Graph image URL
+  // Auto-draft fields (for suggested posts)
+  sourceUrl      String?
+  topicId        String?
 }
 
 model Revision {
@@ -191,17 +196,53 @@ model IntegrationSettings {
   updatedAt           DateTime @updatedAt
 }
 
-model TopicIdeaSource {
-  id          String   @id @default(uuid())
-  title       String              // AI-generated topic title
-  description String?             // Optional description/angle
-  status      String   @default("pending")  // pending, approved, rejected, used
-  sourceTitle String?             // Original RSS article title
-  sourceLink  String?             // Link to source article
-  sourcePubDate DateTime?         // Publication date of source
-  feedUrl     String?             // RSS feed URL
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+model TopicSubscription {
+  id               String     @id @default(uuid())
+  name             String                    // "School Lunch Policy"
+  keywords         String                    // JSON array: ["school lunch", "USDA"]
+  rssFeeds         String                    // JSON array of feed URLs
+  isActive         Boolean    @default(true)
+  useKeywordFilter Boolean    @default(true)
+  frequency        String     @default("daily")
+  maxPerPeriod     Int        @default(3)
+  essayFocus       String?                   // Per-topic essay direction
+  lastRunAt        DateTime?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  newsItems        NewsItem[]
+  posts            Post[]
+}
+
+model NewsItem {
+  id            String            @id @default(uuid())
+  topicId       String
+  topic         TopicSubscription @relation(...)
+  url           String            @unique
+  title         String
+  summary       String?
+  publishedAt   DateTime?
+  status        String            @default("pending")  // "pending", "generated", "skipped"
+  postId        String?           @unique
+  post          Post?             @relation(...)
+  createdAt     DateTime          @default(now())
+}
+
+model Tag {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  posts     PostTag[]
+}
+
+model PostTag {
+  id        String   @id @default(uuid())
+  postId    String
+  tagId     String
+  post      Post     @relation(...)
+  tag       Tag      @relation(...)
+  createdAt DateTime @default(now())
+
+  @@unique([postId, tagId])
 }
 ```
 
@@ -313,13 +354,36 @@ Session-persistent AI chat that's aware of the currently open essay:
 - **State**: Messages persist across navigation within `/writer/*` routes (session-level, not DB)
 - **Essay awareness**: When editing an essay, the editor syncs `{ title, subtitle, markdown }` to chat context
 - **API**: `/api/ai/chat` accepts optional `essayContext` — AI can discuss, critique, and help improve the current draft
+- **Modes** (`ChatMode` type):
+  - `ask` — Discussion mode: AI provides feedback, suggestions, and answers questions
+  - `agent` — Editing mode: AI can directly edit the essay using structured commands
+  - `search` — Web search: Fact-finding with search-enabled models (non-streaming)
+- **Agent Mode Edit Commands** (parsed from AI response):
+  - `replace_section` — Find and replace specific text
+  - `replace_all` — Replace entire essay content (title, subtitle, markdown)
+  - `insert` — Add text before/after a match, or at start/end
+  - `delete` — Remove matched text
+- **Undo Support**: Each AI message with edits stores `previousState` for single-click revert
+- **Web Search Toggle**: Enable search-enhanced responses for fact-finding
+- **Model Selection**: Switch models directly from chat panel
 - **Flow**:
   1. Open essay in editor → `setEssayContext()` called with post content
   2. Open chat panel → AI has full essay in context
-  3. Ask "What's wrong with paragraph 2?" → AI responds with essay-aware feedback
-  4. Navigate to different essay → Context updates, chat history preserved
-  5. Leave editor → Essay context cleared, chat history still available
-- **Components**: `ChatPanel` (uses context, no props needed)
+  3. Toggle mode: Ask (discuss) ↔ Agent (edit directly)
+  4. In Agent mode: "Fix the intro" → AI outputs `:::edit` commands → applied automatically
+  5. Undo button appears on messages that applied edits
+- **Components**: `ChatPanel` (uses context), `ModelSelector` (reusable dropdown)
+
+### Tags System
+Categorize posts with tags for organization:
+- **Database**: `Tag` model (name, unique) + `PostTag` junction table
+- **Admin UI**: `/admin/tags` — CRUD for tags with post counts
+- **Editor UI**: `TagsSection` component in `PostMetadataFooter` — add/remove tags per post
+- **API**:
+  - `/api/tags` — GET all tags (public)
+  - `/api/admin/tags` — POST create tag (admin)
+  - `/api/admin/tags/[id]` — PATCH/DELETE tag (admin)
+- **Post relation**: `Post.tags` → `PostTag[]` with cascade delete
 
 ### Image Storage System
 Hybrid storage in `lib/storage.ts` with automatic backend detection:
@@ -423,13 +487,15 @@ This approach avoids Edge runtime limitations with Prisma.
 |----------|-------------|
 | `/api/posts` | List/create posts |
 | `/api/posts/[id]` | CRUD single post |
+| `/api/tags` | List all tags |
 | `/api/admin/users` | User management (admin) |
 | `/api/admin/revisions` | Revision management (admin) |
-| `/api/admin/topics` | Topic ideas CRUD (admin) |
-| `/api/admin/topics/generate` | Generate topic from RSS item |
+| `/api/admin/topics` | Topic subscriptions CRUD (admin) |
+| `/api/admin/tags` | Tag CRUD (admin) |
 | `/api/webhooks/rb2b` | RB2B webhook receiver |
 | `/api/upload` | Image upload |
 | `/api/ai/generate` | Generate essay content with AI |
+| `/api/ai/chat` | Streaming chat (supports ask/agent/search modes) |
 | `/api/ai/settings` | Get/update AI writing rules and default model |
 | `/api/seo/settings` | Get/update site SEO settings |
 | `/api/integrations/settings` | Get/update integration settings (GA, RB2B, email) |
