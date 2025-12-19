@@ -358,7 +358,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
           throw new Error(result.error)
         }
         urlSlugRef.current = result.slug
-        router.push(`/writer/editor/${result.slug}`)
+        router.replace(`/writer/editor/${result.slug}`)
       }
 
       setStatus(publishStatus)

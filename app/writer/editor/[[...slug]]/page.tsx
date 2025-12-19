@@ -351,27 +351,27 @@ export default function Editor() {
           }
         >
           {/* Skeleton placeholder during AI generation (before content arrives) */}
-          {ai.generating && !post.markdown && (
+          {ai.generating && !post.markdown ? (
             <GeneratingSkeleton />
-          )}
-
-          {/* Toggle between WYSIWYG and raw markdown */}
-          {ui.showMarkdown ? (
-            <textarea
-              ref={textareaRef}
-              value={post.markdown}
-              onChange={(e) => setMarkdown(e.target.value)}
-              placeholder="Write your story in Markdown..."
-              readOnly={!!revisions.previewing}
-              className="w-full min-h-[500px] bg-transparent border-none outline-none resize-none placeholder-gray-400 leading-relaxed overflow-hidden font-mono text-base"
-            />
           ) : (
-            <TiptapEditor
-              content={post.markdown}
-              onChange={setMarkdown}
-              placeholder="Write your story..."
-              onEditorReady={setEditor}
-            />
+            /* Toggle between WYSIWYG and raw markdown */
+            ui.showMarkdown ? (
+              <textarea
+                ref={textareaRef}
+                value={post.markdown}
+                onChange={(e) => setMarkdown(e.target.value)}
+                placeholder="Write your story in Markdown..."
+                readOnly={!!revisions.previewing}
+                className="w-full min-h-[500px] bg-transparent border-none outline-none resize-none placeholder-gray-400 leading-relaxed overflow-hidden font-mono text-base"
+              />
+            ) : (
+              <TiptapEditor
+                content={post.markdown}
+                onChange={setMarkdown}
+                placeholder="Write your story..."
+                onEditorReady={setEditor}
+              />
+            )
           )}
         </ArticleLayout>
       </main>
