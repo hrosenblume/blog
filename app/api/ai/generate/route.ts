@@ -4,20 +4,15 @@ import { prisma } from '@/lib/db'
 import { generate, generateStream } from '@/lib/ai/provider'
 import { resolveModel } from '@/lib/ai/models'
 import { parseGeneratedContent } from '@/lib/ai/parse'
-import { getStyleContext, buildGeneratePrompt } from '@/lib/ai/system-prompt'
+import { getStyleContext, buildGeneratePrompt, buildSearchOnlyPrompt } from '@/lib/ai/system-prompt'
 import { wordCount } from '@/lib/markdown'
 
 interface GenerateRequest {
   prompt: string
-  length?: 'short' | 'medium' | 'long'
+  wordCount?: number
   modelId?: string
   stream?: boolean
-}
-
-const LENGTH_TARGETS: Record<string, number> = {
-  short: 500,
-  medium: 1000,
-  long: 2000,
+  useWebSearch?: boolean
 }
 
 // POST /api/ai/generate - Generate essay content (supports streaming)
@@ -31,9 +26,9 @@ export async function POST(request: NextRequest) {
     return badRequest('Prompt is required')
   }
 
-  const length = body.length || 'medium'
-  const targetWords = LENGTH_TARGETS[length] || 1000
+  const targetWords = body.wordCount || 500
   const shouldStream = body.stream === true
+  const useWebSearch = body.useWebSearch === true
 
   // Resolve model (provided or default from DB)
   let model
@@ -46,12 +41,36 @@ export async function POST(request: NextRequest) {
     return badRequest(err instanceof Error ? err.message : 'Invalid model')
   }
 
+  // If web search is enabled, first gather facts about the topic
+  let searchContext = ''
+  if (useWebSearch) {
+    try {
+      const searchPrompt = buildSearchOnlyPrompt()
+      const searchQuery = `Find current facts, data, and information about: ${body.prompt.trim()}`
+      const searchResult = await generate(model.id, searchPrompt, searchQuery, 1024)
+      searchContext = searchResult.text
+    } catch (error) {
+      console.error('Web search error:', error)
+      // Continue without search context if it fails
+    }
+  }
+
   const context = await getStyleContext()
   const systemPrompt = buildGeneratePrompt(context)
 
-  const userPrompt = `Write an essay of approximately ${targetWords} words about:
+  // Build user prompt with optional search context
+  let userPrompt = `Write an essay of approximately ${targetWords} words about:
 
 ${body.prompt.trim()}`
+
+  if (searchContext) {
+    userPrompt += `
+
+---
+RESEARCH CONTEXT (use this information to inform your essay):
+${searchContext}
+---`
+  }
 
   // Streaming response
   if (shouldStream) {

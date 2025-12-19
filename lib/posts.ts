@@ -129,13 +129,11 @@ export async function updatePost(post: Post, data: UpdatePostData): Promise<Post
   // Sync tags if provided
   if (data.tagIds !== undefined) {
     // Delete existing PostTag records for this post
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (prisma as any).postTag.deleteMany({ where: { postId: post.id } })
+    await prisma.postTag.deleteMany({ where: { postId: post.id } })
     
     // Create new PostTag records one by one
     for (const tagId of data.tagIds) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (prisma as any).postTag.create({
+      await prisma.postTag.create({
         data: {
           postId: post.id,
           tagId
@@ -217,8 +215,7 @@ export async function createPost(data: CreatePostData): Promise<PostResult> {
   // Sync tags if provided
   if (data.tagIds?.length) {
     for (const tagId of data.tagIds) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (prisma as any).postTag.create({
+      await prisma.postTag.create({
         data: { postId: post.id, tagId }
       })
     }

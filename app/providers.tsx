@@ -2,12 +2,11 @@
 
 import { SessionProvider } from 'next-auth/react'
 import { ThemeProvider, useTheme } from 'next-themes'
-import { useRouter, usePathname } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
 
 function GlobalShortcuts() {
   const { theme, setTheme } = useTheme()
-  const router = useRouter()
   const pathname = usePathname()
 
   useKeyboard([
@@ -15,14 +14,9 @@ function GlobalShortcuts() {
     { 
       ...SHORTCUTS.ADMIN, 
       handler: () => {
-        if (pathname?.startsWith('/admin')) {
-          // Leaving admin: go back to where we came from
-          const returnPath = localStorage.getItem('preAdminPath') ?? '/'
-          router.push(returnPath)
-        } else {
-          // Entering admin: remember where we are
-          localStorage.setItem('preAdminPath', pathname ?? '/')
-          router.push('/admin')
+        // Always open admin in a new window (unless already there)
+        if (!pathname?.startsWith('/admin')) {
+          window.open('/admin', '_blank')
         }
       } 
     },

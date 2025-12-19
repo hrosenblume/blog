@@ -557,7 +557,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
   }, [previewingRevision, editor, fetchRevisions, stash])
 
   // Generate content with AI (streaming)
-  const generateWithAI = useCallback(async (prompt: string, length: string, modelId?: string) => {
+  const generateWithAI = useCallback(async (prompt: string, wordCount: number, modelId?: string, useWebSearch?: boolean) => {
     setAiGenerating(true)
     
     // Create new AbortController for this request
@@ -588,7 +588,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
       const res = await fetch('/api/ai/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, length, modelId, stream: true }),
+        body: JSON.stringify({ prompt, wordCount, modelId, stream: true, useWebSearch }),
         signal,
       })
 

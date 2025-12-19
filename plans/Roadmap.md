@@ -28,16 +28,6 @@ Add 3D shapes to essay pages (already assigned via `polyhedraShape`).
 
 ## Later
 
-### ✨ Voice-to-Essay
-
-Long-press "+" on mobile → record → transcribe → generate draft.
-
-**Flow:** Record → Whisper/Web Speech API → AI generation → Editor
-
-**UX:** Pulsing feedback, vibration, preview before generate.
-
----
-
 ### ✨ Select Investments Section
 
 Homepage section showcasing portfolio companies.

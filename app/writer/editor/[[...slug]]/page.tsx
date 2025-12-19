@@ -1,14 +1,12 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useParams, useSearchParams } from 'next/navigation'
-import { useRouter } from 'next/navigation'
+import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Save, Loader2 } from 'lucide-react'
 import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
 import { usePostEditor } from '@/lib/editor/usePostEditor'
 import { useChatContext, EssayEdit } from '@/lib/chat'
-import { LENGTH_OPTIONS } from '@/lib/ai/models'
 import { canPublish } from '@/lib/auth/helpers'
 import { EditorSkeleton } from '@/components/editor/EditorSkeleton'
 import { CenteredPage } from '@/components/CenteredPage'
@@ -47,6 +45,7 @@ export default function Editor() {
   const ideaParam = searchParams.get('idea')
   const modelParam = searchParams.get('model')
   const lengthParam = searchParams.get('length')
+  const webParam = searchParams.get('web')
   const hasTriggeredGeneration = useRef(false)
   
   const { data: session } = useSession()
@@ -171,18 +170,15 @@ export default function Editor() {
     if (ideaParam && !postSlug && !ui.loading && !hasTriggeredGeneration.current) {
       hasTriggeredGeneration.current = true
       
-      // Convert numeric length to short/medium/long based on LENGTH_OPTIONS thresholds
-      const lengthValue = lengthParam ? parseInt(lengthParam) : LENGTH_OPTIONS[1]
-      const lengthKey = lengthValue <= LENGTH_OPTIONS[0] ? 'short' 
-        : lengthValue <= LENGTH_OPTIONS[1] ? 'medium' 
-        : 'long'
+      const wordCount = lengthParam ? parseInt(lengthParam) : 500
+      const useWebSearch = webParam === '1'
       
-      ai.generate(ideaParam, lengthKey, modelParam || undefined)
+      ai.generate(ideaParam, wordCount, modelParam || undefined, useWebSearch)
       
       // Clear the URL param so refresh doesn't re-trigger
       router.replace('/writer/editor', { scroll: false })
     }
-  }, [ideaParam, postSlug, ui.loading, ai, router, modelParam, lengthParam])
+  }, [ideaParam, postSlug, ui.loading, ai, router, modelParam, lengthParam, webParam])
 
   // Keyboard shortcuts
   useKeyboard([
@@ -361,16 +357,18 @@ export default function Editor() {
               value={post.markdown}
               onChange={(e) => setMarkdown(e.target.value)}
               placeholder="Write your story in Markdown..."
-              readOnly={!!revisions.previewing}
-              className="w-full min-h-[500px] bg-transparent border-none outline-none resize-none placeholder-gray-400 leading-relaxed overflow-hidden font-mono text-base"
+              readOnly={!!revisions.previewing || ai.generating}
+              className={`w-full min-h-[500px] bg-transparent border-none outline-none resize-none placeholder-gray-400 leading-relaxed overflow-hidden font-mono text-base ${ai.generating ? 'opacity-60 cursor-not-allowed' : ''}`}
             />
           ) : (
-            <TiptapEditor
-              content={post.markdown}
-              onChange={setMarkdown}
-              placeholder="Write your story..."
-              onEditorReady={setEditor}
-            />
+            <div className={ai.generating ? 'opacity-60 cursor-not-allowed' : ''}>
+              <TiptapEditor
+                content={post.markdown}
+                onChange={setMarkdown}
+                placeholder="Write your story..."
+                onEditorReady={setEditor}
+              />
+            </div>
             )
           )}
         </ArticleLayout>

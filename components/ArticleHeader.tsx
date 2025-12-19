@@ -117,9 +117,11 @@ export function ArticleHeader({
           <div className={BYLINE_MARGIN}>
             <Skeleton className="h-3 w-24" />
           </div>
-        ) : (
-          bylineElement
-        )}
+        ) : byline ? (
+          <div className={BYLINE_MARGIN}>
+            <span className={cn(BYLINE_CLASSES, generating && 'opacity-60')}>{byline}</span>
+          </div>
+        ) : null}
       </header>
     )
   }
@@ -132,5 +134,3 @@ export function ArticleHeader({
     </header>
   )
 }
-
-

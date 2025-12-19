@@ -30,6 +30,6 @@ export interface RevisionState {
 
 export interface AIState {
   generating: boolean
-  generate: (prompt: string, length: string, modelId?: string) => Promise<void>
+  generate: (prompt: string, wordCount: number, modelId?: string, useWebSearch?: boolean) => Promise<void>
   stop: () => void
 }
