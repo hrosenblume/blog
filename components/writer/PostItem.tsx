@@ -1,5 +1,6 @@
 'use client'
 
+import { useRef } from 'react'
 import Link from 'next/link'
 import {
   DropdownMenu,
@@ -31,6 +32,8 @@ interface PostItemProps {
 }
 
 export function PostItem({ post, onDelete, onUnpublish, onPublish, showStatus }: PostItemProps) {
+  const triggerRef = useRef<HTMLButtonElement>(null)
+
   return (
     <div className="flex items-center justify-between py-4 border-b border-border group">
       <div className="flex-1 min-w-0">
@@ -53,13 +56,20 @@ export function PostItem({ post, onDelete, onUnpublish, onPublish, showStatus }:
         </Link>
       </div>
       
-      <DropdownMenu modal={false}>
+      <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon">
+          <Button ref={triggerRef} variant="ghost" size="icon">
             <MoreVerticalIcon className="text-muted-foreground" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent 
+          align="end"
+          onCloseAutoFocus={(e) => {
+            // Prevent focus returning to trigger (causes scroll jump on mobile)
+            e.preventDefault()
+            triggerRef.current?.blur()
+          }}
+        >
           <DropdownMenuItem asChild>
             <Link href={`/writer/editor/${post.slug}`}>Edit</Link>
           </DropdownMenuItem>

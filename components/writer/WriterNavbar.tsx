@@ -1,5 +1,6 @@
 'use client'
 
+import { useRef } from 'react'
 import { signOut } from 'next-auth/react'
 import Link from 'next/link'
 import type { Session } from 'next-auth'
@@ -33,6 +34,7 @@ export function WriterNavbar({
   inert,
   fixed = true,
 }: WriterNavbarProps) {
+  const triggerRef = useRef<HTMLButtonElement>(null)
   return (
     <header 
       className={`border-b border-border bg-background ${fixed ? 'fixed top-0 left-0 right-0 z-50' : ''}`}
@@ -74,14 +76,24 @@ export function WriterNavbar({
           
           <ThemeToggle />
           
-          <DropdownMenu modal={false}>
+          <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="relative w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-sm font-medium text-secondary-foreground hover:ring-2 hover:ring-ring transition-shadow">
+              <button 
+                ref={triggerRef}
+                className="relative w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-sm font-medium text-secondary-foreground hover:ring-2 hover:ring-ring transition-shadow"
+              >
                 {session.user?.email?.charAt(0).toUpperCase()}
                 <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent 
+              align="end"
+              onCloseAutoFocus={(e) => {
+                // Prevent focus returning to trigger (causes scroll jump on mobile)
+                e.preventDefault()
+                triggerRef.current?.blur()
+              }}
+            >
               {session.user?.role === 'admin' && (
                 <>
                   <DropdownMenuItem asChild>
