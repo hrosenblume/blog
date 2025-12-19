@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ExternalLinkIcon, ChatIcon } from '@/components/Icons'
+import { ChatIcon } from '@/components/Icons'
 
 interface WriterNavbarProps {
   session: Session
@@ -63,17 +63,6 @@ export function WriterNavbar({
             <ChatIcon />
           </button>
           
-          <a
-            href="/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-9 h-9 rounded-md border border-border hover:bg-accent text-muted-foreground flex items-center justify-center"
-            aria-label="View homepage"
-            title="View homepage"
-          >
-            <ExternalLinkIcon className="w-4 h-4" />
-          </a>
-          
           <ThemeToggle />
           
           <DropdownMenu>
@@ -101,22 +90,21 @@ export function WriterNavbar({
                       Admin Panel
                     </a>
                   </DropdownMenuItem>
-                  {process.env.NODE_ENV === 'development' ? (
-                    <DropdownMenuItem asChild>
-                      <a href="http://localhost:5555" target="_blank" rel="noopener noreferrer">
-                        Prisma Studio
-                      </a>
-                    </DropdownMenuItem>
-                  ) : process.env.NEXT_PUBLIC_DATABASE_DASHBOARD_URL ? (
+                  {process.env.NEXT_PUBLIC_DATABASE_DASHBOARD_URL && (
                     <DropdownMenuItem asChild>
                       <a href={process.env.NEXT_PUBLIC_DATABASE_DASHBOARD_URL} target="_blank" rel="noopener noreferrer">
                         Database
                       </a>
                     </DropdownMenuItem>
-                  ) : null}
+                  )}
                   <DropdownMenuSeparator />
                 </>
               )}
+              <DropdownMenuItem asChild>
+                <a href="/" target="_blank" rel="noopener noreferrer">
+                  View website
+                </a>
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => signOut({ callbackUrl: '/' })}>
                 Logout
               </DropdownMenuItem>

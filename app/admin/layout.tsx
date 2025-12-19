@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { redirect, usePathname } from 'next/navigation'
 import Link from 'next/link'
@@ -23,6 +23,54 @@ const navGroups = adminNavGroups.map(group => ({
   label: group.label,
   items: getGroupItems(group.label),
 }))
+
+function UserAvatarDropdown({ session }: { session: { user?: { email?: string | null } } }) {
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button 
+          ref={triggerRef}
+          className="relative w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-sm font-medium text-secondary-foreground hover:ring-2 hover:ring-ring transition-shadow"
+        >
+          {session.user?.email?.charAt(0).toUpperCase()}
+          <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent 
+        align="end"
+        onCloseAutoFocus={(e) => {
+          e.preventDefault()
+          triggerRef.current?.blur()
+        }}
+      >
+        {process.env.NEXT_PUBLIC_DATABASE_DASHBOARD_URL && (
+          <>
+            <DropdownMenuItem asChild>
+              <a href={process.env.NEXT_PUBLIC_DATABASE_DASHBOARD_URL} target="_blank" rel="noopener noreferrer">
+                Database
+              </a>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
+        <DropdownMenuItem asChild>
+          <Link href="/writer">Back to writer</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <a href="/" target="_blank" rel="noopener noreferrer">
+            View website
+          </a>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => signOut({ callbackUrl: '/' })}>
+          Logout
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
 
 export default function AdminLayout({
   children,
@@ -92,8 +140,8 @@ export default function AdminLayout({
 
   return (
     <div className="h-dvh bg-muted flex flex-col overflow-hidden">
-      <header className="shrink-0 border-b border-border bg-card shadow">
-        <div className="max-w-5xl mx-auto px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
+      <header className="shrink-0 border-b border-border bg-background">
+        <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4 md:gap-6">
             <Link href="/admin" className="text-section font-bold">
               Admin
@@ -157,33 +205,16 @@ export default function AdminLayout({
               <MenuIcon />
             </Button>
 
-            {/* User dropdown - hidden on mobile */}
-            <DropdownMenu modal={false}>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="hidden md:inline-flex">
-                  {session.user?.email}
-                  <ChevronDownIcon className="ml-1 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <a href="/">Back to site</a>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/writer">Back to writer</Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => signOut({ callbackUrl: '/' })}>
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* User avatar dropdown - hidden on mobile */}
+            <div className="hidden md:block">
+              <UserAvatarDropdown session={session} />
+            </div>
           </div>
         </div>
 
         {/* Mobile nav menu */}
         {mobileNavOpen && (
-          <nav className="md:hidden border-t border-border bg-card">
+          <nav className="md:hidden border-t border-border bg-background">
             <div className="px-4 py-2">
               {/* Flat list of all nav items */}
               {directLinks.map((link) => (
@@ -215,8 +246,8 @@ export default function AdminLayout({
             </div>
             
             <div className="border-t border-border bg-muted/50 px-4 py-3">
-              <a href="/" className="block py-2 text-sm text-muted-foreground hover:text-foreground">
-                Back to site
+              <a href="/" target="_blank" rel="noopener noreferrer" className="block py-2 text-sm text-muted-foreground hover:text-foreground">
+                View website
               </a>
               <Link 
                 href="/writer"
