@@ -40,3 +40,4 @@ if [ "$1" = "--open" ]; then
 else
   npx ngrok http 3000 --domain="$NGROK_DOMAIN" --oauth=google --oauth-allow-email="$NGROK_OAUTH_EMAIL" --oauth-allow-email="$WRITER_EMAIL"
 fi
+

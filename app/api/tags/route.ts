@@ -14,3 +14,4 @@ export const GET = withSession(async () => {
 
   return NextResponse.json(tags)
 })
+

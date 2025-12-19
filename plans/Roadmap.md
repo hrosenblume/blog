@@ -112,3 +112,4 @@ Generate social media posts from published essays for Twitter/X and LinkedIn.
 - Edit before copying
 - Character count indicators
 - Uses existing AI system (`lib/ai/`) with platform-specific prompts
+
