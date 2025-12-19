@@ -140,7 +140,7 @@ export default function AdminLayout({
 
   return (
     <div className="h-dvh bg-muted flex flex-col overflow-hidden">
-      <header className="shrink-0 border-b border-border bg-background">
+      <header className="shrink-0 border-b border-border bg-background relative z-10">
         <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4 md:gap-6">
             <Link href="/admin" className="text-section font-bold">
