@@ -3,6 +3,7 @@
 import { useRef } from 'react'
 import { signOut } from 'next-auth/react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import type { Session } from 'next-auth'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import {
@@ -35,6 +36,8 @@ export function WriterNavbar({
   fixed = true,
 }: WriterNavbarProps) {
   const triggerRef = useRef<HTMLButtonElement>(null)
+  const pathname = usePathname()
+  const isAdmin = pathname?.startsWith('/admin')
   return (
     <header 
       className={`border-b border-border bg-background ${fixed ? 'fixed top-0 left-0 right-0 z-50' : ''}`}
@@ -43,10 +46,15 @@ export function WriterNavbar({
       <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
         {/* Left side: Writer link or custom slot (back arrow) */}
         {leftSlot ?? (
-          <Link href="/writer" className="font-medium flex items-center gap-1.5">
-            Writer
-            <span className="text-xs px-1.5 py-0.5 bg-primary text-primary-foreground rounded">AI</span>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link href={isAdmin ? '/admin' : '/writer'} className="font-medium flex items-center gap-1.5">
+              Writer
+              <span className="text-xs px-1.5 py-0.5 bg-primary text-primary-foreground rounded">AI</span>
+            </Link>
+            {isAdmin && (
+              <span className="text-xs px-1.5 py-0.5 bg-muted text-muted-foreground rounded">Admin</span>
+            )}
+          </div>
         )}
         
         {/* Right side: icons and user menu */}
@@ -54,14 +62,16 @@ export function WriterNavbar({
           {/* Custom right slot (Save icon for drafts) */}
           {rightSlot}
           
-          <button
-            onClick={onChatToggle}
-            className={`w-9 h-9 rounded-md border border-border hover:bg-accent text-muted-foreground flex items-center justify-center ${chatOpen ? 'bg-accent' : ''}`}
-            aria-label="Chat with AI"
-            title="Chat with AI"
-          >
-            <ChatIcon />
-          </button>
+          {!isAdmin && (
+            <button
+              onClick={onChatToggle}
+              className={`w-9 h-9 rounded-md border border-border hover:bg-accent text-muted-foreground flex items-center justify-center ${chatOpen ? 'bg-accent' : ''}`}
+              aria-label="Chat with AI"
+              title="Chat with AI"
+            >
+              <ChatIcon />
+            </button>
+          )}
           
           <ThemeToggle />
           
@@ -86,9 +96,9 @@ export function WriterNavbar({
               {session.user?.role === 'admin' && (
                 <>
                   <DropdownMenuItem asChild>
-                    <a href="/admin" target="_blank" rel="noopener noreferrer">
-                      Admin Panel
-                    </a>
+                    <Link href={isAdmin ? '/writer' : '/admin'}>
+                      {isAdmin ? 'Back to writer' : 'Go to settings'}
+                    </Link>
                   </DropdownMenuItem>
                   {process.env.NEXT_PUBLIC_DATABASE_DASHBOARD_URL && (
                     <DropdownMenuItem asChild>

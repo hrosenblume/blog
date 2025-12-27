@@ -34,6 +34,9 @@ fi
 # Start Next.js in background
 AUTH_URL="https://$NGROK_DOMAIN" next dev &
 
+# Open ngrok URL in browser after tunnel connects
+(sleep 5 && open "https://$NGROK_DOMAIN") &
+
 # Start ngrok tunnel (with or without OAuth based on argument)
 if [ "$1" = "--open" ]; then
   npx ngrok http 3000 --domain="$NGROK_DOMAIN"
