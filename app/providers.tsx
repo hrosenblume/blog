@@ -15,10 +15,10 @@ function GlobalShortcuts() {
     { 
       ...SHORTCUTS.ADMIN, 
       handler: () => {
-        // Toggle between admin and writer
+        // Toggle to/from admin
         if (pathname?.startsWith('/admin')) {
-          router.push('/writer')
-        } else if (pathname?.startsWith('/writer')) {
+          router.back()  // Go back to where you came from
+        } else {
           router.push('/admin')
         }
       } 
