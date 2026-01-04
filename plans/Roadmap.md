@@ -8,6 +8,41 @@
 
 ## Soon
 
+### 🐛 Mobile Chat Bugs (Critical)
+
+Multiple issues with chat on mobile:
+
+- [ ] Mobile buttons stop responding (touch events issue?)
+- [ ] Chat window scrolls to top on open/close (should stay at bottom)
+- [ ] Globe icon triggers send on mobile instead of toggling web search
+- [ ] Message input blocked while response loading — hangs and requires refresh
+- [ ] Sending should not be blocked during loading (allow queuing or cancel)
+
+---
+
+### 🐛 AI/Web Search Issues
+
+- [ ] Web access for models doesn't work
+- [ ] OpenAI models returning errors (likely tied to web access)
+
+---
+
+### 🐛 Revision History - Missing Restore Button
+
+No button to restore when previewing a version in Revision History dropdown.
+
+---
+
+### 🎨 Simplify Settings Navigation
+
+Settings should just be a settings page — no special "Admin" badge in navbar.
+
+**Current:** Writer AI [Admin] badge appears when on /admin pages, feels heavy.
+
+**Goal:** Settings is just another page accessible from dropdown, no visual mode switch. Remove the admin badge, simplify nesting.
+
+---
+
 ### ✨ Polyhedra on Essay Pages
 
 Add 3D shapes to essay pages (already assigned via `polyhedraShape`).
@@ -94,5 +129,26 @@ Generate social media posts from published essays for Twitter/X and LinkedIn.
 - Edit before copying
 - Character count indicators
 - Uses existing AI system (`lib/ai/`) with platform-specific prompts
+
+---
+
+### ✨ Scalable Research Flows
+
+*(Details TBD)*
+
+---
+
+### ✨ Google Docs-Style Comments
+
+Inline commenting system for essays (collaborative editing/feedback).
+
+**Features:**
+- Highlight text → add comment
+- Reply threads on comments
+- Resolve/unresolve comments
+- Notifications for replies
+- Permission levels (viewer can comment, editor can resolve)
+
+**Schema:** `Comment` (postId, userId, selection range, content, parentId?, resolved, createdAt)
 
 
