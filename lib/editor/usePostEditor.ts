@@ -81,7 +81,7 @@ export interface PostEditorNav {
 }
 
 export interface PostEditorActions {
-  save: (status: 'draft' | 'published', options?: { skipConfirm?: boolean }) => Promise<void>
+  save: (status: 'draft' | 'published', options?: { silent?: boolean; skipConfirm?: boolean; skipNavigation?: boolean }) => Promise<string | null>
   unpublish: () => Promise<void>
   delete: () => Promise<void>
 }
