@@ -1,6 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils/cn'
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface ToolbarButtonProps {
   onClick: () => void
@@ -34,6 +35,12 @@ export function ToolbarButton({ onClick, active, disabled, children, title }: To
 export function Divider() {
   return <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1" />
 }
+
+/** Skeleton placeholder for a toolbar button - matches ToolbarButton dimensions */
+export function SkeletonButton() {
+  return <Skeleton className="h-7 w-7 rounded shrink-0" />
+}
+
 
 
 

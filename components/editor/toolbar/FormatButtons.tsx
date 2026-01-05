@@ -5,19 +5,20 @@ import type { Editor } from '@tiptap/react'
 import type { RefObject } from 'react'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { ToolbarButton, Divider } from './ToolbarButton'
+import { ToolbarButton, Divider, SkeletonButton } from './ToolbarButton'
 import { setHeadingAtCursor, insertAtCursor } from '@/lib/editor/markdown-helpers'
 import { WandIcon } from '@/components/Icons'
 
 interface FormatButtonsProps {
-  editor: Editor | null
+  editor?: Editor | null
   textareaRef?: RefObject<HTMLTextAreaElement | null>
   markdown?: string
   onMarkdownChange?: (markdown: string) => void
   aiGenerating?: boolean
+  loading?: boolean
 }
 
-export function FormatButtons({ editor, textareaRef, markdown, onMarkdownChange, aiGenerating }: FormatButtonsProps) {
+export function FormatButtons({ editor, textareaRef, markdown, onMarkdownChange, aiGenerating, loading }: FormatButtonsProps) {
   const isMarkdownMode = !editor && textareaRef && markdown !== undefined && onMarkdownChange
   const [hasSelection, setHasSelection] = useState(false)
   const [isRewriting, setIsRewriting] = useState(false)
@@ -89,6 +90,26 @@ export function FormatButtons({ editor, textareaRef, markdown, onMarkdownChange,
     if (textareaRef?.current && markdown !== undefined && onMarkdownChange) {
       insertAtCursor(textareaRef.current, before, after, markdown, onMarkdownChange)
     }
+  }
+
+  // Skeleton state - render placeholders matching actual button layout
+  if (loading) {
+    return (
+      <>
+        {/* H1, H2, H3 */}
+        <SkeletonButton />
+        <SkeletonButton />
+        <SkeletonButton />
+        <Divider />
+        {/* Bold, Italic, Strikethrough */}
+        <SkeletonButton />
+        <SkeletonButton />
+        <SkeletonButton />
+        {/* AI Rewrite (shown in rich text mode) */}
+        <Divider />
+        <SkeletonButton />
+      </>
+    )
   }
 
   return (

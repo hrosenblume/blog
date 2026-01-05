@@ -327,6 +327,14 @@ Defined in `lib/keyboard/shortcuts.ts`:
 - AI generation with preview/accept/discard flow
 - Visual feedback during generation (editor disabled with opacity change)
 
+**Skeleton Loading Pattern:**
+- Navbar renders immediately (session available instantly)
+- Toolbar button groups each handle their own skeleton via `loading` prop
+- `SkeletonButton` in `ToolbarButton.tsx` — matches button dimensions
+- `ContentSkeleton` — title/subtitle/body placeholders for inline loading
+- `EditorSkeleton` — full page skeleton for `loading.tsx` route transitions
+- Adding a toolbar button → add matching `SkeletonButton` in same component
+
 ### AI Writing System
 Generate essays using Anthropic (Claude) or OpenAI (GPT-4):
 - **Models**: `lib/ai/models.ts` — Claude Sonnet 4, Opus 4, GPT-4o, GPT-4o Mini

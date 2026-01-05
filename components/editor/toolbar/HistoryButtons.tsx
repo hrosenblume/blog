@@ -3,19 +3,20 @@
 import { useCallback } from 'react'
 import type { Editor } from '@tiptap/react'
 import type { RefObject } from 'react'
-import { ToolbarButton, Divider } from './ToolbarButton'
+import { ToolbarButton, Divider, SkeletonButton } from './ToolbarButton'
 import { RevisionHistoryDropdown } from '../RevisionHistoryDropdown'
 import { UndoIcon, RedoIcon } from '@/components/Icons'
 import type { RevisionState } from '@/lib/editor/types'
 
 interface HistoryButtonsProps {
-  editor: Editor | null
+  editor?: Editor | null
   textareaRef?: RefObject<HTMLTextAreaElement | null>
   showMarkdown?: boolean
   setShowMarkdown?: (show: boolean) => void
   postSlug?: string
   revisions?: RevisionState
   aiGenerating?: boolean
+  loading?: boolean
 }
 
 export function HistoryButtons({
@@ -26,6 +27,7 @@ export function HistoryButtons({
   postSlug,
   revisions,
   aiGenerating,
+  loading,
 }: HistoryButtonsProps) {
   const handleUndo = useCallback(() => {
     if (editor) {
@@ -44,6 +46,23 @@ export function HistoryButtons({
       document.execCommand('redo')
     }
   }, [editor, textareaRef])
+
+  // Skeleton state - render placeholders matching actual button layout
+  if (loading) {
+    return (
+      <>
+        {/* Undo, Redo */}
+        <SkeletonButton />
+        <SkeletonButton />
+        {/* MD toggle */}
+        <Divider />
+        <SkeletonButton />
+        {/* Revision dropdown */}
+        <Divider />
+        <SkeletonButton />
+      </>
+    )
+  }
 
   return (
     <>

@@ -2,7 +2,7 @@
 
 import type { Editor } from '@tiptap/react'
 import type { RefObject } from 'react'
-import { ToolbarButton } from './ToolbarButton'
+import { ToolbarButton, SkeletonButton } from './ToolbarButton'
 import { insertBlockAtCursor, insertAtCursor } from '@/lib/editor/markdown-helpers'
 import {
   BulletListIcon,
@@ -13,14 +13,29 @@ import {
 } from '@/components/Icons'
 
 interface BlockButtonsProps {
-  editor: Editor | null
+  editor?: Editor | null
   textareaRef?: RefObject<HTMLTextAreaElement | null>
   markdown?: string
   onMarkdownChange?: (markdown: string) => void
   aiGenerating?: boolean
+  loading?: boolean
 }
 
-export function BlockButtons({ editor, textareaRef, markdown, onMarkdownChange, aiGenerating }: BlockButtonsProps) {
+export function BlockButtons({ editor, textareaRef, markdown, onMarkdownChange, aiGenerating, loading }: BlockButtonsProps) {
+  // Skeleton state - render placeholders matching actual button layout
+  if (loading) {
+    return (
+      <>
+        {/* Bullet list, Numbered list */}
+        <SkeletonButton />
+        <SkeletonButton />
+        {/* Blockquote, Code block, Horizontal rule */}
+        <SkeletonButton />
+        <SkeletonButton />
+        <SkeletonButton />
+      </>
+    )
+  }
   const isMarkdownMode = !editor && textareaRef && markdown !== undefined && onMarkdownChange
 
   const insertBlock = (prefix: string) => {

@@ -3,7 +3,7 @@
 import type { RefObject } from 'react'
 import type { Editor } from '@tiptap/react'
 import { MessageSquarePlus, MessageSquare } from 'lucide-react'
-import { ToolbarButton, Divider } from './toolbar/ToolbarButton'
+import { ToolbarButton, Divider, SkeletonButton } from './toolbar/ToolbarButton'
 import { FormatButtons } from './toolbar/FormatButtons'
 import { BlockButtons } from './toolbar/BlockButtons'
 import { MediaButtons } from './toolbar/MediaButtons'
@@ -11,7 +11,7 @@ import { HistoryButtons } from './toolbar/HistoryButtons'
 import type { RevisionState } from '@/lib/editor/types'
 
 interface EditorToolbarProps {
-  editor: Editor | null
+  editor?: Editor | null
   // For markdown mode
   textareaRef?: RefObject<HTMLTextAreaElement | null>
   markdown?: string
@@ -30,6 +30,8 @@ interface EditorToolbarProps {
   onAddComment?: () => void
   commentsCount?: number
   onViewComments?: () => void
+  // Loading state
+  loading?: boolean
 }
 
 export function EditorToolbar({
@@ -47,7 +49,27 @@ export function EditorToolbar({
   onAddComment,
   commentsCount,
   onViewComments,
+  loading = false,
 }: EditorToolbarProps) {
+  // Skeleton state - each button group renders its own skeletons
+  if (loading) {
+    return (
+      <div className="flex items-center justify-start md:justify-center gap-0.5 px-4 py-2 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-black overflow-x-auto">
+        <FormatButtons loading={true} />
+        <Divider />
+        <BlockButtons loading={true} />
+        <Divider />
+        <MediaButtons loading={true} />
+        <Divider />
+        <HistoryButtons loading={true} />
+        {/* Comment buttons skeleton */}
+        <Divider />
+        <SkeletonButton />
+        <SkeletonButton />
+      </div>
+    )
+  }
+
   return (
     <div className="flex items-center justify-start md:justify-center gap-0.5 px-4 py-2 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-black overflow-x-auto">
       <FormatButtons

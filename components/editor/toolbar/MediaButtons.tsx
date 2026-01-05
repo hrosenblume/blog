@@ -4,19 +4,20 @@ import { useRef, useCallback } from 'react'
 import type { Editor } from '@tiptap/react'
 import type { RefObject } from 'react'
 import { toast } from 'sonner'
-import { ToolbarButton } from './ToolbarButton'
+import { ToolbarButton, SkeletonButton } from './ToolbarButton'
 import { clearMarkdownFormatting } from '@/lib/editor/markdown-helpers'
 import { LinkIcon, ImageIcon, ClearFormattingIcon } from '@/components/Icons'
 
 interface MediaButtonsProps {
-  editor: Editor | null
+  editor?: Editor | null
   textareaRef?: RefObject<HTMLTextAreaElement | null>
   markdown?: string
   onMarkdownChange?: (markdown: string) => void
   aiGenerating?: boolean
+  loading?: boolean
 }
 
-export function MediaButtons({ editor, textareaRef, markdown, onMarkdownChange, aiGenerating }: MediaButtonsProps) {
+export function MediaButtons({ editor, textareaRef, markdown, onMarkdownChange, aiGenerating, loading }: MediaButtonsProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const isMarkdownMode = !editor && textareaRef && markdown !== undefined && onMarkdownChange
 
@@ -108,6 +109,18 @@ export function MediaButtons({ editor, textareaRef, markdown, onMarkdownChange, 
       clearMarkdownFormatting(textareaRef.current, markdown, onMarkdownChange)
     }
   }, [editor, isMarkdownMode, textareaRef, markdown, onMarkdownChange])
+
+  // Skeleton state - render placeholders matching actual button layout
+  if (loading) {
+    return (
+      <>
+        {/* Link, Image, Clear formatting */}
+        <SkeletonButton />
+        <SkeletonButton />
+        <SkeletonButton />
+      </>
+    )
+  }
 
   return (
     <>

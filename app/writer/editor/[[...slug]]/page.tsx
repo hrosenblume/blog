@@ -8,7 +8,7 @@ import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
 import { usePostEditor } from '@/lib/editor/usePostEditor'
 import { useChatContext, EssayEdit } from '@/lib/chat'
 import { canPublish } from '@/lib/auth/helpers'
-import { EditorSkeleton } from '@/components/editor/EditorSkeleton'
+import { ContentSkeleton } from '@/components/editor/EditorSkeleton'
 import { CenteredPage } from '@/components/CenteredPage'
 import { TiptapEditor, EditorToolbar } from '@/components/TiptapEditor'
 import type { SelectionState } from '@/components/TiptapEditor'
@@ -310,11 +310,6 @@ export default function Editor() {
     actions.save('published', { skipConfirm: true })
   }, [actions])
 
-  // Loading state
-  if (ui.loading) {
-    return <EditorSkeleton />
-  }
-
   // Success state after publishing
   if (ui.publishSuccess) {
     return <PublishSuccess />
@@ -322,42 +317,41 @@ export default function Editor() {
 
   return (
     <div className="h-screen flex flex-col">
-      {session && (
-        <WriterNavbar
-          session={session}
-          chatOpen={chatOpen}
-          onChatToggle={() => setChatOpen(!chatOpen)}
-          fixed={false}
-          leftSlot={
-            <MagicBackButton 
-              backLink="/writer" 
-              onBeforeNavigate={confirmLeave}
-            />
-          }
-          rightSlot={
-            // Save icon only for drafts, hidden during revision preview
-            !revisions.previewing && post.status === 'draft' ? (
-              <button
-                type="button"
-                onClick={() => actions.save('draft')}
-                disabled={!ui.hasUnsavedChanges || ui.savingAs !== null}
-                className="w-9 h-9 rounded-md border border-border hover:bg-accent text-muted-foreground flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
-                aria-label="Save draft"
-                title="Save draft"
-              >
-                {ui.savingAs === 'draft' ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4" />
-                )}
-              </button>
-            ) : undefined
-          }
-        />
-      )}
+      {/* Navbar renders immediately - doesn't depend on post data */}
+      <WriterNavbar
+        session={session}
+        chatOpen={chatOpen}
+        onChatToggle={() => setChatOpen(!chatOpen)}
+        fixed={false}
+        leftSlot={
+          <MagicBackButton 
+            backLink="/writer" 
+            onBeforeNavigate={confirmLeave}
+          />
+        }
+        rightSlot={
+          // Save icon only for drafts, hidden during revision preview or loading
+          !ui.loading && !revisions.previewing && post.status === 'draft' ? (
+            <button
+              type="button"
+              onClick={() => actions.save('draft')}
+              disabled={!ui.hasUnsavedChanges || ui.savingAs !== null}
+              className="w-9 h-9 rounded-md border border-border hover:bg-accent text-muted-foreground flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
+              aria-label="Save draft"
+              title="Save draft"
+            >
+              {ui.savingAs === 'draft' ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+            </button>
+          ) : undefined
+        }
+      />
 
       {/* Preview info line when viewing a revision */}
-      {revisions.previewing && (
+      {!ui.loading && revisions.previewing && (
         <RevisionPreviewBanner 
           revision={revisions.previewing} 
           onCancel={revisions.cancel}
@@ -365,9 +359,10 @@ export default function Editor() {
         />
       )}
 
-      {/* Fixed toolbar below header - hidden in preview mode */}
+      {/* Toolbar - shows loading skeleton while post data loads */}
       {!revisions.previewing && (
         <EditorToolbar
+          loading={ui.loading}
           editor={ui.showMarkdown ? null : editor}
           textareaRef={ui.showMarkdown ? textareaRef : undefined}
           markdown={ui.showMarkdown ? post.markdown : undefined}
@@ -386,100 +381,107 @@ export default function Editor() {
       )}
 
       <main className="flex-1 overflow-auto pb-20 overscroll-contain">
-        <ArticleLayout
-          withContainer
-          className="pt-12 pb-24"
-          header={
-            <ArticleHeader
-              title={post.title}
-              subtitle={post.subtitle}
-              byline={HOMEPAGE.name}
-              editable
-              disabled={!!revisions.previewing}
-              generating={ai.generating}
-              onTitleChange={setTitle}
-              onSubtitleChange={setSubtitle}
-            />
-          }
-          footer={
-            !revisions.previewing && (
-              <PostMetadataFooter
-                slug={post.slug}
-                status={post.status}
-                polyhedraShape={post.polyhedraShape}
-                markdown={post.markdown}
+        {/* Content skeleton while post data loads */}
+        {ui.loading ? (
+          <ContentSkeleton />
+        ) : (
+          <ArticleLayout
+            withContainer
+            className="pt-12 pb-24"
+            header={
+              <ArticleHeader
                 title={post.title}
                 subtitle={post.subtitle}
-                seoTitle={post.seoTitle}
-                seoDescription={post.seoDescription}
-                seoKeywords={post.seoKeywords}
-                noIndex={post.noIndex}
-                ogImage={post.ogImage}
-                tags={post.tags}
-                onSlugChange={setSlug}
-                onShapeRegenerate={regenerateShape}
-                onUnpublish={actions.unpublish}
-                onPublish={handlePublish}
-                savingAs={ui.savingAs}
-                hasUnsavedChanges={ui.hasUnsavedChanges}
-                canPublish={userCanPublish}
-                onSeoTitleChange={setSeoTitle}
-                onSeoDescriptionChange={setSeoDescription}
-                onSeoKeywordsChange={setSeoKeywords}
-                onNoIndexChange={setNoIndex}
-                onOgImageChange={setOgImage}
-                onTagsChange={setTags}
+                byline={HOMEPAGE.name}
+                editable
+                disabled={!!revisions.previewing}
+                generating={ai.generating}
+                onTitleChange={setTitle}
+                onSubtitleChange={setSubtitle}
               />
-            )
-          }
-        >
-          {/* Skeleton placeholder during AI generation (before content arrives) */}
-          {ai.generating && !post.markdown ? (
-            <GeneratingSkeleton />
-          ) : (
-            /* Toggle between WYSIWYG and raw markdown */
-            ui.showMarkdown ? (
-            <textarea
-              ref={textareaRef}
-              value={post.markdown}
-              onChange={(e) => setMarkdown(e.target.value)}
-              placeholder="Write your story in Markdown..."
-              readOnly={!!revisions.previewing || ai.generating}
-              className={`w-full min-h-[500px] bg-transparent border-none outline-none resize-none placeholder-gray-400 leading-relaxed overflow-hidden font-mono text-base ${ai.generating ? 'opacity-60 cursor-not-allowed' : ''}`}
-            />
-          ) : (
-            <div className={ai.generating ? 'opacity-60 cursor-not-allowed' : ''}>
-              <TiptapEditor
-                content={post.markdown}
-                onChange={setMarkdown}
-                placeholder="Write your story..."
-                onEditorReady={setEditor}
-                onSelectionChange={(sel: SelectionState | null) => {
-                  if (sel?.hasSelection) {
-                    comments.setSelectedText({ 
-                      text: sel.text, 
-                      from: sel.from, 
-                      to: sel.to,
-                      hasExistingComment: sel.hasExistingComment,
-                    })
-                  } else {
-                    comments.setSelectedText(null)
-                  }
-                }}
-                onCommentClick={(commentId: string) => {
-                  comments.setActiveId(commentId)
-                  setCommentsOpen(true)
-                }}
+            }
+            footer={
+              !revisions.previewing && (
+                <PostMetadataFooter
+                  slug={post.slug}
+                  status={post.status}
+                  polyhedraShape={post.polyhedraShape}
+                  markdown={post.markdown}
+                  title={post.title}
+                  subtitle={post.subtitle}
+                  seoTitle={post.seoTitle}
+                  seoDescription={post.seoDescription}
+                  seoKeywords={post.seoKeywords}
+                  noIndex={post.noIndex}
+                  ogImage={post.ogImage}
+                  tags={post.tags}
+                  onSlugChange={setSlug}
+                  onShapeRegenerate={regenerateShape}
+                  onUnpublish={actions.unpublish}
+                  onPublish={handlePublish}
+                  savingAs={ui.savingAs}
+                  hasUnsavedChanges={ui.hasUnsavedChanges}
+                  canPublish={userCanPublish}
+                  onSeoTitleChange={setSeoTitle}
+                  onSeoDescriptionChange={setSeoDescription}
+                  onSeoKeywordsChange={setSeoKeywords}
+                  onNoIndexChange={setNoIndex}
+                  onOgImageChange={setOgImage}
+                  onTagsChange={setTags}
+                />
+              )
+            }
+          >
+            {/* Skeleton placeholder during AI generation (before content arrives) */}
+            {ai.generating && !post.markdown ? (
+              <GeneratingSkeleton />
+            ) : (
+              /* Toggle between WYSIWYG and raw markdown */
+              ui.showMarkdown ? (
+              <textarea
+                ref={textareaRef}
+                value={post.markdown}
+                onChange={(e) => setMarkdown(e.target.value)}
+                placeholder="Write your story in Markdown..."
+                readOnly={!!revisions.previewing || ai.generating}
+                className={`w-full min-h-[500px] bg-transparent border-none outline-none resize-none placeholder-gray-400 leading-relaxed overflow-hidden font-mono text-base ${ai.generating ? 'opacity-60 cursor-not-allowed' : ''}`}
               />
-            </div>
-            )
-          )}
-        </ArticleLayout>
+            ) : (
+              <div className={ai.generating ? 'opacity-60 cursor-not-allowed' : ''}>
+                <TiptapEditor
+                  content={post.markdown}
+                  onChange={setMarkdown}
+                  placeholder="Write your story..."
+                  onEditorReady={setEditor}
+                  onSelectionChange={(sel: SelectionState | null) => {
+                    if (sel?.hasSelection) {
+                      comments.setSelectedText({ 
+                        text: sel.text, 
+                        from: sel.from, 
+                        to: sel.to,
+                        hasExistingComment: sel.hasExistingComment,
+                      })
+                    } else {
+                      comments.setSelectedText(null)
+                    }
+                  }}
+                  onCommentClick={(commentId: string) => {
+                    comments.setActiveId(commentId)
+                    setCommentsOpen(true)
+                  }}
+                />
+              </div>
+              )
+            )}
+          </ArticleLayout>
+        )}
       </main>
 
       <footer className="fixed bottom-0 left-0 right-0 border-t border-border px-4 sm:px-6 py-3 bg-background touch-none">
         <div className="flex items-center justify-end text-sm text-muted-foreground">
-          {ai.generating ? (
+          {ui.loading ? (
+            <span>&nbsp;</span>
+          ) : ai.generating ? (
             <button 
               onClick={() => ai.stop()} 
               className="hover:text-foreground transition-colors"
