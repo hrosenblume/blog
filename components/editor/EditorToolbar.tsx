@@ -91,8 +91,8 @@ export function EditorToolbar({
         <>
           <Divider />
           <ToolbarButton
-            onClick={onAddComment}
-            disabled={!hasSelection}
+            onClick={onAddComment ?? (() => {})}
+            disabled={!hasSelection || !onAddComment}
             title={
               hasSelection 
                 ? 'New comment (⌘⌥M)' 
