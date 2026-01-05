@@ -8,6 +8,7 @@ import { RB2BScript } from '@/components/RB2BScript'
 import { GoogleAnalytics } from '@/components/GoogleAnalytics'
 import { PageTracker } from 'react-page-tracker'
 import { Toaster } from '@/components/ui/sonner'
+import { TouchActiveEnabler } from '@/components/TouchActiveEnabler'
 import { getSiteSettings, getEffectiveSiteTitle, getEffectiveSiteDescription, getEffectiveSiteKeywords, getTitleTemplate } from '@/lib/seo'
 import { getIntegrationSettings } from '@/lib/integrations'
 
@@ -77,6 +78,7 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
+        <TouchActiveEnabler />
         <PageTracker />
         <Providers>{children}</Providers>
         <Toaster />

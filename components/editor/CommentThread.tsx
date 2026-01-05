@@ -122,7 +122,7 @@ export function CommentThread({
             <button
               type="button"
               onClick={(e) => e.stopPropagation()}
-              className="w-6 h-6 rounded hover:bg-accent flex items-center justify-center text-muted-foreground"
+              className="w-6 h-6 rounded interactive-bg-accent flex items-center justify-center text-muted-foreground"
             >
               <MoreHorizontal className="w-4 h-4" />
             </button>

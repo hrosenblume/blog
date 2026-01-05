@@ -25,6 +25,9 @@ export const MagicBackButton = React.forwardRef<HTMLButtonElement, MagicBackButt
         return
       }
       
+      // Blur to clear focus/active state (prevents sticky highlight on mobile)
+      e.currentTarget.blur()
+      
       if (isFirstPage) {
         router.push(backLink)
       } else {
@@ -37,7 +40,7 @@ export const MagicBackButton = React.forwardRef<HTMLButtonElement, MagicBackButt
       <Button
         variant="ghost"
         size="sm"
-        className={cn('min-h-[44px] gap-1.5 -ml-3 sm:ml-0', className)}
+        className={cn('h-9 gap-1.5 -ml-3', className)}
         ref={ref}
         onClick={handleClick}
         {...props}
@@ -54,5 +57,4 @@ export const MagicBackButton = React.forwardRef<HTMLButtonElement, MagicBackButt
 )
 
 MagicBackButton.displayName = 'MagicBackButton'
-
 

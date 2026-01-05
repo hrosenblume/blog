@@ -314,10 +314,18 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
     setIsManualSlug(true)
   }, [])
 
-  // Handle markdown change (tracks edits for whitespace detection)
+  // Handle markdown change (only track as edit if content actually changed from saved)
   const handleMarkdownChange = useCallback((value: string) => {
-    setHasEditedSinceLastSave(true)
-    setMarkdown(value)
+    // Only mark as edited if content differs from both current state AND last saved
+    // This prevents false "unsaved changes" from editor normalization (markdown → html → markdown)
+    setMarkdown(prev => {
+      const isDifferentFromCurrent = value !== prev
+      const isDifferentFromSaved = value !== lastSavedContent.current.markdown
+      if (isDifferentFromCurrent && isDifferentFromSaved) {
+        setHasEditedSinceLastSave(true)
+      }
+      return value
+    })
   }, [])
 
   // Handle tags change (takes tagIds, updates state with full tag objects)

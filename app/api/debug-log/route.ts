@@ -20,7 +20,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to write log' }, { status: 500 })
   }
 }
-
-
-
-

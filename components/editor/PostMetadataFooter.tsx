@@ -114,7 +114,7 @@ export function PostMetadataFooter({
         <button
           type="button"
           onClick={onShapeRegenerate}
-          className="flex-shrink-0 px-2.5 py-1 text-xs rounded bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
+          className="flex-shrink-0 px-2.5 py-1 text-xs rounded bg-secondary text-secondary-foreground interactive-bg-secondary transition-colors"
         >
           Regenerate
         </button>
@@ -146,7 +146,7 @@ export function PostMetadataFooter({
             <button
               type="button"
               onClick={onUnpublish}
-              className="px-2.5 py-1 text-xs rounded bg-secondary text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+              className="px-2.5 py-1 text-xs rounded bg-secondary text-muted-foreground interactive-bg-destructive can-hover:hover:text-destructive active:text-destructive transition-colors"
             >
               Unpublish
             </button>

@@ -34,30 +34,17 @@ export function ContentSkeleton() {
 
 /**
  * Full page skeleton for route-level loading (loading.tsx).
- * Shows navbar skeleton + toolbar skeleton + content skeleton.
+ * Shows toolbar skeleton + content skeleton.
+ * Note: No navbar - the layout handles navbar during navigation.
+ * No outer wrapper - works whether layout is in editor mode or not.
  */
 export function EditorSkeleton() {
   return (
-    <div className="h-screen flex flex-col">
-      {/* Navbar skeleton */}
-      <header className="border-b border-border bg-background">
-        <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
-          <Skeleton className="h-5 w-16" />
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-9 w-9 rounded-md" />
-            <Skeleton className="h-9 w-9 rounded-md" />
-            <Skeleton className="h-9 w-9 rounded-full" />
-          </div>
-        </div>
-      </header>
-
+    <>
       <EditorToolbar loading={true} />
-
-      <main className="flex-1 overflow-auto pb-20 overscroll-contain">
+      <div className="flex-1 overflow-auto pb-20 overscroll-contain">
         <ContentSkeleton />
-      </main>
-    </div>
+      </div>
+    </>
   )
 }
-
-

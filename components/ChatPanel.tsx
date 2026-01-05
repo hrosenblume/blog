@@ -113,12 +113,6 @@ export function ChatPanel() {
     }
   }, [input])
 
-  // Focus input when panel opens
-  useEffect(() => {
-    if (open) {
-      setTimeout(() => textareaRef.current?.focus(), 100)
-    }
-  }, [open])
 
   const sendMessage = useCallback(async () => {
     if (!input.trim() || isStreaming) return
@@ -193,7 +187,7 @@ export function ChatPanel() {
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-md hover:bg-accent flex items-center justify-center text-muted-foreground"
+            className="w-8 h-8 rounded-md interactive-bg-accent flex items-center justify-center text-muted-foreground"
             aria-label="Close chat"
           >
             <X className="w-4 h-4" />
@@ -368,6 +362,7 @@ export function ChatPanel() {
               className="min-h-[40px] max-h-[120px] resize-none"
               rows={1}
               enterKeyHint="send"
+              autoFocus
             />
             <Button
               type="submit"

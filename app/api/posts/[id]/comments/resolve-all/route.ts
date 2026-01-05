@@ -16,4 +16,3 @@ export const POST = withSession(async (_req: NextRequest, { params }: RouteConte
 
   return NextResponse.json({ resolved: result.count })
 })
-

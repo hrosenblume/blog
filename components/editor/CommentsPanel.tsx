@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { X, MessageSquare, ArrowUp, Loader2 } from 'lucide-react'
+import { X, MessageSquare, ArrowUp, Loader2, ChevronDown, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils/cn'
@@ -172,7 +172,7 @@ export function CommentsPanel({
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-md hover:bg-accent flex items-center justify-center text-muted-foreground"
+            className="w-8 h-8 rounded-md interactive-bg-accent flex items-center justify-center text-muted-foreground"
             aria-label="Close comments"
           >
             <X className="w-4 h-4" />
@@ -264,7 +264,10 @@ export function CommentsPanel({
                     onClick={() => setShowResolved(!showResolved)}
                     className="w-full text-left text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
                   >
-                    {showResolved ? '▼' : '▶'} Resolved ({resolvedComments.length})
+                    <span className="inline-flex items-center gap-1">
+                      {showResolved ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                      Resolved ({resolvedComments.length})
+                    </span>
                   </button>
                   {showResolved && (
                     <div className="space-y-3 mt-2">

@@ -60,8 +60,3 @@ export function ModelSelector({
     </DropdownMenu>
   )
 }
-
-
-
-
-

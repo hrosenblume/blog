@@ -145,16 +145,3 @@ export function clearMarkdownFormatting(
     textarea.setSelectionRange(start, start + cleaned.length)
   })
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

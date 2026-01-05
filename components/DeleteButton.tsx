@@ -23,7 +23,7 @@ export function DeleteButton({ endpoint, confirmMessage }: DeleteButtonProps) {
       variant="ghost"
       size="sm"
       onClick={handleDelete}
-      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+      className="text-destructive interactive-bg-destructive"
     >
       Delete
     </Button>

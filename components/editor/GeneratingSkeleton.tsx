@@ -33,8 +33,3 @@ export function GeneratingSkeleton() {
     </div>
   )
 }
-
-
-
-
-

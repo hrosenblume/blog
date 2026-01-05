@@ -84,11 +84,11 @@ export function EditorNavbar({
   if (previewMode) {
     return (
       <>
-        <header className="border-b border-border px-4 sm:px-6 py-3 sm:py-4 touch-none">
+        <header className="border-b border-border px-4 sm:px-6 py-4 touch-none">
           <div className="flex items-center justify-between pointer-events-auto">
             <button
               onClick={previewMode.onCancel}
-              className="inline-flex items-center gap-1.5 sm:gap-2 text-muted-foreground hover:text-foreground min-h-[44px] px-2 -mx-2 rounded-lg hover:bg-accent transition-colors"
+              className="inline-flex items-center gap-1.5 sm:gap-2 text-muted-foreground interactive-text-foreground h-9 px-2 -mx-2 rounded-lg interactive-bg-accent transition-colors"
             >
               <ChevronLeftIcon />
               <span>Back to editor</span>
@@ -132,11 +132,11 @@ export function EditorNavbar({
   }
 
   return (
-    <header className="border-b border-border px-4 sm:px-6 py-3 sm:py-4 touch-none">
+    <header className="border-b border-border px-4 sm:px-6 py-4 touch-none">
       <div className="flex items-center justify-between pointer-events-auto">
         <button
           onClick={handleBack}
-          className="inline-flex items-center gap-1.5 sm:gap-2 text-muted-foreground hover:text-foreground min-h-[44px] px-2 -mx-2 rounded-lg hover:bg-accent transition-colors"
+          className="inline-flex items-center gap-1.5 sm:gap-2 text-muted-foreground interactive-text-foreground h-9 px-2 -mx-2 rounded-lg interactive-bg-accent transition-colors"
         >
           <ChevronLeftIcon />
           <span className="hidden sm:inline">Back</span>
@@ -148,7 +148,7 @@ export function EditorNavbar({
           {onOpenChat && (
             <button
               onClick={onOpenChat}
-              className="w-9 h-9 rounded-lg border border-border hover:bg-accent flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+              className="w-9 h-9 rounded-lg border border-border interactive-bg-accent flex items-center justify-center text-muted-foreground interactive-text-foreground transition-colors"
               aria-label="Open chat"
             >
               <ChatIcon />

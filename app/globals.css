@@ -2,6 +2,41 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  /* 
+   * Interactive button/link utilities
+   * Use can-hover: for desktop hover, active: for touch/click feedback
+   * Prevents sticky hover on iOS while maintaining tap feedback
+   */
+  .interactive-bg-accent {
+    @apply can-hover:hover:bg-accent active:bg-accent;
+  }
+  
+  .interactive-bg-secondary {
+    @apply can-hover:hover:bg-secondary/80 active:bg-secondary/80;
+  }
+  
+  .interactive-bg-muted {
+    @apply can-hover:hover:bg-muted active:bg-muted;
+  }
+  
+  .interactive-bg-destructive {
+    @apply can-hover:hover:bg-destructive/10 active:bg-destructive/10;
+  }
+  
+  .interactive-text-foreground {
+    @apply can-hover:hover:text-foreground;
+  }
+  
+  .interactive-text-accent {
+    @apply can-hover:hover:text-accent-foreground active:text-accent-foreground;
+  }
+  
+  .interactive-ring {
+    @apply can-hover:hover:ring-2 can-hover:hover:ring-ring active:ring-2 active:ring-ring;
+  }
+}
+
 @layer base {
   :root {
     /* shadcn/ui theme variables (Zinc) */

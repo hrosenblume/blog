@@ -42,4 +42,3 @@ export const POST = withSession(async (request: NextRequest) => {
 
   return NextResponse.json(message)
 })
-

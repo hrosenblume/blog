@@ -3,23 +3,21 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { Save, Loader2 } from 'lucide-react'
 import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
 import { usePostEditor } from '@/lib/editor/usePostEditor'
 import { useChatContext, EssayEdit } from '@/lib/chat'
+import { useDashboardContext } from '@/lib/dashboard'
 import { canPublish } from '@/lib/auth/helpers'
 import { ContentSkeleton } from '@/components/editor/EditorSkeleton'
 import { CenteredPage } from '@/components/CenteredPage'
 import { TiptapEditor, EditorToolbar } from '@/components/TiptapEditor'
 import type { SelectionState } from '@/components/TiptapEditor'
-import { WriterNavbar } from '@/components/writer/WriterNavbar'
 import { PostMetadataFooter } from '@/components/editor/PostMetadataFooter'
 import { RevisionPreviewBanner } from '@/components/editor/RevisionPreviewBanner'
 import { CommentsPanel } from '@/components/editor/CommentsPanel'
 import { ArticleLayout } from '@/components/ArticleLayout'
 import { ArticleHeader } from '@/components/ArticleHeader'
 import { GeneratingSkeleton } from '@/components/editor/GeneratingSkeleton'
-import { MagicBackButton } from '@/components/MagicBackButton'
 import { CheckIcon } from '@/components/Icons'
 import {
   AlertDialog,
@@ -65,6 +63,9 @@ export default function Editor() {
   const { data: session } = useSession()
   const userCanPublish = canPublish(session?.user?.role)
 
+  // Dashboard context - register editor state for navbar
+  const { registerEditor } = useDashboardContext()
+
   const {
     post,
     setTitle,
@@ -107,8 +108,33 @@ export default function Editor() {
   // Publish confirmation dialog (for resolving comments)
   const [showPublishDialog, setShowPublishDialog] = useState(false)
 
-  // Chat context - sync essay content for AI awareness and navbar
-  const { setEssayContext, isOpen: chatOpen, setIsOpen: setChatOpen, registerEditHandler, addMessage } = useChatContext()
+  // Chat context - sync essay content for AI awareness
+  const { setEssayContext, registerEditHandler, addMessage } = useChatContext()
+
+  // Check for unsaved changes before navigating away (must be before conditional returns)
+  const confirmLeave = useCallback(() => {
+    if (ui.hasUnsavedChanges) {
+      return window.confirm('You have unsaved changes. Leave anyway?')
+    }
+    return true
+  }, [ui.hasUnsavedChanges])
+
+  // Register editor state with dashboard context for navbar integration
+  useEffect(() => {
+    if (!ui.loading && !revisions.previewing) {
+      registerEditor({
+        hasUnsavedChanges: ui.hasUnsavedChanges,
+        status: post.status as 'draft' | 'published',
+        savingAs: ui.savingAs,
+        onSave: actions.save,
+        confirmLeave,
+      })
+    } else {
+      registerEditor(null)
+    }
+    
+    return () => registerEditor(null)
+  }, [ui.loading, ui.hasUnsavedChanges, ui.savingAs, post.status, revisions.previewing, actions.save, confirmLeave, registerEditor])
 
   // Keep essay context in sync with current post content
   useEffect(() => {
@@ -280,14 +306,6 @@ export default function Editor() {
     },
   ])
 
-  // Check for unsaved changes before navigating away (must be before conditional returns)
-  const confirmLeave = useCallback(() => {
-    if (ui.hasUnsavedChanges) {
-      return window.confirm('You have unsaved changes. Leave anyway?')
-    }
-    return true
-  }, [ui.hasUnsavedChanges])
-
   // Handle publish - check for open comments first
   const handlePublish = useCallback(() => {
     if (comments.openCount > 0) {
@@ -316,40 +334,7 @@ export default function Editor() {
   }
 
   return (
-    <div className="h-screen flex flex-col">
-      {/* Navbar renders immediately - doesn't depend on post data */}
-      <WriterNavbar
-        session={session}
-        chatOpen={chatOpen}
-        onChatToggle={() => setChatOpen(!chatOpen)}
-        fixed={false}
-        leftSlot={
-          <MagicBackButton 
-            backLink="/writer" 
-            onBeforeNavigate={confirmLeave}
-          />
-        }
-        rightSlot={
-          // Save icon only for drafts, hidden during revision preview or loading
-          !ui.loading && !revisions.previewing && post.status === 'draft' ? (
-            <button
-              type="button"
-              onClick={() => actions.save('draft')}
-              disabled={!ui.hasUnsavedChanges || ui.savingAs !== null}
-              className="w-9 h-9 rounded-md border border-border hover:bg-accent text-muted-foreground flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
-              aria-label="Save draft"
-              title="Save draft"
-            >
-              {ui.savingAs === 'draft' ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-            </button>
-          ) : undefined
-        }
-      />
-
+    <div className="flex flex-col h-full">
       {/* Preview info line when viewing a revision */}
       {!ui.loading && revisions.previewing && (
         <RevisionPreviewBanner 
@@ -385,95 +370,95 @@ export default function Editor() {
         {ui.loading ? (
           <ContentSkeleton />
         ) : (
-          <ArticleLayout
-            withContainer
-            className="pt-12 pb-24"
-            header={
-              <ArticleHeader
+        <ArticleLayout
+          withContainer
+          className="pt-12 pb-24"
+          header={
+            <ArticleHeader
+              title={post.title}
+              subtitle={post.subtitle}
+              byline={HOMEPAGE.name}
+              editable
+              disabled={!!revisions.previewing}
+              generating={ai.generating}
+              onTitleChange={setTitle}
+              onSubtitleChange={setSubtitle}
+            />
+          }
+          footer={
+            !revisions.previewing && (
+              <PostMetadataFooter
+                slug={post.slug}
+                status={post.status}
+                polyhedraShape={post.polyhedraShape}
+                markdown={post.markdown}
                 title={post.title}
                 subtitle={post.subtitle}
-                byline={HOMEPAGE.name}
-                editable
-                disabled={!!revisions.previewing}
-                generating={ai.generating}
-                onTitleChange={setTitle}
-                onSubtitleChange={setSubtitle}
+                seoTitle={post.seoTitle}
+                seoDescription={post.seoDescription}
+                seoKeywords={post.seoKeywords}
+                noIndex={post.noIndex}
+                ogImage={post.ogImage}
+                tags={post.tags}
+                onSlugChange={setSlug}
+                onShapeRegenerate={regenerateShape}
+                onUnpublish={actions.unpublish}
+                onPublish={handlePublish}
+                savingAs={ui.savingAs}
+                hasUnsavedChanges={ui.hasUnsavedChanges}
+                canPublish={userCanPublish}
+                onSeoTitleChange={setSeoTitle}
+                onSeoDescriptionChange={setSeoDescription}
+                onSeoKeywordsChange={setSeoKeywords}
+                onNoIndexChange={setNoIndex}
+                onOgImageChange={setOgImage}
+                onTagsChange={setTags}
               />
-            }
-            footer={
-              !revisions.previewing && (
-                <PostMetadataFooter
-                  slug={post.slug}
-                  status={post.status}
-                  polyhedraShape={post.polyhedraShape}
-                  markdown={post.markdown}
-                  title={post.title}
-                  subtitle={post.subtitle}
-                  seoTitle={post.seoTitle}
-                  seoDescription={post.seoDescription}
-                  seoKeywords={post.seoKeywords}
-                  noIndex={post.noIndex}
-                  ogImage={post.ogImage}
-                  tags={post.tags}
-                  onSlugChange={setSlug}
-                  onShapeRegenerate={regenerateShape}
-                  onUnpublish={actions.unpublish}
-                  onPublish={handlePublish}
-                  savingAs={ui.savingAs}
-                  hasUnsavedChanges={ui.hasUnsavedChanges}
-                  canPublish={userCanPublish}
-                  onSeoTitleChange={setSeoTitle}
-                  onSeoDescriptionChange={setSeoDescription}
-                  onSeoKeywordsChange={setSeoKeywords}
-                  onNoIndexChange={setNoIndex}
-                  onOgImageChange={setOgImage}
-                  onTagsChange={setTags}
-                />
-              )
-            }
-          >
-            {/* Skeleton placeholder during AI generation (before content arrives) */}
-            {ai.generating && !post.markdown ? (
-              <GeneratingSkeleton />
-            ) : (
-              /* Toggle between WYSIWYG and raw markdown */
-              ui.showMarkdown ? (
-              <textarea
-                ref={textareaRef}
-                value={post.markdown}
-                onChange={(e) => setMarkdown(e.target.value)}
-                placeholder="Write your story in Markdown..."
-                readOnly={!!revisions.previewing || ai.generating}
-                className={`w-full min-h-[500px] bg-transparent border-none outline-none resize-none placeholder-gray-400 leading-relaxed overflow-hidden font-mono text-base ${ai.generating ? 'opacity-60 cursor-not-allowed' : ''}`}
+            )
+          }
+        >
+          {/* Skeleton placeholder during AI generation (before content arrives) */}
+          {ai.generating && !post.markdown ? (
+            <GeneratingSkeleton />
+          ) : (
+            /* Toggle between WYSIWYG and raw markdown */
+            ui.showMarkdown ? (
+            <textarea
+              ref={textareaRef}
+              value={post.markdown}
+              onChange={(e) => setMarkdown(e.target.value)}
+              placeholder="Write your story in Markdown..."
+              readOnly={!!revisions.previewing || ai.generating}
+              className={`w-full min-h-[500px] bg-transparent border-none outline-none resize-none placeholder-gray-400 leading-relaxed overflow-hidden font-mono text-base ${ai.generating ? 'opacity-60 cursor-not-allowed' : ''}`}
+            />
+          ) : (
+            <div className={ai.generating ? 'opacity-60 cursor-not-allowed' : ''}>
+              <TiptapEditor
+                content={post.markdown}
+                onChange={setMarkdown}
+                placeholder="Write your story..."
+                onEditorReady={setEditor}
+                onSelectionChange={(sel: SelectionState | null) => {
+                  if (sel?.hasSelection) {
+                    comments.setSelectedText({ 
+                      text: sel.text, 
+                      from: sel.from, 
+                      to: sel.to,
+                      hasExistingComment: sel.hasExistingComment,
+                    })
+                  } else {
+                    comments.setSelectedText(null)
+                  }
+                }}
+                onCommentClick={(commentId: string) => {
+                  comments.setActiveId(commentId)
+                  setCommentsOpen(true)
+                }}
               />
-            ) : (
-              <div className={ai.generating ? 'opacity-60 cursor-not-allowed' : ''}>
-                <TiptapEditor
-                  content={post.markdown}
-                  onChange={setMarkdown}
-                  placeholder="Write your story..."
-                  onEditorReady={setEditor}
-                  onSelectionChange={(sel: SelectionState | null) => {
-                    if (sel?.hasSelection) {
-                      comments.setSelectedText({ 
-                        text: sel.text, 
-                        from: sel.from, 
-                        to: sel.to,
-                        hasExistingComment: sel.hasExistingComment,
-                      })
-                    } else {
-                      comments.setSelectedText(null)
-                    }
-                  }}
-                  onCommentClick={(commentId: string) => {
-                    comments.setActiveId(commentId)
-                    setCommentsOpen(true)
-                  }}
-                />
-              </div>
-              )
-            )}
-          </ArticleLayout>
+            </div>
+            )
+          )}
+        </ArticleLayout>
         )}
       </main>
 
@@ -551,3 +536,4 @@ export default function Editor() {
     </div>
   )
 }
+
