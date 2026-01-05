@@ -9,6 +9,7 @@ const countResolvers: Record<string, () => Promise<number>> = {
   users: () => prisma.user.count(),
   posts: () => prisma.post.count(),
   tags: () => prisma.tag.count(),
+  comments: () => prisma.comment.count(),
   revisions: () => prisma.revision.count(),
   visits: () => prisma.lead.count(),
   topics: () => prisma.topicSubscription.count(),

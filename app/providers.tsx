@@ -15,11 +15,11 @@ function GlobalShortcuts() {
     { 
       ...SHORTCUTS.ADMIN, 
       handler: () => {
-        // Toggle to/from admin
-        if (pathname?.startsWith('/admin')) {
+        // Toggle to/from settings
+        if (pathname?.startsWith('/settings')) {
           router.back()  // Go back to where you came from
         } else {
-          router.push('/admin')
+          router.push('/settings')
         }
       } 
     },

@@ -124,7 +124,7 @@ export default function AISettingsPage() {
           <CardDescription>
             Configure your AI writing assistant. Writing rules apply to essay generation; chat rules control how the assistant behaves during brainstorming.
             To configure API keys, go to{' '}
-            <Link href="/admin/integrations" className="underline hover:text-foreground">
+            <Link href="/settings/integrations" className="underline hover:text-foreground">
               Integrations
             </Link>.
           </CardDescription>

@@ -48,7 +48,7 @@ export default async function RevisionsPage({ searchParams }: PageProps) {
       ],
       actions: (
         <Button variant="ghost" size="sm" asChild>
-          <Link href={`/admin/revisions/${revision.id}`}>View</Link>
+          <Link href={`/settings/revisions/${revision.id}`}>View</Link>
         </Button>
       ),
       mobileLabel: revision.post.title || 'Untitled',
@@ -62,7 +62,7 @@ export default async function RevisionsPage({ searchParams }: PageProps) {
       <AdminPageHeader
         title="Revisions"
         subtitle={`${totalCount} total revision${totalCount !== 1 ? 's' : ''}`}
-        action={<Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/admin/revisions" position="top" />}
+        action={<Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/settings/revisions" position="top" />}
       />
 
       <AdminTable
@@ -71,7 +71,7 @@ export default async function RevisionsPage({ searchParams }: PageProps) {
         emptyMessage="No revisions yet."
       />
 
-      <Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/admin/revisions" position="bottom" />
+      <Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/settings/revisions" position="bottom" />
     </div>
   )
 }

@@ -11,14 +11,26 @@ import { canPublish } from '@/lib/auth/helpers'
 import { EditorSkeleton } from '@/components/editor/EditorSkeleton'
 import { CenteredPage } from '@/components/CenteredPage'
 import { TiptapEditor, EditorToolbar } from '@/components/TiptapEditor'
+import type { SelectionState } from '@/components/TiptapEditor'
 import { WriterNavbar } from '@/components/writer/WriterNavbar'
 import { PostMetadataFooter } from '@/components/editor/PostMetadataFooter'
 import { RevisionPreviewBanner } from '@/components/editor/RevisionPreviewBanner'
+import { CommentsPanel } from '@/components/editor/CommentsPanel'
 import { ArticleLayout } from '@/components/ArticleLayout'
 import { ArticleHeader } from '@/components/ArticleHeader'
 import { GeneratingSkeleton } from '@/components/editor/GeneratingSkeleton'
 import { MagicBackButton } from '@/components/MagicBackButton'
 import { CheckIcon } from '@/components/Icons'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { formatSavedTime } from '@/lib/utils/format'
 import { HOMEPAGE } from '@/lib/homepage'
 
@@ -46,7 +58,9 @@ export default function Editor() {
   const modelParam = searchParams.get('model')
   const lengthParam = searchParams.get('length')
   const webParam = searchParams.get('web')
+  const commentParam = searchParams.get('comment')
   const hasTriggeredGeneration = useRef(false)
+  const hasOpenedComment = useRef(false)
   
   const { data: session } = useSession()
   const userCanPublish = canPublish(session?.user?.role)
@@ -73,10 +87,28 @@ export default function Editor() {
     textareaRef,
     revisions,
     ai,
+    comments,
   } = usePostEditor(postSlug)
 
+  // Comments panel state
+  const [commentsOpen, setCommentsOpen] = useState(false)
+
+  // Open comments panel from URL param (e.g., from settings page)
+  useEffect(() => {
+    if (commentParam && !hasOpenedComment.current && !ui.loading) {
+      hasOpenedComment.current = true
+      comments.setActiveId(commentParam)
+      setCommentsOpen(true)
+      // Clear the URL param
+      router.replace(`/writer/editor/${postSlug}`, { scroll: false })
+    }
+  }, [commentParam, ui.loading, comments, router, postSlug])
+  
+  // Publish confirmation dialog (for resolving comments)
+  const [showPublishDialog, setShowPublishDialog] = useState(false)
+
   // Chat context - sync essay content for AI awareness and navbar
-  const { setEssayContext, isOpen: chatOpen, setIsOpen: setChatOpen, registerEditHandler } = useChatContext()
+  const { setEssayContext, isOpen: chatOpen, setIsOpen: setChatOpen, registerEditHandler, addMessage } = useChatContext()
 
   // Keep essay context in sync with current post content
   useEffect(() => {
@@ -173,12 +205,25 @@ export default function Editor() {
       const wordCount = lengthParam ? parseInt(lengthParam) : 500
       const useWebSearch = webParam === '1'
       
+      // Log prompt to chat
+      addMessage('user', `Generate essay: ${ideaParam}`)
+      
+      // Generate and log result based on outcome
       ai.generate(ideaParam, wordCount, modelParam || undefined, useWebSearch)
+        .then((status) => {
+          if (status === 'complete') {
+            addMessage('assistant', 'Essay generation complete.')
+          } else if (status === 'stopped') {
+            addMessage('assistant', 'Essay generation was stopped. Any content generated is on the canvas.')
+          } else {
+            addMessage('assistant', 'Essay generation failed. Any partial content is on the canvas.')
+          }
+        })
       
       // Clear the URL param so refresh doesn't re-trigger
       router.replace('/writer/editor', { scroll: false })
     }
-  }, [ideaParam, postSlug, ui.loading, ai, router, modelParam, lengthParam, webParam])
+  }, [ideaParam, postSlug, ui.loading, ai, router, modelParam, lengthParam, webParam, addMessage])
 
   // Keyboard shortcuts
   useKeyboard([
@@ -224,6 +269,15 @@ export default function Editor() {
         router.push('/writer')
       },
     },
+    {
+      ...SHORTCUTS.ADD_COMMENT,
+      handler: () => {
+        // Only open comments panel if text is selected
+        if (comments.selectedText) {
+          setCommentsOpen(true)
+        }
+      },
+    },
   ])
 
   // Check for unsaved changes before navigating away (must be before conditional returns)
@@ -233,6 +287,28 @@ export default function Editor() {
     }
     return true
   }, [ui.hasUnsavedChanges])
+
+  // Handle publish - check for open comments first
+  const handlePublish = useCallback(() => {
+    if (comments.openCount > 0) {
+      setShowPublishDialog(true)
+    } else {
+      actions.save('published')
+    }
+  }, [comments.openCount, actions])
+
+  // Publish after resolving all comments (skip confirm since user already confirmed via dialog)
+  const handleResolveAndPublish = useCallback(async () => {
+    setShowPublishDialog(false)
+    await comments.resolveAll()
+    actions.save('published', { skipConfirm: true })
+  }, [comments, actions])
+
+  // Publish without resolving comments (skip confirm since user already confirmed via dialog)
+  const handlePublishAnyway = useCallback(() => {
+    setShowPublishDialog(false)
+    actions.save('published', { skipConfirm: true })
+  }, [actions])
 
   // Loading state
   if (ui.loading) {
@@ -260,11 +336,12 @@ export default function Editor() {
           }
           rightSlot={
             // Save icon only for drafts, hidden during revision preview
-            !revisions.previewing && post.status === 'draft' && (
+            !revisions.previewing && post.status === 'draft' ? (
               <button
+                type="button"
                 onClick={() => actions.save('draft')}
                 disabled={!ui.hasUnsavedChanges || ui.savingAs !== null}
-                className="w-9 h-9 rounded-md border border-border hover:bg-accent text-muted-foreground flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-9 h-9 rounded-md border border-border hover:bg-accent text-muted-foreground flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
                 aria-label="Save draft"
                 title="Save draft"
               >
@@ -274,14 +351,18 @@ export default function Editor() {
                   <Save className="h-4 w-4" />
                 )}
               </button>
-            )
+            ) : undefined
           }
         />
       )}
 
       {/* Preview info line when viewing a revision */}
       {revisions.previewing && (
-        <RevisionPreviewBanner revision={revisions.previewing} />
+        <RevisionPreviewBanner 
+          revision={revisions.previewing} 
+          onCancel={revisions.cancel}
+          onRestore={revisions.restore}
+        />
       )}
 
       {/* Fixed toolbar below header - hidden in preview mode */}
@@ -295,6 +376,11 @@ export default function Editor() {
           setShowMarkdown={setShowMarkdown}
           postSlug={postSlug}
           revisions={revisions}
+          hasSelection={!!comments.selectedText && !comments.selectedText.hasExistingComment}
+          selectionHasComment={comments.selectedText?.hasExistingComment}
+          onAddComment={() => setCommentsOpen(true)}
+          commentsCount={comments.list.filter(c => !c.resolved).length}
+          onViewComments={postSlug ? () => setCommentsOpen(true) : undefined}
         />
       )}
 
@@ -332,7 +418,7 @@ export default function Editor() {
                 onSlugChange={setSlug}
                 onShapeRegenerate={regenerateShape}
                 onUnpublish={actions.unpublish}
-                onPublish={() => actions.save('published')}
+                onPublish={handlePublish}
                 savingAs={ui.savingAs}
                 hasUnsavedChanges={ui.hasUnsavedChanges}
                 canPublish={userCanPublish}
@@ -367,6 +453,22 @@ export default function Editor() {
                 onChange={setMarkdown}
                 placeholder="Write your story..."
                 onEditorReady={setEditor}
+                onSelectionChange={(sel: SelectionState | null) => {
+                  if (sel?.hasSelection) {
+                    comments.setSelectedText({ 
+                      text: sel.text, 
+                      from: sel.from, 
+                      to: sel.to,
+                      hasExistingComment: sel.hasExistingComment,
+                    })
+                  } else {
+                    comments.setSelectedText(null)
+                  }
+                }}
+                onCommentClick={(commentId: string) => {
+                  comments.setActiveId(commentId)
+                  setCommentsOpen(true)
+                }}
               />
             </div>
             )
@@ -377,9 +479,19 @@ export default function Editor() {
       <footer className="fixed bottom-0 left-0 right-0 border-t border-border px-4 sm:px-6 py-3 bg-background touch-none">
         <div className="flex items-center justify-end text-sm text-muted-foreground">
           {ai.generating ? (
-            <span>Press Esc to stop generating</span>
+            <button 
+              onClick={() => ai.stop()} 
+              className="hover:text-foreground transition-colors"
+            >
+              Press Esc to stop generating
+            </button>
           ) : revisions.previewing ? (
-            <span>Press Esc to cancel</span>
+            <button 
+              onClick={() => revisions.cancel()} 
+              className="hover:text-foreground transition-colors"
+            >
+              Press Esc to cancel
+            </button>
           ) : ui.lastSaved ? (
             <span>Saved {formatSavedTime(ui.lastSaved)}</span>
           ) : (
@@ -388,6 +500,51 @@ export default function Editor() {
         </div>
       </footer>
 
+      {/* Comments Panel */}
+      {session?.user?.email && (
+        <CommentsPanel
+          comments={comments.list}
+          currentUserEmail={session.user.email}
+          isAdmin={session.user.role === 'admin'}
+          selectedText={comments.selectedText?.text ?? null}
+          onCreateComment={comments.create}
+          onReply={comments.reply}
+          onEdit={comments.edit}
+          onDelete={comments.remove}
+          onResolve={comments.resolve}
+          onCommentClick={comments.scrollTo}
+          activeCommentId={comments.activeId}
+          isOpen={commentsOpen}
+          onClose={() => setCommentsOpen(false)}
+          onClearSelection={() => comments.setSelectedText(null)}
+        />
+      )}
+
+      {/* Publish confirmation dialog for open comments */}
+      <AlertDialog open={showPublishDialog} onOpenChange={setShowPublishDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {comments.openCount} open comment{comments.openCount !== 1 ? 's' : ''}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Would you like to resolve all comments before publishing?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handlePublishAnyway}
+              className="bg-transparent border border-input hover:bg-accent hover:text-accent-foreground text-foreground"
+            >
+              Publish anyway
+            </AlertDialogAction>
+            <AlertDialogAction onClick={handleResolveAndPublish}>
+              Resolve & publish
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

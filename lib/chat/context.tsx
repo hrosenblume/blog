@@ -1,7 +1,7 @@
 'use client'
 
-import { createContext, useContext, useState, useCallback, useRef, ReactNode } from 'react'
-import { getSearchModel } from '@/lib/ai/models'
+import { createContext, useContext, useState, useCallback, useRef, useEffect, ReactNode } from 'react'
+import { modelHasNativeSearch } from '@/lib/ai/models'
 
 export interface EssaySnapshot {
   title: string
@@ -53,6 +53,7 @@ interface ChatContextValue {
   // Actions
   setEssayContext: (context: EssayContext | null) => void
   sendMessage: (content: string) => Promise<void>
+  addMessage: (role: 'user' | 'assistant', content: string) => void
   clearMessages: () => void
   setIsOpen: (open: boolean) => void
   setMode: (mode: ChatMode) => void
@@ -100,9 +101,39 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   
   // Edit handler registered by the editor
   const editHandlerRef = useRef<EditHandler | null>(null)
+  // Track if history has been loaded
+  const historyLoadedRef = useRef(false)
   
   const registerEditHandler = useCallback((handler: EditHandler | null) => {
     editHandlerRef.current = handler
+  }, [])
+
+  // Load history on first open
+  useEffect(() => {
+    if (isOpen && !historyLoadedRef.current) {
+      historyLoadedRef.current = true
+      fetch('/api/chat/history')
+        .then(res => res.ok ? res.json() : [])
+        .then((data: { role: 'user' | 'assistant'; content: string }[]) => {
+          if (data.length > 0) {
+            setMessages(data.map(m => ({ role: m.role, content: m.content })))
+          }
+        })
+        .catch(() => {
+          // Silently fail - history is not critical
+        })
+    }
+  }, [isOpen])
+
+  // Helper to save a message to the database
+  const saveMessage = useCallback((role: 'user' | 'assistant', content: string) => {
+    fetch('/api/chat/history', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role, content }),
+    }).catch(() => {
+      // Silently fail - saving is not critical
+    })
   }, [])
 
   const sendMessage = useCallback(async (content: string) => {
@@ -113,27 +144,29 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setMessages(newMessages)
     setIsStreaming(true)
 
+    // Save user message to history
+    saveMessage('user', content.trim())
+
     // Add empty assistant message that we'll stream into
     const assistantMessage: Message = { role: 'assistant', content: '' }
     setMessages([...newMessages, assistantMessage])
 
     try {
-      // Determine which model to use based on web search toggle
-      const searchModelVariant = getSearchModel(selectedModel)
-      const useNativeSearch = webSearchEnabled && searchModelVariant !== null
-      const useSearchFirstFlow = webSearchEnabled && searchModelVariant === null
+      // Determine web search approach based on model
+      const hasNativeSearch = modelHasNativeSearch(selectedModel)
+      const useSearchFirstFlow = webSearchEnabled && !hasNativeSearch
       
       let searchContext: string | null = null
       
       if (useSearchFirstFlow) {
-        // For Claude: 2-call flow - first call GPT-4o-search to get facts
+        // For Claude: 2-call flow - first call GPT-5.2 with web search to get facts
         const searchResponse = await fetch('/api/ai/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             messages: [{ role: 'user', content: content.trim() }],
             modelId: 'gpt-5.2',
-            useSearchModel: true, // Tell API to use search variant
+            useWebSearch: true,
             mode: 'search',
           }),
         })
@@ -147,8 +180,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       // Build the messages for the main call
       const messagesForApi = searchContext
         ? [
-            { role: 'user' as const, content: `[Web Search Results]\n${searchContext}\n\n[User Question]\n${content.trim()}` },
             ...newMessages.slice(0, -1), // Previous messages without the current one
+            { role: 'user' as const, content: `[Web Search Results]\n${searchContext}\n\n[User Question]\n${content.trim()}` },
           ]
         : newMessages
       
@@ -156,11 +189,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          messages: searchContext ? messagesForApi : newMessages,
+          messages: messagesForApi,
           essayContext: essayContext,
           mode: mode,
           modelId: selectedModel,
-          useSearchModel: useNativeSearch, // Use search variant for GPT models
+          useWebSearch: webSearchEnabled && hasNativeSearch, // Native search for GPT models
         }),
       })
 
@@ -215,17 +248,26 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         
         // Update the final message with clean content, applied flag, and previous state
         if (edits.length > 0) {
+          const finalContent = cleanContent || 'Edit applied.'
           setMessages(prev => {
             const updated = [...prev]
             updated[updated.length - 1] = { 
               role: 'assistant', 
-              content: cleanContent || 'Edit applied.',
+              content: finalContent,
               appliedEdits,
               previousState: appliedEdits ? previousState : undefined,
             }
             return updated
           })
+          // Save the cleaned content to history
+          saveMessage('assistant', finalContent)
+        } else {
+          // No edits, save the raw content
+          saveMessage('assistant', assistantContent)
         }
+      } else {
+        // Not in agent mode, save the response as-is
+        saveMessage('assistant', assistantContent)
       }
     } catch (error) {
       console.error('Chat error:', error)
@@ -238,11 +280,19 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsStreaming(false)
     }
-  }, [messages, isStreaming, essayContext, mode, webSearchEnabled, selectedModel])
+  }, [messages, isStreaming, essayContext, mode, webSearchEnabled, selectedModel, saveMessage])
 
   const clearMessages = useCallback(() => {
     setMessages([])
   }, [])
+
+  // Add a message directly (for logging generation, etc.)
+  const addMessage = useCallback((role: 'user' | 'assistant', content: string) => {
+    const message: Message = { role, content }
+    setMessages(prev => [...prev, message])
+    // Save to history
+    saveMessage(role, content)
+  }, [saveMessage])
 
   // Undo an edit by restoring the previous state
   const undoEdit = useCallback((messageIndex: number) => {
@@ -283,6 +333,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         selectedModel,
         setEssayContext,
         sendMessage,
+        addMessage,
         clearMessages,
         setIsOpen,
         setMode,
@@ -304,8 +355,4 @@ export function useChatContext() {
   }
   return context
 }
-
-
-
-
 

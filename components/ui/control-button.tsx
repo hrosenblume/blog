@@ -10,10 +10,11 @@ interface ControlButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
  * Matches the muted metadata text style (text-sm text-muted-foreground).
  */
 export const ControlButton = forwardRef<HTMLButtonElement, ControlButtonProps>(
-  ({ className, active, disabled, children, ...props }, ref) => {
+  ({ className, active, disabled, children, type = 'button', ...props }, ref) => {
     return (
       <button
         ref={ref}
+        type={type}
         disabled={disabled}
         className={cn(
           "inline-flex items-center gap-1 text-sm transition-colors focus:outline-none",
@@ -33,6 +34,8 @@ export const ControlButton = forwardRef<HTMLButtonElement, ControlButtonProps>(
 )
 
 ControlButton.displayName = 'ControlButton'
+
+
 
 
 

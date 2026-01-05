@@ -20,6 +20,7 @@ model Post {
   subtitle       String?
   revisions      Revision[]
   tags           PostTag[]
+  comments       Comment[]
   
   // SEO fields (optional overrides)
   seoTitle       String?
@@ -52,11 +53,12 @@ model Revision {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
+  id        String    @id @default(uuid())
+  email     String    @unique
   name      String?
-  role      String   @default("writer")
-  createdAt DateTime @default(now())
+  role      String    @default("writer")
+  createdAt DateTime  @default(now())
+  comments  Comment[]
 }
 
 model Lead {
@@ -200,4 +202,36 @@ model PostTag {
   @@unique([postId, tagId])
   @@index([postId])
   @@index([tagId])
+}
+
+// Chat history
+model ChatMessage {
+  id        String   @id @default(uuid())
+  role      String   // "user" or "assistant"
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// Comments on posts (Google Docs style)
+model Comment {
+  id         String    @id @default(uuid())
+  postId     String
+  userId     String
+  quotedText String    // Snapshot of highlighted text
+  content    String
+  parentId   String?   // For single-level replies
+  resolved   Boolean   @default(false)
+  deletedAt  DateTime? // Soft delete timestamp
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  post       Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user       User      @relation(fields: [userId], references: [id])
+  parent     Comment?  @relation("Replies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies    Comment[] @relation("Replies")
+
+  @@index([postId])
+  @@index([parentId])
 }

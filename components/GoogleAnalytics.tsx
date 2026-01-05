@@ -10,8 +10,8 @@ type GoogleAnalyticsProps = {
 export function GoogleAnalytics({ gaId }: GoogleAnalyticsProps) {
   const pathname = usePathname()
 
-  // Only track public-facing pages (not admin/writer/auth)
-  if (!gaId || pathname?.startsWith('/admin') || pathname?.startsWith('/writer') || pathname?.startsWith('/auth')) {
+  // Only track public-facing pages (not settings/writer/auth)
+  if (!gaId || pathname?.startsWith('/settings') || pathname?.startsWith('/writer') || pathname?.startsWith('/auth')) {
     return null
   }
 

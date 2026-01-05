@@ -16,7 +16,7 @@ alwaysApply: true
 - Production: `$NEXT_PUBLIC_SITE_URL`
 - Staging: `$NEXT_PUBLIC_STAGING_URL` (Cloudflare Access protected)
 - Writer dashboard: `/writer` (protected)
-- Admin panel: `/admin` (admin only)
+- Settings panel: `/settings` (admin only)
 
 ## Tech Stack
 
@@ -44,7 +44,7 @@ blog/
 │   │   ├── ai/                 # AI generation + settings
 │   │   ├── auth/[...nextauth]/ # NextAuth handler
 │   │   └── posts/              # Posts CRUD
-│   ├── admin/                  # Admin dashboard
+│   ├── settings/               # Settings dashboard
 │   ├── auth/                   # Auth pages
 │   ├── e/[slug]/               # Public essay pages
 │   ├── writer/                 # Writer dashboard
@@ -313,7 +313,7 @@ Adding an item to the config automatically shows it in both places.
 Defined in `lib/keyboard/shortcuts.ts`:
 - `Cmd + .` — Toggle theme
 - `Cmd + /` — Toggle view (essay↔editor)
-- `Cmd + '` — Open admin in new window (from non-admin pages)
+- `Cmd + '` — Toggle settings (from non-settings pages)
 - `←`/`→` — Prev/Next essay
 - `n` — New article
 - `Escape` — Back to dashboard
@@ -347,7 +347,7 @@ Generate essays using Anthropic (Claude) or OpenAI (GPT-4):
 - **API**: `/api/ai/generate` (generate content), `/api/ai/settings` (CRUD settings)
 - **Generation params**: `wordCount: number` (explicit word target), `useWebSearch: boolean` (research-enhanced generation)
 - **Web search**: When enabled, first gathers facts via `buildSearchOnlyPrompt()`, then injects research context into generation
-- **Admin UI**: `/admin/ai` — Configure essay writing rules, chat behavior rules, rewrite rules, default model, and editable prompt templates
+- **Settings UI**: `/settings/ai` — Configure essay writing rules, chat behavior rules, rewrite rules, default model, and editable prompt templates
 - **Flow**: Dashboard idea input → new editor → API call → streaming content
 - **Context injection**: System prompt includes custom rules first (override everything), then all published posts as style examples
 - **Env vars**: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` (at least one required)
@@ -381,7 +381,7 @@ Session-persistent AI chat that's aware of the currently open essay:
 ### Tags System
 Categorize posts with tags for organization:
 - **Database**: `Tag` model (name, unique) + `PostTag` junction table
-- **Admin UI**: `/admin/tags` — CRUD for tags with post counts
+- **Settings UI**: `/settings/tags` — CRUD for tags with post counts
 - **Editor UI**: `TagsSection` component in `PostMetadataFooter` — add/remove tags per post
 - **API**:
   - `/api/tags` — GET all tags (public)
@@ -399,18 +399,18 @@ Hybrid storage in `lib/storage.ts` with automatic backend detection:
 
 ### Google Analytics
 Page view tracking via Google Analytics 4:
-- **Script**: `components/GoogleAnalytics.tsx` — loads gtag.js (public pages only, excludes /admin, /writer, /auth)
+- **Script**: `components/GoogleAnalytics.tsx` — loads gtag.js (public pages only, excludes /settings, /writer, /auth)
 - **Env var**: `NEXT_PUBLIC_GA_MEASUREMENT_ID` — GA4 measurement ID (e.g., G-XXXXXXXXXX)
 
 ### RB2B Lead Tracking
 Visitor identification via RB2B integration:
-- **Tracking script**: `components/RB2BScript.tsx` — loads RB2B client-side script (public pages only, excludes /admin, /writer, /auth)
+- **Tracking script**: `components/RB2BScript.tsx` — loads RB2B client-side script (public pages only, excludes /settings, /writer, /auth)
 - **Webhook**: `/api/webhooks/rb2b` — receives identified visitor data (optionally secured with `RB2B_WEBHOOK_SECRET`)
-- **Admin pages**:
-  - `/admin/leads` — unique contacts
-  - `/admin/leads/visits` — all visits
-  - `/admin/visitors/companies` — aggregated by company
-  - `/admin/visitors/persons` — identified individuals
+- **Settings pages**:
+  - `/settings/leads` — unique contacts
+  - `/settings/leads/visits` — all visits
+  - `/settings/visitors/companies` — aggregated by company
+  - `/settings/visitors/persons` — identified individuals
 - **Data flow**: RB2B script → RB2B servers identify visitor → webhook POST → Lead/LeadVisit created
 - **Env vars**: 
   - `NEXT_PUBLIC_RB2B_API_KEY` — tracking key from RB2B dashboard
@@ -422,7 +422,7 @@ Admin-managed SEO with database persistence using `next-seo` for JSON-LD structu
   - `Post` fields: `seoTitle`, `seoDescription`, `seoKeywords`, `noIndex` (optional overrides)
   - `SiteSettings`: site-wide SEO config (title, description, keywords, org info)
 - **Utilities**: `lib/seo.ts` — `getSiteSettings()`, `getPostSeoValues()`, fallback helpers
-- **Admin UI**: `/admin/seo` — configure site title, description, keywords, organization info for JSON-LD
+- **Settings UI**: `/settings/seo` — configure site title, description, keywords, organization info for JSON-LD
 - **Editor UI**: `components/editor/SeoSection.tsx` — per-post SEO overrides with SERP preview
 - **JSON-LD components** (via `next-seo`):
   - `ArticleJsonLd` + `BreadcrumbJsonLd` on essay pages (`app/e/[slug]/page.tsx`)
@@ -435,7 +435,7 @@ Admin-managed SEO with database persistence using `next-seo` for JSON-LD structu
 Admin-managed third-party integrations with env var fallbacks:
 - **Config**: `lib/integrations/config.ts` — Client-safe config array (no Prisma)
 - **Server helper**: `lib/integrations/index.ts` — `getIntegrationSettings()` with Prisma
-- **Admin UI**: `/admin/integrations` — Data-driven from config array
+- **Settings UI**: `/settings/integrations` — Data-driven from config array
 - **API**: `/api/integrations/settings` — GET/PATCH, handles any field dynamically
 - **Database**: `IntegrationSettings` model with nullable string fields
 - **Fallbacks**: DB values take precedence over env vars
@@ -448,7 +448,7 @@ Admin-managed third-party integrations with env var fallbacks:
 
 ### Topics & Auto-Draft System
 Topic idea generation from RSS feeds:
-- **Admin UI**: `/admin/topics` — Manage topic ideas with status (pending/approved/rejected/used)
+- **Settings UI**: `/settings/topics` — Manage topic ideas with status (pending/approved/rejected/used)
 - **Database**: `TopicIdeaSource` model stores RSS source info (title, link, pubDate, feedUrl)
 - **Auto-draft library**: `lib/auto-draft/` — RSS parsing, keyword matching, slug generation
 - **Script**: `scripts/auto-draft.ts` — CLI to generate topic ideas from configured RSS feeds
@@ -457,7 +457,7 @@ Topic idea generation from RSS feeds:
   1. Run `npx tsx scripts/auto-draft.ts` with RSS feed URLs
   2. System fetches feeds, matches keywords from `lib/auto-draft/keywords.ts`
   3. Generates topic ideas with AI-suggested titles
-  4. Admin reviews/approves in `/admin/topics`
+  4. Admin reviews/approves in `/settings/topics`
   5. Approved topics appear in writer inbox
 
 ### Writer Inbox
@@ -470,7 +470,7 @@ Suggested posts queue for writers:
 ### Route Protection
 Auth checks happen in layout components (client-side):
 - `/writer/*` — `useSession()` hook redirects unauthenticated users to signin (all roles: admin, writer, drafter)
-- `/admin/*` — checks `session.user.role === 'admin'`, redirects non-admins to writer
+- `/settings/*` — checks `session.user.role === 'admin'`, redirects non-admins to writer
 - **Publishing**: API routes check `canPublish(role)` before allowing `status: 'published'`; editor UI hides Publish button for drafters
 This approach avoids Edge runtime limitations with Prisma.
 
@@ -479,7 +479,7 @@ This approach avoids Edge runtime limitations with Prisma.
 - **Google OAuth** via NextAuth.js
 - **Allowlist model**: Only users in `User` table can sign in
 - **Roles**:
-  - `admin` — Full access to /admin and /writer, can publish
+  - `admin` — Full access to /settings and /writer, can publish
   - `writer` — Access to /writer, can publish
   - `drafter` — Access to /writer, can save drafts but cannot publish
 - **Helper**: `canPublish(role)` in `lib/auth.ts` — returns true for admin/writer, false for drafter

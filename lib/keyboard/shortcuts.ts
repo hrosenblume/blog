@@ -8,4 +8,5 @@ export const SHORTCUTS = {
   NEXT: { key: 'ArrowRight' },
   ESCAPE_BACK: { key: 'Escape', allowInInput: true },  // editor→writer
   TOGGLE_CHAT_MODE: { key: 'a', meta: true, shift: true, allowInInput: true },  // Ask↔Agent mode
+  ADD_COMMENT: { key: 'm', meta: true, alt: true, allowInInput: true },  // Google Docs style: Cmd+Option+M
 } as const

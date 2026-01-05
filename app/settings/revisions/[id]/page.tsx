@@ -50,7 +50,7 @@ export default function RevisionDetailPage() {
       const res = await fetch(`/api/admin/revisions/${params.id}/restore`, { method: 'POST' })
       if (res.ok) {
         toast.success('Revision restored successfully!')
-        router.push('/admin/revisions')
+        router.push('/settings/revisions')
       } else {
         const data = await res.json()
         toast.error(data.error || 'Failed to restore')
@@ -74,7 +74,7 @@ export default function RevisionDetailPage() {
     return (
       <div className="text-center py-12">
         <p className="text-muted-foreground">Revision not found</p>
-        <Link href="/admin/revisions" className="text-blue-500 hover:underline mt-4 inline-block">
+        <Link href="/settings/revisions" className="text-blue-500 hover:underline mt-4 inline-block">
           ← Back to revisions
         </Link>
       </div>
@@ -91,7 +91,7 @@ export default function RevisionDetailPage() {
   return (
     <div>
       <div className="mb-8">
-        <Link href="/admin/revisions" className="text-table text-muted-foreground hover:text-foreground mb-2 inline-block">
+        <Link href="/settings/revisions" className="text-table text-muted-foreground hover:text-foreground mb-2 inline-block">
           ← Back to revisions
         </Link>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">

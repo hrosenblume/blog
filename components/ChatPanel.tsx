@@ -97,10 +97,12 @@ export function ChatPanel() {
     }
   }, [open])
 
-  // Auto-scroll to bottom when messages change
+  // Auto-scroll to bottom when messages change or panel opens
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+    if (open) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [messages, open])
 
   // Auto-resize textarea
   useEffect(() => {
@@ -336,6 +338,7 @@ export function ChatPanel() {
               onClick={() => setWebSearchEnabled(!webSearchEnabled)}
               active={webSearchEnabled}
               title={webSearchEnabled ? "Web search enabled" : "Enable web search"}
+              tabIndex={-1}
             >
               <Globe className="w-4 h-4" />
             </ControlButton>
@@ -363,7 +366,6 @@ export function ChatPanel() {
                     : "Ask anything..."
               }
               className="min-h-[40px] max-h-[120px] resize-none"
-              disabled={isStreaming}
               rows={1}
               enterKeyHint="send"
             />
@@ -372,7 +374,7 @@ export function ChatPanel() {
               disabled={!input.trim() || isStreaming}
               size="icon"
               variant="secondary"
-              className="rounded-full w-10 h-10 flex-shrink-0 border border-input"
+              className="rounded-full w-10 h-10 flex-shrink-0 border border-input touch-manipulation"
             >
               {isStreaming ? (
                 <Loader2 className="h-5 w-5 animate-spin" />

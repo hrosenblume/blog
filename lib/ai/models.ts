@@ -26,7 +26,7 @@ export const AI_MODELS = [
     provider: 'openai',
     model: 'gpt-5.2',
     description: 'Latest OpenAI flagship',
-    searchModel: null,
+    searchModel: 'native', // Uses tools-based web search
   },
   {
     id: 'gpt-5-mini',
@@ -34,7 +34,7 @@ export const AI_MODELS = [
     provider: 'openai',
     model: 'gpt-5-mini',
     description: 'Fast and cost-efficient',
-    searchModel: null,
+    searchModel: 'native', // Uses tools-based web search
   },
 ] as const
 
@@ -53,9 +53,9 @@ export function getModel(id: string): AIModel | undefined {
   return AI_MODELS.find(m => m.id === id)
 }
 
-/** Check if a model has a native search variant (can use search without 2-call flow) */
+/** Check if a model has native search (via tools, not a separate model) */
 export function modelHasNativeSearch(id: string): boolean {
-  return AI_MODELS.find(m => m.id === id)?.searchModel !== null
+  return AI_MODELS.find(m => m.id === id)?.searchModel === 'native'
 }
 
 /** Get the search model variant for a model, or null if it uses 2-call flow */

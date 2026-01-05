@@ -22,6 +22,7 @@ import { LENGTH_OPTIONS } from '@/lib/ai/models'
 import { ModelSelector } from '@/components/editor/ModelSelector'
 import { confirmPublish, confirmUnpublish } from '@/lib/utils/confirm'
 import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
+import { useChatContext } from '@/lib/chat'
 import { PostItem, type Post } from '@/components/writer/PostItem'
 
 interface SuggestedPost {
@@ -52,10 +53,13 @@ export default function Dashboard() {
   const { models, selectedModel: modelId, setSelectedModel: setModelId, currentModel } = useAIModels()
   const [length, setLength] = useState<number>(500)
   const [webEnabled, setWebEnabled] = useState(false)
+  
+  // Chat context - check if open to disable shortcuts
+  const { isOpen: chatOpen } = useChatContext()
 
-  // N to create new essay
+  // N to create new essay (disabled when chat is open)
   useKeyboard([
-    { ...SHORTCUTS.NEW_ARTICLE, handler: () => router.push('/writer/editor') },
+    { ...SHORTCUTS.NEW_ARTICLE, handler: () => { if (!chatOpen) router.push('/writer/editor') } },
   ])
 
   useEffect(() => {
@@ -231,6 +235,13 @@ export default function Dashboard() {
               placeholder="Describe your idea..."
               className="min-h-[100px] pr-14 resize-none text-base md:text-base"
               rows={3}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  const form = e.currentTarget.form
+                  if (form) form.requestSubmit()
+                }
+              }}
             />
             <Button 
               type="submit" 
@@ -264,9 +275,15 @@ export default function Dashboard() {
             
             {/* Web Search Toggle */}
             <ControlButton
-              onClick={() => setWebEnabled(!webEnabled)}
+              onClick={(e) => {
+                setWebEnabled(!webEnabled)
+                // Return focus to textarea so Enter submits form
+                const textarea = e.currentTarget.closest('form')?.querySelector('textarea')
+                textarea?.focus()
+              }}
               active={webEnabled}
               title="Search the web for current information"
+              tabIndex={-1}
             >
               <Globe className="w-4 h-4" />
             </ControlButton>
@@ -348,7 +365,7 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <p className="text-muted-foreground text-sm">
-                  No suggested essays — <Link href="/admin/topics" className="text-primary hover:underline">configure topics</Link> to generate drafts
+                  No suggested essays — <Link href="/settings/topics" className="text-primary hover:underline">configure topics</Link> to generate drafts
                 </p>
               )}
             </CollapsibleContent>

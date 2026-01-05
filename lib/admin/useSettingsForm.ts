@@ -30,7 +30,7 @@ interface UseSettingsFormReturn<T> {
  * 2. Allow editing
  * 3. Save with loading/saved states
  * 
- * Reduces boilerplate in /admin/ai, /admin/seo, /admin/integrations pages.
+ * Reduces boilerplate in /settings/ai, /settings/seo, /settings/integrations pages.
  * 
  * @example
  * ```tsx

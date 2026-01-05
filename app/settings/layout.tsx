@@ -48,14 +48,14 @@ function AdminLayoutContent({
     redirect('/api/auth/signin')
   }
 
-  // Only admins can access /admin
+  // Only admins can access /settings
   if (session.user?.role !== 'admin') {
     return (
       <CenteredPage>
         <div className="text-center">
-          <h1 className="text-title font-bold mb-4">Admin Access Required</h1>
+          <h1 className="text-title font-bold mb-4">Settings Access Required</h1>
           <p className="text-muted-foreground mb-6">
-            You need admin privileges to access this page.
+            You need admin privileges to access settings.
           </p>
           <Link 
             href="/writer" 

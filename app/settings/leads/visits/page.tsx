@@ -61,7 +61,7 @@ export default async function LeadVisitsPage({ searchParams }: PageProps) {
       <AdminPageHeader
         title="Visits"
         subtitle={`${totalCount} total visit${totalCount !== 1 ? 's' : ''}`}
-        action={<Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/admin/leads/visits" position="top" />}
+        action={<Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/settings/leads/visits" position="top" />}
       />
 
       <AdminTable
@@ -71,7 +71,7 @@ export default async function LeadVisitsPage({ searchParams }: PageProps) {
         showActions={true}
       />
 
-      <Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/admin/leads/visits" position="bottom" />
+      <Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/settings/leads/visits" position="bottom" />
     </div>
   )
 }

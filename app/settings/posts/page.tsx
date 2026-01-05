@@ -63,7 +63,7 @@ export default async function PostsPage({ searchParams }: PageProps) {
         subtitle={`${totalCount} total post${totalCount !== 1 ? 's' : ''}`}
         action={
           <div className="flex items-center gap-4">
-            <Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/admin/posts" position="top" />
+            <Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/settings/posts" position="top" />
             <Button asChild>
               <Link href="/writer/editor">New Post</Link>
             </Button>
@@ -77,7 +77,7 @@ export default async function PostsPage({ searchParams }: PageProps) {
         emptyMessage="No posts yet."
       />
 
-      <Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/admin/posts" position="bottom" />
+      <Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/settings/posts" position="bottom" />
     </div>
   )
 }

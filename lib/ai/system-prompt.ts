@@ -239,17 +239,23 @@ export function buildChatPrompt(context: StyleContext): string {
  */
 export function buildChatPromptWithEssay(
   context: StyleContext,
-  essay?: EssayContext | null
+  essay?: EssayContext | null,
+  hasWebSearch: boolean = false
 ): string {
   const basePrompt = buildChatPrompt(context)
   
-  if (!essay?.markdown) return basePrompt
+  // Add web search capability notice
+  const webSearchNotice = hasWebSearch 
+    ? `\n\n## Web Search\n\nYou have access to web search. When asked about current events, facts, statistics, or information you're uncertain about, you can search the web to provide accurate, up-to-date information. Use this capability when relevant to the conversation.`
+    : ''
+  
+  if (!essay?.markdown) return basePrompt + webSearchNotice
   
   const header = essay.subtitle 
     ? `# ${essay.title}\n*${essay.subtitle}*` 
     : `# ${essay.title}`
     
-  return `${basePrompt}
+  return `${basePrompt}${webSearchNotice}
 
 ---
 
@@ -268,13 +274,19 @@ ${essay.markdown}`
  */
 export function buildAgentChatPrompt(
   context: StyleContext,
-  essay?: EssayContext | null
+  essay?: EssayContext | null,
+  hasWebSearch: boolean = false
 ): string {
   const template = DEFAULT_AGENT_CHAT_TEMPLATE
   const basePrompt = applyPlaceholders(template, context.customRules, context.chatRules, context.rewriteRules, context.styleExamples)
   
+  // Add web search capability notice
+  const webSearchNotice = hasWebSearch 
+    ? `\n\n## Web Search\n\nYou have access to web search. When adding facts, statistics, or current information to the essay, you can search the web to ensure accuracy. Use this capability when relevant to the user's request.`
+    : ''
+  
   if (!essay?.markdown) {
-    return `${basePrompt}
+    return `${basePrompt}${webSearchNotice}
 
 ---
 
@@ -287,7 +299,7 @@ No essay is currently open. Ask the user to open an essay in the editor first, o
     ? `# ${essay.title}\n*${essay.subtitle}*` 
     : `# ${essay.title}`
     
-  return `${basePrompt}
+  return `${basePrompt}${webSearchNotice}
 
 ---
 

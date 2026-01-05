@@ -19,7 +19,8 @@ export type {
   RevisionFull, 
   StashedContent,
   RevisionState,
-  AIState 
+  AIState,
+  GenerationStatus,
 } from './types'
 
 // Markdown helpers
@@ -29,8 +30,6 @@ export {
   setHeadingAtCursor,
   clearMarkdownFormatting,
 } from './markdown-helpers'
-
-
 
 
 

@@ -2,7 +2,8 @@
 
 import type { RefObject } from 'react'
 import type { Editor } from '@tiptap/react'
-import { Divider } from './toolbar/ToolbarButton'
+import { MessageSquarePlus, MessageSquare } from 'lucide-react'
+import { ToolbarButton, Divider } from './toolbar/ToolbarButton'
 import { FormatButtons } from './toolbar/FormatButtons'
 import { BlockButtons } from './toolbar/BlockButtons'
 import { MediaButtons } from './toolbar/MediaButtons'
@@ -23,6 +24,12 @@ interface EditorToolbarProps {
   revisions?: RevisionState
   // AI rewrite (for disabling button during generation)
   aiGenerating?: boolean
+  // Comments
+  hasSelection?: boolean
+  selectionHasComment?: boolean
+  onAddComment?: () => void
+  commentsCount?: number
+  onViewComments?: () => void
 }
 
 export function EditorToolbar({
@@ -35,6 +42,11 @@ export function EditorToolbar({
   postSlug,
   revisions,
   aiGenerating,
+  hasSelection,
+  selectionHasComment,
+  onAddComment,
+  commentsCount,
+  onViewComments,
 }: EditorToolbarProps) {
   return (
     <div className="flex items-center justify-start md:justify-center gap-0.5 px-4 py-2 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-black overflow-x-auto">
@@ -74,6 +86,36 @@ export function EditorToolbar({
         postSlug={postSlug}
         revisions={revisions}
       />
+
+      {onViewComments && (
+        <>
+          <Divider />
+          <ToolbarButton
+            onClick={onAddComment}
+            disabled={!hasSelection}
+            title={
+              hasSelection 
+                ? 'New comment (⌘⌥M)' 
+                : selectionHasComment 
+                  ? 'Text already has a comment' 
+                  : 'Select text to comment'
+            }
+          >
+            <MessageSquarePlus className="w-4 h-4" />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={onViewComments}
+            title="View all comments"
+          >
+            <span className="flex items-center gap-1">
+              <MessageSquare className="w-4 h-4" />
+              {commentsCount !== undefined && commentsCount > 0 && (
+                <span className="text-xs tabular-nums">{commentsCount}</span>
+              )}
+            </span>
+          </ToolbarButton>
+        </>
+      )}
     </div>
   )
 }

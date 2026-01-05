@@ -27,7 +27,7 @@ export default async function UsersPage() {
     ],
     actions: (
       <SimpleActionsMenu
-        editHref={`/admin/users/${user.id}`}
+        editHref={`/settings/users/${user.id}`}
         deleteEndpoint={`/api/admin/users/${user.id}`}
         deleteConfirmMessage={`Delete user "${user.email}"?`}
       />
@@ -42,7 +42,7 @@ export default async function UsersPage() {
       <div className="flex items-center justify-between mb-6 md:mb-8">
         <h1 className="text-section font-bold">Users</h1>
         <Button asChild>
-          <Link href="/admin/users/new">Add User</Link>
+          <Link href="/settings/users/new">Add User</Link>
         </Button>
       </div>
 

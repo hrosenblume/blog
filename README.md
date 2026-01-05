@@ -84,20 +84,20 @@ SPACES_SECRET="..."
 | `/e/[slug]` | Single essay |
 | `/writer` | Writer dashboard |
 | `/writer/editor` | Create/edit essays |
-| `/admin` | Admin dashboard |
-| `/admin/ai` | AI writing rules & model settings |
-| `/admin/seo` | Site-wide SEO settings |
-| `/admin/tags` | Tag management |
-| `/admin/topics` | Auto-draft topic subscriptions |
-| `/admin/leads` | Lead tracking |
-| `/admin/users` | User management |
-| `/admin/revisions` | Post revision history |
+| `/settings` | Settings dashboard |
+| `/settings/ai` | AI writing rules & model settings |
+| `/settings/seo` | Site-wide SEO settings |
+| `/settings/tags` | Tag management |
+| `/settings/topics` | Auto-draft topic subscriptions |
+| `/settings/leads` | Lead tracking |
+| `/settings/users` | User management |
+| `/settings/revisions` | Post revision history |
 
 ## SEO
 
-SEO is managed through the admin panel and editor:
+SEO is managed through the settings panel and editor:
 
-- **Site-wide settings** (`/admin/seo`) — Title template, description, keywords, organization info for JSON-LD
+- **Site-wide settings** (`/settings/seo`) — Title template, description, keywords, organization info for JSON-LD
 - **Per-post overrides** (editor) — Custom title, description, keywords, noIndex flag
 - **Auto-generation** — SEO fields auto-populate from post content if not overridden
 - **Structured data** — ArticleJsonLd, BreadcrumbJsonLd, OrganizationJsonLd via next-seo

@@ -36,12 +36,14 @@ async function getApiKey(provider: 'anthropic' | 'openai'): Promise<string | nul
  * 
  * @param modelId - Can be either a model ID from AI_MODELS (e.g., 'gpt-5.2') 
  *                  or a raw model name (e.g., 'gpt-5.2-search-preview')
+ * @param useWebSearch - Enable web search tools (OpenAI only)
  */
 export async function generate(
   modelId: string,
   systemPrompt: string,
   userPrompt: string,
-  maxTokens: number = 4096
+  maxTokens: number = 4096,
+  useWebSearch: boolean = false
 ): Promise<GenerateResult> {
   // First try to resolve from AI_MODELS
   const model = getModel(modelId)
@@ -51,7 +53,7 @@ export async function generate(
     if (model.provider === 'anthropic') {
       return generateWithAnthropic(model.model, systemPrompt, userPrompt, maxTokens)
     }
-    return generateWithOpenAI(model.model, systemPrompt, userPrompt, maxTokens)
+    return generateWithOpenAI(model.model, systemPrompt, userPrompt, maxTokens, useWebSearch)
   }
   
   // Raw model name - determine provider from name
@@ -59,7 +61,7 @@ export async function generate(
     return generateWithAnthropic(modelId, systemPrompt, userPrompt, maxTokens)
   }
   // Assume OpenAI for gpt-*, o1-*, etc.
-  return generateWithOpenAI(modelId, systemPrompt, userPrompt, maxTokens)
+  return generateWithOpenAI(modelId, systemPrompt, userPrompt, maxTokens, useWebSearch)
 }
 
 async function generateWithAnthropic(
@@ -70,7 +72,7 @@ async function generateWithAnthropic(
 ): Promise<GenerateResult> {
   const apiKey = await getApiKey('anthropic')
   if (!apiKey) {
-    throw new Error('Anthropic API key is not configured. Add it at /admin/integrations')
+    throw new Error('Anthropic API key is not configured. Add it at /settings/integrations')
   }
 
   const client = new Anthropic({
@@ -102,20 +104,24 @@ async function generateWithOpenAI(
   model: string,
   systemPrompt: string,
   userPrompt: string,
-  maxTokens: number
+  maxTokens: number,
+  useWebSearch: boolean = false
 ): Promise<GenerateResult> {
   const apiKey = await getApiKey('openai')
   if (!apiKey) {
-    throw new Error('OpenAI API key is not configured. Add it at /admin/integrations')
+    throw new Error('OpenAI API key is not configured. Add it at /settings/integrations')
   }
 
-  const client = new OpenAI({
-    apiKey,
-  })
+  // Use Responses API for web search, Chat Completions for normal requests
+  if (useWebSearch) {
+    return generateWithOpenAIResponses(apiKey, model, systemPrompt, userPrompt, maxTokens)
+  }
+
+  const client = new OpenAI({ apiKey })
 
   const response = await client.chat.completions.create({
     model,
-    max_tokens: maxTokens,
+    max_completion_tokens: maxTokens,
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt },
@@ -131,6 +137,53 @@ async function generateWithOpenAI(
     text: content,
     inputTokens: response.usage?.prompt_tokens,
     outputTokens: response.usage?.completion_tokens,
+  }
+}
+
+/**
+ * Generate using OpenAI Responses API (supports web search tool)
+ */
+async function generateWithOpenAIResponses(
+  apiKey: string,
+  model: string,
+  systemPrompt: string,
+  userPrompt: string,
+  maxTokens: number
+): Promise<GenerateResult> {
+  const response = await fetch('https://api.openai.com/v1/responses', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model,
+      instructions: systemPrompt,
+      input: userPrompt,
+      max_output_tokens: maxTokens,
+      tools: [{ type: 'web_search' }],
+    }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error?.message || `OpenAI API error: ${response.status}`)
+  }
+
+  const data = await response.json()
+  
+  // Extract text from response output
+  const textOutput = data.output?.find((item: { type: string }) => item.type === 'message')
+  const content = textOutput?.content?.find((c: { type: string }) => c.type === 'output_text')?.text
+  
+  if (!content) {
+    throw new Error('No content in response')
+  }
+
+  return {
+    text: content,
+    inputTokens: data.usage?.input_tokens,
+    outputTokens: data.usage?.output_tokens,
   }
 }
 
@@ -162,12 +215,14 @@ export async function* generateStream(
  * 
  * @param modelId - Can be either a model ID from AI_MODELS (e.g., 'gpt-5.2') 
  *                  or a raw model name (e.g., 'gpt-5.2-search-preview')
+ * @param useWebSearch - Enable web search tools (OpenAI only)
  */
 export async function* generateChatStream(
   modelId: string,
   systemPrompt: string,
   messages: ChatMessage[],
-  maxTokens: number = 4096
+  maxTokens: number = 4096,
+  useWebSearch: boolean = false
 ): AsyncGenerator<string, void, unknown> {
   // First try to resolve from AI_MODELS
   const model = getModel(modelId)
@@ -177,7 +232,7 @@ export async function* generateChatStream(
     if (model.provider === 'anthropic') {
       yield* chatStreamWithAnthropic(model.model, systemPrompt, messages, maxTokens)
     } else {
-      yield* chatStreamWithOpenAI(model.model, systemPrompt, messages, maxTokens)
+      yield* chatStreamWithOpenAI(model.model, systemPrompt, messages, maxTokens, useWebSearch)
     }
   } else {
     // Raw model name - determine provider from name
@@ -185,7 +240,7 @@ export async function* generateChatStream(
       yield* chatStreamWithAnthropic(modelId, systemPrompt, messages, maxTokens)
     } else {
       // Assume OpenAI for gpt-*, o1-*, etc.
-      yield* chatStreamWithOpenAI(modelId, systemPrompt, messages, maxTokens)
+      yield* chatStreamWithOpenAI(modelId, systemPrompt, messages, maxTokens, useWebSearch)
     }
   }
 }
@@ -198,7 +253,7 @@ async function* streamWithAnthropic(
 ): AsyncGenerator<string, void, unknown> {
   const apiKey = await getApiKey('anthropic')
   if (!apiKey) {
-    throw new Error('Anthropic API key is not configured. Add it at /admin/integrations')
+    throw new Error('Anthropic API key is not configured. Add it at /settings/integrations')
   }
 
   const client = new Anthropic({ apiKey })
@@ -225,14 +280,14 @@ async function* streamWithOpenAI(
 ): AsyncGenerator<string, void, unknown> {
   const apiKey = await getApiKey('openai')
   if (!apiKey) {
-    throw new Error('OpenAI API key is not configured. Add it at /admin/integrations')
+    throw new Error('OpenAI API key is not configured. Add it at /settings/integrations')
   }
 
   const client = new OpenAI({ apiKey })
 
   const stream = await client.chat.completions.create({
     model,
-    max_tokens: maxTokens,
+    max_completion_tokens: maxTokens,
     stream: true,
     messages: [
       { role: 'system', content: systemPrompt },
@@ -256,7 +311,7 @@ async function* chatStreamWithAnthropic(
 ): AsyncGenerator<string, void, unknown> {
   const apiKey = await getApiKey('anthropic')
   if (!apiKey) {
-    throw new Error('Anthropic API key is not configured. Add it at /admin/integrations')
+    throw new Error('Anthropic API key is not configured. Add it at /settings/integrations')
   }
 
   const client = new Anthropic({ apiKey })
@@ -279,18 +334,25 @@ async function* chatStreamWithOpenAI(
   model: string,
   systemPrompt: string,
   messages: ChatMessage[],
-  maxTokens: number
+  maxTokens: number,
+  useWebSearch: boolean = false
 ): AsyncGenerator<string, void, unknown> {
   const apiKey = await getApiKey('openai')
   if (!apiKey) {
-    throw new Error('OpenAI API key is not configured. Add it at /admin/integrations')
+    throw new Error('OpenAI API key is not configured. Add it at /settings/integrations')
+  }
+
+  // Use Responses API for web search, Chat Completions for normal requests
+  if (useWebSearch) {
+    yield* chatStreamWithOpenAIResponses(apiKey, model, systemPrompt, messages, maxTokens)
+    return
   }
 
   const client = new OpenAI({ apiKey })
 
   const stream = await client.chat.completions.create({
     model,
-    max_tokens: maxTokens,
+    max_completion_tokens: maxTokens,
     stream: true,
     messages: [
       { role: 'system', content: systemPrompt },
@@ -302,6 +364,89 @@ async function* chatStreamWithOpenAI(
     const delta = chunk.choices[0]?.delta?.content
     if (delta) {
       yield delta
+    }
+  }
+}
+
+/**
+ * Stream chat using OpenAI Responses API (supports web search tool)
+ */
+async function* chatStreamWithOpenAIResponses(
+  apiKey: string,
+  model: string,
+  systemPrompt: string,
+  messages: ChatMessage[],
+  maxTokens: number
+): AsyncGenerator<string, void, unknown> {
+  // Convert messages to Responses API input format
+  // The last user message is the main input, previous messages are context
+  const lastUserMessage = messages[messages.length - 1]
+  const previousMessages = messages.slice(0, -1)
+  
+  // Build input with conversation history
+  let input = ''
+  if (previousMessages.length > 0) {
+    input = previousMessages.map(m => 
+      `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`
+    ).join('\n\n') + '\n\nUser: ' + lastUserMessage.content
+  } else {
+    input = lastUserMessage.content
+  }
+
+  const response = await fetch('https://api.openai.com/v1/responses', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model,
+      instructions: systemPrompt,
+      input,
+      max_output_tokens: maxTokens,
+      tools: [{ type: 'web_search' }],
+      stream: true,
+    }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error?.message || `OpenAI API error: ${response.status}`)
+  }
+
+  const reader = response.body?.getReader()
+  if (!reader) throw new Error('No response body')
+
+  const decoder = new TextDecoder()
+  let buffer = ''
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+
+    buffer += decoder.decode(value, { stream: true })
+    
+    // Process SSE events
+    const lines = buffer.split('\n')
+    buffer = lines.pop() || '' // Keep incomplete line in buffer
+
+    for (const line of lines) {
+      if (line.startsWith('data: ')) {
+        const data = line.slice(6)
+        if (data === '[DONE]') continue
+        
+        try {
+          const event = JSON.parse(data)
+          // Handle different event types from Responses API streaming
+          if (event.type === 'response.output_text.delta') {
+            yield event.delta || ''
+          } else if (event.type === 'content_part.delta' && event.delta?.text) {
+            yield event.delta.text
+          }
+        } catch {
+          // Skip malformed JSON
+        }
+      }
     }
   }
 }

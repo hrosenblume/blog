@@ -56,5 +56,3 @@ export const MagicBackButton = React.forwardRef<HTMLButtonElement, MagicBackButt
 MagicBackButton.displayName = 'MagicBackButton'
 
 
-
-

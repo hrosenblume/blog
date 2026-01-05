@@ -59,7 +59,7 @@ export function UserFormPage({ userId }: { userId?: string }) {
     )
 
     if (res.ok) {
-      router.push('/admin/users')
+      router.push('/settings/users')
     } else {
       const result = await res.json()
       setError(result.error ?? `Failed to ${isEdit ? 'update' : 'create'} user`)
@@ -72,7 +72,7 @@ export function UserFormPage({ userId }: { userId?: string }) {
 
   return (
     <div>
-      <BackLink href="/admin/users" label="Back to Users" />
+      <BackLink href="/settings/users" label="Back to Users" />
       <h1 className="text-section font-bold mb-8">
         {isEdit ? 'Edit User' : 'Add New User'}
       </h1>
@@ -127,7 +127,7 @@ export function UserFormPage({ userId }: { userId?: string }) {
               {saving ? (isEdit ? 'Saving...' : 'Creating...') : (isEdit ? 'Save Changes' : 'Create User')}
             </Button>
             <Button variant="ghost" asChild>
-              <Link href="/admin/users">Cancel</Link>
+              <Link href="/settings/users">Cancel</Link>
             </Button>
           </div>
         </form>

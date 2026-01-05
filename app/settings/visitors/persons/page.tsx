@@ -131,7 +131,7 @@ export default async function PersonVisitorsPage({ searchParams }: PageProps) {
       <AdminPageHeader
         title="Person Visitors"
         subtitle={`${totalCount} identified visitor${totalCount !== 1 ? 's' : ''}`}
-        action={<Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/admin/visitors/persons" position="top" />}
+        action={<Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/settings/visitors/persons" position="top" />}
       />
 
       <AdminTable
@@ -141,7 +141,7 @@ export default async function PersonVisitorsPage({ searchParams }: PageProps) {
         showActions={false}
       />
 
-      <Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/admin/visitors/persons" position="bottom" />
+      <Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/settings/visitors/persons" position="bottom" />
     </div>
   )
 }

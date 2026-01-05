@@ -109,7 +109,7 @@ export default function InboxPage() {
         <div className="text-center py-16 border border-dashed rounded-lg">
           <p className="text-muted-foreground mb-4">No suggested essays</p>
           <p className="text-sm text-muted-foreground">
-            Configure <Link href="/admin/topics" className="text-primary hover:underline">topic subscriptions</Link> to automatically generate drafts
+            Configure <Link href="/settings/topics" className="text-primary hover:underline">topic subscriptions</Link> to automatically generate drafts
           </p>
         </div>
       ) : (

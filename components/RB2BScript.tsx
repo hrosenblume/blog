@@ -10,8 +10,8 @@ type RB2BScriptProps = {
 export function RB2BScript({ apiKey }: RB2BScriptProps) {
   const pathname = usePathname()
 
-  // Only track public-facing pages (not admin/writer/auth)
-  if (!apiKey || pathname?.startsWith('/admin') || pathname?.startsWith('/writer') || pathname?.startsWith('/auth')) {
+  // Only track public-facing pages (not settings/writer/auth)
+  if (!apiKey || pathname?.startsWith('/settings') || pathname?.startsWith('/writer') || pathname?.startsWith('/auth')) {
     return null
   }
 

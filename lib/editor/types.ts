@@ -28,8 +28,10 @@ export interface RevisionState {
   restore: () => Promise<void>
 }
 
+export type GenerationStatus = 'complete' | 'stopped' | 'error'
+
 export interface AIState {
   generating: boolean
-  generate: (prompt: string, wordCount: number, modelId?: string, useWebSearch?: boolean) => Promise<void>
+  generate: (prompt: string, wordCount: number, modelId?: string, useWebSearch?: boolean) => Promise<GenerationStatus>
   stop: () => void
 }

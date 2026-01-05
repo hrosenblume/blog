@@ -8,10 +8,45 @@ import { getRandomShape } from '@/lib/polyhedra/shapes'
 import { confirmPublish, confirmUnpublish } from '@/lib/utils/confirm'
 import { useContentStash } from './useContentStash'
 import type { RevisionSummary, RevisionFull, RevisionState, AIState } from './types'
+import type { CommentWithUser } from '@/lib/comments'
+import {
+  fetchComments as apiFetchComments,
+  createComment as apiCreateComment,
+  updateComment as apiUpdateComment,
+  deleteComment as apiDeleteComment,
+  toggleResolve as apiToggleResolve,
+  resolveAllComments as apiResolveAll,
+} from '@/lib/comments'
+import { addCommentMark, removeCommentMark, applyCommentMarks, scrollToComment } from './comment-mark'
 
 interface Tag {
   id: string
   name: string
+}
+
+export interface SelectionState {
+  text: string
+  from: number
+  to: number
+  hasExistingComment: boolean
+}
+
+export interface CommentsState {
+  list: CommentWithUser[]
+  loading: boolean
+  activeId: string | null
+  setActiveId: (id: string | null) => void
+  selectedText: SelectionState | null
+  setSelectedText: (selection: SelectionState | null) => void
+  postId: string | null
+  create: (content: string) => Promise<void>
+  reply: (parentId: string, content: string) => Promise<void>
+  edit: (commentId: string, content: string) => Promise<void>
+  remove: (commentId: string) => Promise<void>
+  resolve: (commentId: string) => Promise<void>
+  resolveAll: () => Promise<void>
+  scrollTo: (commentId: string) => void
+  openCount: number
 }
 
 export interface PostContent {
@@ -46,7 +81,7 @@ export interface PostEditorNav {
 }
 
 export interface PostEditorActions {
-  save: (status: 'draft' | 'published') => Promise<void>
+  save: (status: 'draft' | 'published', options?: { skipConfirm?: boolean }) => Promise<void>
   unpublish: () => Promise<void>
   delete: () => Promise<void>
 }
@@ -94,6 +129,9 @@ export interface UsePostEditorReturn {
   
   // AI generation
   ai: AIState
+  
+  // Comments
+  comments: CommentsState
 }
 
 export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn {
@@ -154,6 +192,13 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
   const [aiGenerating, setAiGenerating] = useState(false)
   const aiAbortController = useRef<AbortController | null>(null)
 
+  // Comments state
+  const [comments, setComments] = useState<CommentWithUser[]>([])
+  const [commentsLoading, setCommentsLoading] = useState(false)
+  const [activeCommentId, setActiveCommentId] = useState<string | null>(null)
+  const [selectedText, setSelectedText] = useState<SelectionState | null>(null)
+  const [postId, setPostId] = useState<string | null>(null)
+
   // Load existing post
   useEffect(() => {
     if (!postSlug) return
@@ -183,6 +228,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
         setOgImage(data.ogImage || '')
         // Tags
         setTagsState(data.tags || [])
+        setPostId(data.id)
         lastSavedContent.current = {
           title: data.title,
           subtitle: data.subtitle || '',
@@ -294,9 +340,10 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
     }
   }, [])
 
-  // Save handler (silent mode skips button spinner for autosave)
-  const handleSave = useCallback(async (publishStatus: 'draft' | 'published', options?: { silent?: boolean }) => {
+  // Save handler (silent mode skips button spinner for autosave, skipConfirm skips publish dialog)
+  const handleSave = useCallback(async (publishStatus: 'draft' | 'published', options?: { silent?: boolean; skipConfirm?: boolean }) => {
     const silent = options?.silent ?? false
+    const skipConfirm = options?.skipConfirm ?? false
 
     if (!title.trim()) {
       if (!silent) alert('Title is required')
@@ -307,7 +354,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
       return
     }
 
-    if (publishStatus === 'published' && !confirmPublish()) {
+    if (publishStatus === 'published' && !skipConfirm && !confirmPublish()) {
       return
     }
 
@@ -557,7 +604,8 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
   }, [previewingRevision, editor, fetchRevisions, stash])
 
   // Generate content with AI (streaming)
-  const generateWithAI = useCallback(async (prompt: string, wordCount: number, modelId?: string, useWebSearch?: boolean) => {
+  // Returns: 'complete' | 'stopped' | 'error'
+  const generateWithAI = useCallback(async (prompt: string, wordCount: number, modelId?: string, useWebSearch?: boolean): Promise<'complete' | 'stopped' | 'error'> => {
     setAiGenerating(true)
     
     // Create new AbortController for this request
@@ -609,7 +657,11 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
 
       while (true) {
         // Check if aborted before reading
-        if (signal.aborted) break
+        if (signal.aborted) {
+          editor?.setEditable(true)
+          setHasEditedSinceLastSave(true)
+          return 'stopped'
+        }
         
         const { done, value } = await reader.read()
         if (done) break
@@ -640,19 +692,21 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
       // 5. Generation complete - content is already in place, enable editing
       editor?.setEditable(true)
       setHasEditedSinceLastSave(true)
+      return 'complete'
     } catch (err) {
       // Handle abort gracefully - not an error
       if (err instanceof Error && err.name === 'AbortError') {
         // User stopped generation - keep whatever content was streamed, enable editing
         editor?.setEditable(true)
         setHasEditedSinceLastSave(true)
-        return
+        return 'stopped'
       }
       
       // On error, re-enable editing (revision was already saved if there was content)
       editor?.setEditable(true)
       alert(err instanceof Error ? err.message : 'Generation failed')
       console.error(err)
+      return 'error'
     } finally {
       setAiGenerating(false)
       aiAbortController.current = null
@@ -665,6 +719,164 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
       aiAbortController.current.abort()
     }
   }, [])
+
+  // Fetch comments when post loads
+  useEffect(() => {
+    if (!postId || loading) return
+    
+    setCommentsLoading(true)
+    apiFetchComments(postId)
+      .then((fetchedComments) => {
+        setComments(fetchedComments)
+        // Apply comment marks after a short delay to ensure editor is ready
+        // Only apply marks for unresolved comments
+        setTimeout(() => {
+          if (editor) {
+            const unresolvedComments = fetchedComments.filter(c => !c.resolved)
+            applyCommentMarks(editor, unresolvedComments)
+          }
+        }, 100)
+      })
+      .catch(console.error)
+      .finally(() => setCommentsLoading(false))
+  }, [postId, loading, editor])
+
+  // Comment actions
+  const createComment = useCallback(async (content: string) => {
+    if (!postId || !selectedText) return
+    
+    const comment = await apiCreateComment(postId, {
+      quotedText: selectedText.text,
+      content,
+    })
+    
+    // Add mark to editor
+    if (editor) {
+      addCommentMark(editor, comment.id, selectedText.from, selectedText.to)
+    }
+    
+    // Add to list with empty replies array
+    setComments(prev => [{ ...comment, replies: [] }, ...prev])
+    setSelectedText(null)
+  }, [postId, selectedText, editor])
+
+  const replyToComment = useCallback(async (parentId: string, content: string) => {
+    if (!postId) return
+    
+    const reply = await apiCreateComment(postId, {
+      quotedText: '',
+      content,
+      parentId,
+    })
+    
+    // Add reply to parent comment
+    setComments(prev => prev.map(c => 
+      c.id === parentId 
+        ? { ...c, replies: [...(c.replies || []), reply] }
+        : c
+    ))
+  }, [postId])
+
+  const editComment = useCallback(async (commentId: string, content: string) => {
+    if (!postId) return
+    
+    const updated = await apiUpdateComment(postId, commentId, content)
+    
+    // Update in list (could be top-level or reply)
+    setComments(prev => prev.map(c => {
+      if (c.id === commentId) {
+        return { ...c, content: updated.content, updatedAt: updated.updatedAt }
+      }
+      if (c.replies) {
+        return {
+          ...c,
+          replies: c.replies.map(r => 
+            r.id === commentId 
+              ? { ...r, content: updated.content, updatedAt: updated.updatedAt }
+              : r
+          )
+        }
+      }
+      return c
+    }))
+  }, [postId])
+
+  const removeComment = useCallback(async (commentId: string) => {
+    if (!postId) return
+    
+    await apiDeleteComment(postId, commentId)
+    
+    // Remove mark from editor
+    if (editor) {
+      removeCommentMark(editor, commentId)
+    }
+    
+    // Remove from list (and any replies if it's a parent)
+    setComments(prev => {
+      // Check if it's a top-level comment
+      const isTopLevel = prev.some(c => c.id === commentId)
+      if (isTopLevel) {
+        return prev.filter(c => c.id !== commentId)
+      }
+      // Otherwise it's a reply - remove from parent's replies
+      return prev.map(c => ({
+        ...c,
+        replies: c.replies?.filter(r => r.id !== commentId)
+      }))
+    })
+  }, [postId, editor])
+
+  const resolveComment = useCallback(async (commentId: string) => {
+    if (!postId) return
+    
+    const updated = await apiToggleResolve(postId, commentId)
+    
+    // Toggle highlight: remove when resolved, re-add when unresolved
+    if (editor) {
+      if (updated.resolved) {
+        // Remove highlight when resolved
+        removeCommentMark(editor, commentId)
+      } else {
+        // Re-add highlight when unresolved (find the text and mark it)
+        const comment = comments.find(c => c.id === commentId)
+        if (comment?.quotedText) {
+          applyCommentMarks(editor, [comment])
+        }
+      }
+    }
+    
+    // Update in list
+    setComments(prev => prev.map(c => 
+      c.id === commentId ? updated : c
+    ))
+  }, [postId, editor, comments])
+
+  const scrollToCommentMark = useCallback((commentId: string) => {
+    if (editor) {
+      scrollToComment(editor, commentId)
+    }
+    setActiveCommentId(commentId)
+  }, [editor])
+
+  // Resolve all open comments
+  const resolveAllCommentsAction = useCallback(async () => {
+    if (!postId) return
+    
+    await apiResolveAll(postId)
+    
+    // Remove all highlights from editor
+    if (editor) {
+      comments.filter(c => !c.resolved && !c.parentId).forEach(c => {
+        removeCommentMark(editor, c.id)
+      })
+    }
+    
+    // Mark all as resolved in local state
+    setComments(prev => prev.map(c => ({ ...c, resolved: true })))
+  }, [postId, editor, comments])
+
+  // Count of open (unresolved) comments
+  const openCommentsCount = comments.filter(c => !c.resolved && !c.parentId).length
 
   return {
     post: { title, subtitle, slug, markdown, polyhedraShape, status, seoTitle, seoDescription, seoKeywords, noIndex, ogImage, tags },
@@ -716,6 +928,24 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
       generating: aiGenerating,
       generate: generateWithAI,
       stop: stopAiGeneration,
+    },
+    
+    comments: {
+      list: comments,
+      loading: commentsLoading,
+      activeId: activeCommentId,
+      setActiveId: setActiveCommentId,
+      selectedText,
+      setSelectedText,
+      postId,
+      create: createComment,
+      reply: replyToComment,
+      edit: editComment,
+      remove: removeComment,
+      resolve: resolveComment,
+      resolveAll: resolveAllCommentsAction,
+      scrollTo: scrollToCommentMark,
+      openCount: openCommentsCount,
     },
   }
 }

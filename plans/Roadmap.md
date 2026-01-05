@@ -2,46 +2,32 @@
 
 ## Now
 
-*(Nothing active — pick from Soon)*
+*(Nothing active — pick from Later)*
 
 ---
 
-## Soon
+## Recently Completed
 
-### 🐛 Mobile Chat Bugs (Critical)
+### ✅ Mobile Touch/Chat Bugs
+- [x] Writer navbar buttons stop responding → added `type="button"` and `touch-manipulation`
+- [x] Chat window scrolls to top on open/close → scroll to bottom on open
+- [x] Globe icon triggers send on mobile → fixed ControlButton type
+- [x] Message input blocked during loading → removed disabled state from textarea
 
-Multiple issues with chat on mobile:
+### ✅ AI/Web Search
+- [x] Web search not working → switched to OpenAI Responses API
+- [x] OpenAI models returning errors → fixed `max_completion_tokens` param
+- [x] Claude web search → 2-call flow with GPT fetching results first
 
-- [ ] Mobile buttons stop responding (touch events issue?)
-- [ ] Chat window scrolls to top on open/close (should stay at bottom)
-- [ ] Globe icon triggers send on mobile instead of toggling web search
-- [ ] Message input blocked while response loading — hangs and requires refresh
-- [ ] Sending should not be blocked during loading (allow queuing or cancel)
+### ✅ Revision History
+- [x] Missing restore button → added Restore/Cancel buttons to preview banner
 
----
-
-### 🐛 AI/Web Search Issues
-
-- [ ] Web access for models doesn't work
-- [ ] OpenAI models returning errors (likely tied to web access)
-
----
-
-### 🐛 Revision History - Missing Restore Button
-
-No button to restore when previewing a version in Revision History dropdown.
+### ✅ Settings Navigation
+- [x] Remove Admin badge → navbar now shows "Settings" on admin pages
 
 ---
 
-### 🎨 Simplify Settings Navigation
-
-Settings should just be a settings page — no special "Admin" badge in navbar.
-
-**Current:** Writer AI [Admin] badge appears when on /admin pages, feels heavy.
-
-**Goal:** Settings is just another page accessible from dropdown, no visual mode switch. Remove the admin badge, simplify nesting.
-
----
+## Later
 
 ### ✨ Polyhedra on Essay Pages
 
@@ -50,18 +36,6 @@ Add 3D shapes to essay pages (already assigned via `polyhedraShape`).
 **Consider:** Placement (header/sidebar/corner), smaller size, scroll performance, mobile/reduced-motion.
 
 ---
-
-### 🎨 View All Essays Link
-
-"View all essays →" feels disconnected. Options:
-- Inline with "Recent Essays" header
-- Card-style footer
-- Final row in essay list
-- Floating after scroll
-
----
-
-## Later
 
 ### ✨ Select Investments Section
 
@@ -90,16 +64,6 @@ Manual control over homepage essays instead of most recent.
 ### 🎨 Visual Bio Section
 
 Make homepage bio more engaging. Keep minimal aesthetic, respect motion preferences.
-
----
-
-### ✨ Persistent Chat History
-
-Save chat to DB, resume across sessions.
-
-**Schema:** `ChatMessage` (userId, postId?, role, content, createdAt)
-
-**Features:** Load previous messages, clear/archive, conversation grouping.
 
 ---
 
@@ -134,21 +98,24 @@ Generate social media posts from published essays for Twitter/X and LinkedIn.
 
 ### ✨ Scalable Research Flows
 
-*(Details TBD)*
+Context stitching and smart essay building — ways to gather, organize, and synthesize research into coherent essays.
+
+**Sources:**
+- Twitter/X accounts I follow (trends, conversations, hot takes)
+- RSS feeds, newsletters, articles
+- Manual snippets and notes
+
+**Ideas:**
+- Aggregate content from multiple sources into a research pool
+- Surface essay ideas based on trends and what people are talking about
+- Save and tag research snippets/sources
+- Link related sources together
+- AI-assisted outlining from collected research
+- Smart context injection when generating essays
 
 ---
 
-### ✨ Google Docs-Style Comments
+### ✨ Inline Comments on Large Screens
 
-Inline commenting system for essays (collaborative editing/feedback).
-
-**Features:**
-- Highlight text → add comment
-- Reply threads on comments
-- Resolve/unresolve comments
-- Notifications for replies
-- Permission levels (viewer can comment, editor can resolve)
-
-**Schema:** `Comment` (postId, userId, selection range, content, parentId?, resolved, createdAt)
-
+Show comments alongside highlighted text on larger screens (side panel or margin annotations), instead of requiring users to open the comments panel.
 

@@ -5,6 +5,8 @@ import { useEffect, useRef } from 'react'
 interface Shortcut {
   key: string
   meta?: boolean
+  alt?: boolean
+  shift?: boolean
   handler: () => void
   allowInInput?: boolean
 }
@@ -39,9 +41,19 @@ export function useKeyboard(shortcuts: Shortcut[]) {
         }
 
         const metaMatch = shortcut.meta ? e.metaKey : !e.metaKey
-        const keyMatch = e.key === shortcut.key || e.key.toLowerCase() === shortcut.key
+        const altMatch = shortcut.alt ? e.altKey : !e.altKey
+        const shiftMatch = shortcut.shift ? e.shiftKey : !e.shiftKey
+        
+        // Check both e.key and e.code for matching
+        // When Alt/Option is pressed on Mac, the key character changes (e.g., m → µ)
+        // So we also check e.code (physical key) for alt-modified shortcuts
+        const keyLower = e.key.toLowerCase()
+        const codeLower = e.code.toLowerCase()
+        const targetKey = shortcut.key.toLowerCase()
+        const keyMatch = keyLower === targetKey || 
+          (shortcut.alt && codeLower === `key${targetKey}`)
 
-        if (metaMatch && keyMatch) {
+        if (metaMatch && altMatch && shiftMatch && keyMatch) {
           e.preventDefault()
           shortcut.handler()
           return

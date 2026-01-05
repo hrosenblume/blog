@@ -9,22 +9,23 @@ export type AdminNavItem = {
 }
 
 export const adminNavItems: AdminNavItem[] = [
-  { label: 'Users', href: '/admin/users', countKey: 'users' },
-  { label: 'Posts', href: '/admin/posts', countKey: 'posts' },
-  { label: 'Tags', href: '/admin/tags', countKey: 'tags' },
-  { label: 'Revisions', href: '/admin/revisions', countKey: 'revisions' },
-  { label: 'Visits', href: '/admin/leads/visits', countKey: 'visits' },
-  { label: 'Companies', href: '/admin/visitors/companies', countKey: 'companies' },
-  { label: 'Persons', href: '/admin/visitors/persons', countKey: 'persons' },
-  { label: 'Topics', href: '/admin/topics', countKey: 'topics', featureFlag: 'autoDraftEnabled' },
-  { label: 'AI', href: '/admin/ai' },
-  { label: 'SEO', href: '/admin/seo' },
-  { label: 'Integrations', href: '/admin/integrations' },
+  { label: 'Users', href: '/settings/users', countKey: 'users' },
+  { label: 'Posts', href: '/settings/posts', countKey: 'posts' },
+  { label: 'Tags', href: '/settings/tags', countKey: 'tags' },
+  { label: 'Comments', href: '/settings/comments', countKey: 'comments' },
+  { label: 'Revisions', href: '/settings/revisions', countKey: 'revisions' },
+  { label: 'Visits', href: '/settings/leads/visits', countKey: 'visits' },
+  { label: 'Companies', href: '/settings/visitors/companies', countKey: 'companies' },
+  { label: 'Persons', href: '/settings/visitors/persons', countKey: 'persons' },
+  { label: 'Topics', href: '/settings/topics', countKey: 'topics', featureFlag: 'autoDraftEnabled' },
+  { label: 'AI', href: '/settings/ai' },
+  { label: 'SEO', href: '/settings/seo' },
+  { label: 'Integrations', href: '/settings/integrations' },
 ]
 
 // For navbar grouping - items listed here will appear in dropdowns
 export const adminNavGroups = [
-  { label: 'Content', items: ['Posts', 'Tags', 'Revisions', 'Topics'] },
+  { label: 'Content', items: ['Posts', 'Tags', 'Comments', 'Revisions', 'Topics'] },
   { label: 'Analytics', items: ['Visits', 'Companies', 'Persons'] },
   { label: 'Settings', items: ['AI', 'SEO', 'Integrations'] },
 ]

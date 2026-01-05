@@ -132,7 +132,7 @@ export default async function CompanyVisitorsPage({ searchParams }: PageProps) {
       <AdminPageHeader
         title="Company Visitors"
         subtitle={`${totalCount} compan${totalCount !== 1 ? 'ies' : 'y'}`}
-        action={<Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/admin/visitors/companies" position="top" />}
+        action={<Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/settings/visitors/companies" position="top" />}
       />
 
       <AdminTable
@@ -142,7 +142,7 @@ export default async function CompanyVisitorsPage({ searchParams }: PageProps) {
         showActions={false}
       />
 
-      <Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/admin/visitors/companies" position="bottom" />
+      <Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/settings/visitors/companies" position="bottom" />
     </div>
   )
 }
