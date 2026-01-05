@@ -46,7 +46,7 @@ export const CommentMark = Mark.create<CommentMarkOptions>({
       'mark',
       mergeAttributes(HTMLAttributes, {
         class:
-          'bg-yellow-200/50 dark:bg-yellow-500/30 cursor-pointer hover:bg-yellow-300/60 dark:hover:bg-yellow-500/40 transition-colors rounded-sm',
+          'bg-yellow-200/50 dark:bg-yellow-500/30 dark:text-foreground cursor-pointer hover:bg-yellow-300/60 dark:hover:bg-yellow-500/40 transition-colors rounded-sm',
       }),
       0,
     ]
