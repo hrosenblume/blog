@@ -36,6 +36,7 @@ export function CommentThread({
   onEdit,
   onDelete,
   onResolve,
+  onClick,
 }: CommentThreadProps) {
   const [isReplying, setIsReplying] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
@@ -82,8 +83,17 @@ export function CommentThread({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onClick()
+        }
+      }}
       className={cn(
-        'rounded-lg border p-3 transition-colors',
+        'rounded-lg border p-3 transition-colors cursor-pointer',
         isActive
           ? 'border-yellow-400 bg-yellow-50/50 dark:border-yellow-600 dark:bg-yellow-900/20'
           : 'border-border bg-background',
@@ -111,6 +121,7 @@ export function CommentThread({
           <DropdownMenuTrigger asChild>
             <button
               type="button"
+              onClick={(e) => e.stopPropagation()}
               className="w-6 h-6 rounded hover:bg-accent flex items-center justify-center text-muted-foreground"
             >
               <MoreHorizontal className="w-4 h-4" />
@@ -173,15 +184,16 @@ export function CommentThread({
                 setEditContent(comment.content)
               }
             }}
+            onClick={(e) => e.stopPropagation()}
             className="min-h-[60px] max-h-[120px]"
-            autoFocus
           />
           <div className="flex gap-2 justify-end">
             <Button
               type="button"
               variant="ghost"
               size="sm"
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation()
                 setIsEditing(false)
                 setEditContent(comment.content)
               }}
@@ -192,7 +204,10 @@ export function CommentThread({
             <Button
               type="button"
               size="sm"
-              onClick={handleEdit}
+              onClick={(e) => {
+                e.stopPropagation()
+                handleEdit()
+              }}
               disabled={loading || !editContent.trim()}
             >
               Save
@@ -243,14 +258,15 @@ export function CommentThread({
                 }}
                 placeholder="Write a reply..."
                 className="min-h-[60px] max-h-[120px]"
-                autoFocus
+                onClick={(e) => e.stopPropagation()}
               />
               <div className="flex gap-2 justify-end">
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation()
                     setIsReplying(false)
                     setReplyContent('')
                   }}
@@ -261,7 +277,10 @@ export function CommentThread({
                 <Button
                   type="button"
                   size="sm"
-                  onClick={handleReply}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleReply()
+                  }}
                   disabled={loading || !replyContent.trim()}
                 >
                   Reply
@@ -271,7 +290,10 @@ export function CommentThread({
           ) : (
             <button
               type="button"
-              onClick={() => setIsReplying(true)}
+              onClick={(e) => {
+                e.stopPropagation()
+                setIsReplying(true)
+              }}
               className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               <Reply className="w-3.5 h-3.5" />
