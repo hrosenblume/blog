@@ -95,6 +95,8 @@ export const CommentMark = Mark.create<CommentMarkOptions>({
 
             const commentMark = marks.find((mark) => mark.type.name === 'comment')
             if (commentMark && commentMark.attrs.commentId) {
+              // Blur the editor to prevent keyboard popup on mobile
+              ;(view.dom as HTMLElement).blur()
               onCommentClick(commentMark.attrs.commentId)
               return true
             }
