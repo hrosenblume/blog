@@ -15,6 +15,7 @@ interface HistoryButtonsProps {
   setShowMarkdown?: (show: boolean) => void
   postSlug?: string
   revisions?: RevisionState
+  aiGenerating?: boolean
 }
 
 export function HistoryButtons({
@@ -24,6 +25,7 @@ export function HistoryButtons({
   setShowMarkdown,
   postSlug,
   revisions,
+  aiGenerating,
 }: HistoryButtonsProps) {
   const handleUndo = useCallback(() => {
     if (editor) {
@@ -48,14 +50,14 @@ export function HistoryButtons({
       {/* Undo/Redo */}
       <ToolbarButton
         onClick={handleUndo}
-        disabled={editor ? !editor.can().undo() : false}
+        disabled={aiGenerating || (editor ? !editor.can().undo() : false)}
         title="Undo (⌘Z)"
       >
         <UndoIcon />
       </ToolbarButton>
       <ToolbarButton
         onClick={handleRedo}
-        disabled={editor ? !editor.can().redo() : false}
+        disabled={aiGenerating || (editor ? !editor.can().redo() : false)}
         title="Redo (⌘⇧Z)"
       >
         <RedoIcon />
@@ -68,6 +70,7 @@ export function HistoryButtons({
           <ToolbarButton
             onClick={() => setShowMarkdown(!showMarkdown)}
             active={showMarkdown}
+            disabled={aiGenerating}
             title={showMarkdown ? 'Switch to rich text editor' : 'Switch to markdown mode'}
           >
             <span className="font-mono text-xs">MD</span>
@@ -83,7 +86,7 @@ export function HistoryButtons({
             revisions={revisions.list}
             loading={revisions.loading}
             previewLoading={revisions.previewLoading}
-            disabled={!postSlug}
+            disabled={aiGenerating || !postSlug}
             isPreviewMode={!!revisions.previewing}
             onOpen={revisions.fetch}
             onSelect={revisions.preview}
@@ -93,8 +96,5 @@ export function HistoryButtons({
     </>
   )
 }
-
-
-
 
 

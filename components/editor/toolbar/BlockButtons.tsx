@@ -17,9 +17,10 @@ interface BlockButtonsProps {
   textareaRef?: RefObject<HTMLTextAreaElement | null>
   markdown?: string
   onMarkdownChange?: (markdown: string) => void
+  aiGenerating?: boolean
 }
 
-export function BlockButtons({ editor, textareaRef, markdown, onMarkdownChange }: BlockButtonsProps) {
+export function BlockButtons({ editor, textareaRef, markdown, onMarkdownChange, aiGenerating }: BlockButtonsProps) {
   const isMarkdownMode = !editor && textareaRef && markdown !== undefined && onMarkdownChange
 
   const insertBlock = (prefix: string) => {
@@ -53,6 +54,7 @@ export function BlockButtons({ editor, textareaRef, markdown, onMarkdownChange }
       <ToolbarButton
         onClick={() => editor ? editor.chain().focus().toggleBulletList().run() : insertBlock('- ')}
         active={editor?.isActive('bulletList')}
+        disabled={aiGenerating}
         title="Bullet list"
       >
         <BulletListIcon />
@@ -60,6 +62,7 @@ export function BlockButtons({ editor, textareaRef, markdown, onMarkdownChange }
       <ToolbarButton
         onClick={() => editor ? editor.chain().focus().toggleOrderedList().run() : insertBlock('1. ')}
         active={editor?.isActive('orderedList')}
+        disabled={aiGenerating}
         title="Numbered list"
       >
         <NumberedListIcon />
@@ -69,6 +72,7 @@ export function BlockButtons({ editor, textareaRef, markdown, onMarkdownChange }
       <ToolbarButton
         onClick={() => editor ? editor.chain().focus().toggleBlockquote().run() : insertBlock('> ')}
         active={editor?.isActive('blockquote')}
+        disabled={aiGenerating}
         title="Blockquote"
       >
         <BlockquoteIcon />
@@ -76,19 +80,17 @@ export function BlockButtons({ editor, textareaRef, markdown, onMarkdownChange }
       <ToolbarButton
         onClick={() => editor ? editor.chain().focus().toggleCodeBlock().run() : wrapSelection('```\n', '\n```')}
         active={editor?.isActive('codeBlock')}
+        disabled={aiGenerating}
         title="Code block"
       >
         <CodeBlockIcon />
       </ToolbarButton>
-      <ToolbarButton onClick={handleHorizontalRule} title="Horizontal rule">
+      <ToolbarButton onClick={handleHorizontalRule} disabled={aiGenerating} title="Horizontal rule">
         <HorizontalRuleIcon />
       </ToolbarButton>
     </>
   )
 }
-
-
-
 
 
 

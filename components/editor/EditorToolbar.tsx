@@ -22,7 +22,7 @@ interface EditorToolbarProps {
   // Revision history
   postSlug?: string
   revisions?: RevisionState
-  // AI rewrite (for disabling button during generation)
+  // AI generation state (disables all toolbar buttons during generation)
   aiGenerating?: boolean
   // Comments
   hasSelection?: boolean
@@ -65,6 +65,7 @@ export function EditorToolbar({
         textareaRef={textareaRef}
         markdown={markdown}
         onMarkdownChange={onMarkdownChange}
+        aiGenerating={aiGenerating}
       />
 
       <Divider />
@@ -74,6 +75,7 @@ export function EditorToolbar({
         textareaRef={textareaRef}
         markdown={markdown}
         onMarkdownChange={onMarkdownChange}
+        aiGenerating={aiGenerating}
       />
 
       <Divider />
@@ -85,6 +87,7 @@ export function EditorToolbar({
         setShowMarkdown={setShowMarkdown}
         postSlug={postSlug}
         revisions={revisions}
+        aiGenerating={aiGenerating}
       />
 
       {onViewComments && (
@@ -92,7 +95,7 @@ export function EditorToolbar({
           <Divider />
           <ToolbarButton
             onClick={onAddComment ?? (() => {})}
-            disabled={!hasSelection || !onAddComment}
+            disabled={aiGenerating || !hasSelection || !onAddComment}
             title={
               hasSelection 
                 ? 'New comment (⌘⌥M)' 
@@ -105,6 +108,7 @@ export function EditorToolbar({
           </ToolbarButton>
           <ToolbarButton
             onClick={onViewComments}
+            disabled={aiGenerating}
             title="View all comments"
           >
             <span className="flex items-center gap-1">

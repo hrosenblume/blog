@@ -116,9 +116,14 @@ export function addCommentMark(
   from: number,
   to: number
 ): void {
+  // Guard against editor not being ready
+  if (!editor.view || editor.isDestroyed) {
+    console.warn('Cannot add comment mark: editor not ready')
+    return
+  }
+  
   editor
     .chain()
-    .focus()
     .setTextSelection({ from, to })
     .setComment(commentId)
     .run()
@@ -128,7 +133,8 @@ export function addCommentMark(
  * Remove comment mark from the document
  */
 export function removeCommentMark(editor: Editor, commentId: string): void {
-  editor.chain().focus().unsetComment(commentId).run()
+  if (!editor.view || editor.isDestroyed) return
+  editor.chain().unsetComment(commentId).run()
 }
 
 /**
@@ -139,6 +145,8 @@ export function applyCommentMarks(
   editor: Editor,
   comments: CommentWithUser[]
 ): void {
+  if (!editor.view || editor.isDestroyed) return
+  
   const { doc } = editor.state
   const textContent = doc.textContent
 
@@ -196,6 +204,8 @@ export function applyCommentMarks(
  * Scroll to a comment mark in the editor
  */
 export function scrollToComment(editor: Editor, commentId: string): void {
+  if (!editor.view || editor.isDestroyed) return
+  
   const { doc } = editor.state
 
   doc.descendants((node, pos) => {
@@ -204,7 +214,7 @@ export function scrollToComment(editor: Editor, commentId: string): void {
     )
 
     if (commentMark) {
-      editor.chain().focus().setTextSelection(pos).run()
+      editor.chain().setTextSelection(pos).run()
 
       // Scroll to the selection
       const view = editor.view

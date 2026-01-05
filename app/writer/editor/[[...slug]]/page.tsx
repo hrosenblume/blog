@@ -376,6 +376,7 @@ export default function Editor() {
           setShowMarkdown={setShowMarkdown}
           postSlug={postSlug}
           revisions={revisions}
+          aiGenerating={ai.generating}
           hasSelection={!!comments.selectedText && !comments.selectedText.hasExistingComment}
           selectionHasComment={comments.selectedText?.hasExistingComment}
           onAddComment={() => setCommentsOpen(true)}

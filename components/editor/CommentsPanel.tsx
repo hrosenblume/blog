@@ -108,8 +108,9 @@ export function CommentsPanel({
   }, [newComment, selectedText, onCreateComment, onClearSelection])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
+      e.stopPropagation()
       handleCreateComment()
     }
     if (e.key === 'Escape') {
@@ -197,6 +198,7 @@ export function CommentsPanel({
                 placeholder="Add a comment..."
                 className="min-h-[40px] max-h-[120px] resize-none"
                 rows={1}
+                enterKeyHint="send"
               />
               <Button
                 type="button"

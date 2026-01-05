@@ -97,6 +97,7 @@ export function FormatButtons({ editor, textareaRef, markdown, onMarkdownChange,
       <ToolbarButton
         onClick={() => editor ? editor.chain().focus().toggleHeading({ level: 1 }).run() : setHeading(1)}
         active={editor?.isActive('heading', { level: 1 })}
+        disabled={aiGenerating}
         title="Heading 1"
       >
         H1
@@ -104,6 +105,7 @@ export function FormatButtons({ editor, textareaRef, markdown, onMarkdownChange,
       <ToolbarButton
         onClick={() => editor ? editor.chain().focus().toggleHeading({ level: 2 }).run() : setHeading(2)}
         active={editor?.isActive('heading', { level: 2 })}
+        disabled={aiGenerating}
         title="Heading 2"
       >
         H2
@@ -111,6 +113,7 @@ export function FormatButtons({ editor, textareaRef, markdown, onMarkdownChange,
       <ToolbarButton
         onClick={() => editor ? editor.chain().focus().toggleHeading({ level: 3 }).run() : setHeading(3)}
         active={editor?.isActive('heading', { level: 3 })}
+        disabled={aiGenerating}
         title="Heading 3"
       >
         H3
@@ -122,6 +125,7 @@ export function FormatButtons({ editor, textareaRef, markdown, onMarkdownChange,
       <ToolbarButton
         onClick={() => editor ? editor.chain().focus().toggleBold().run() : wrapSelection('**', '**')}
         active={editor?.isActive('bold')}
+        disabled={aiGenerating}
         title="Bold (⌘B)"
       >
         <span className="font-bold">B</span>
@@ -129,6 +133,7 @@ export function FormatButtons({ editor, textareaRef, markdown, onMarkdownChange,
       <ToolbarButton
         onClick={() => editor ? editor.chain().focus().toggleItalic().run() : wrapSelection('*', '*')}
         active={editor?.isActive('italic')}
+        disabled={aiGenerating}
         title="Italic (⌘I)"
       >
         <span className="italic">I</span>
@@ -136,19 +141,26 @@ export function FormatButtons({ editor, textareaRef, markdown, onMarkdownChange,
       <ToolbarButton
         onClick={() => editor ? editor.chain().focus().toggleStrike().run() : wrapSelection('~~', '~~')}
         active={editor?.isActive('strike')}
+        disabled={aiGenerating}
         title="Strikethrough"
       >
         <span className="line-through">S</span>
       </ToolbarButton>
 
-      {/* AI Rewrite (only in rich text mode with selection) */}
-      {editor && (
+      {/* AI Rewrite (only in rich text mode, but always visible when not in markdown mode) */}
+      {!isMarkdownMode && (
         <>
           <Divider />
           <ToolbarButton
             onClick={handleRewrite}
-            disabled={!hasSelection || isRewriting || aiGenerating}
-            title={hasSelection ? 'Rewrite selection with AI' : 'Select text to rewrite'}
+            disabled={!editor || !hasSelection || isRewriting || aiGenerating}
+            title={
+              !editor 
+                ? 'Editor loading...' 
+                : hasSelection 
+                  ? 'Rewrite selection with AI' 
+                  : 'Select text to rewrite'
+            }
           >
             {isRewriting ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -161,8 +173,5 @@ export function FormatButtons({ editor, textareaRef, markdown, onMarkdownChange,
     </>
   )
 }
-
-
-
 
 

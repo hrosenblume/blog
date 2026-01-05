@@ -13,9 +13,10 @@ interface MediaButtonsProps {
   textareaRef?: RefObject<HTMLTextAreaElement | null>
   markdown?: string
   onMarkdownChange?: (markdown: string) => void
+  aiGenerating?: boolean
 }
 
-export function MediaButtons({ editor, textareaRef, markdown, onMarkdownChange }: MediaButtonsProps) {
+export function MediaButtons({ editor, textareaRef, markdown, onMarkdownChange, aiGenerating }: MediaButtonsProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const isMarkdownMode = !editor && textareaRef && markdown !== undefined && onMarkdownChange
 
@@ -113,11 +114,12 @@ export function MediaButtons({ editor, textareaRef, markdown, onMarkdownChange }
       <ToolbarButton
         onClick={handleLinkClick}
         active={editor?.isActive('link')}
+        disabled={aiGenerating}
         title="Insert link"
       >
         <LinkIcon />
       </ToolbarButton>
-      <ToolbarButton onClick={() => fileInputRef.current?.click()} title="Insert image">
+      <ToolbarButton onClick={() => fileInputRef.current?.click()} disabled={aiGenerating} title="Insert image">
         <ImageIcon />
       </ToolbarButton>
       <input
@@ -127,15 +129,12 @@ export function MediaButtons({ editor, textareaRef, markdown, onMarkdownChange }
         onChange={handleImageUpload}
         className="hidden"
       />
-      <ToolbarButton onClick={handleClearFormatting} title="Clear formatting">
+      <ToolbarButton onClick={handleClearFormatting} disabled={aiGenerating} title="Clear formatting">
         <ClearFormattingIcon />
       </ToolbarButton>
     </>
   )
 }
-
-
-
 
 
 

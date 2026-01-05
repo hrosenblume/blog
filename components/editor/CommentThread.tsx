@@ -156,6 +156,18 @@ export function CommentThread({
           <Textarea
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                e.stopPropagation()
+                handleEdit()
+              }
+              if (e.key === 'Escape') {
+                e.stopPropagation()
+                setIsEditing(false)
+                setEditContent(comment.content)
+              }
+            }}
             className="min-h-[60px]"
             autoFocus
           />
@@ -207,6 +219,18 @@ export function CommentThread({
               <Textarea
                 value={replyContent}
                 onChange={(e) => setReplyContent(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    handleReply()
+                  }
+                  if (e.key === 'Escape') {
+                    e.stopPropagation()
+                    setIsReplying(false)
+                    setReplyContent('')
+                  }
+                }}
                 placeholder="Write a reply..."
                 className="min-h-[60px]"
                 autoFocus

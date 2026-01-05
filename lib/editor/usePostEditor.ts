@@ -340,11 +340,13 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
     }
   }, [])
 
-  // Save handler (silent mode skips button spinner for autosave, skipConfirm skips publish dialog)
+  // Save handler (silent mode skips button spinner for autosave, skipConfirm skips publish dialog, skipNavigation skips URL update)
   // Returns the post ID on success (for new posts), null otherwise
-  const handleSave = useCallback(async (publishStatus: 'draft' | 'published', options?: { silent?: boolean; skipConfirm?: boolean }): Promise<string | null> => {
+  const handleSave = useCallback(async (publishStatus: 'draft' | 'published', options?: { silent?: boolean; skipConfirm?: boolean; skipNavigation?: boolean }): Promise<string | null> => {
     const silent = options?.silent ?? false
     const skipConfirm = options?.skipConfirm ?? false
+    // Skip navigation if explicitly requested OR if AI is generating (to prevent interrupting generation)
+    const skipNavigation = options?.skipNavigation ?? aiGenerating
 
     if (!title.trim()) {
       if (!silent) alert('Title is required')
@@ -385,7 +387,9 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
 
       let newPostId: string | null = null
       
-      if (postSlug) {
+      // Use postId (state) to determine if we're updating or creating
+      // This handles the case where we've saved but skipped navigation (e.g., during AI generation)
+      if (postId || postSlug) {
         const res = await fetch(`/api/posts/by-slug/${urlSlugRef.current}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -395,7 +399,9 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
 
         if (result.slug !== urlSlugRef.current) {
           urlSlugRef.current = result.slug
-          router.replace(`/writer/editor/${result.slug}`)
+          if (!skipNavigation) {
+            router.replace(`/writer/editor/${result.slug}`)
+          }
         }
         newPostId = result.id
       } else {
@@ -411,7 +417,9 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
         urlSlugRef.current = result.slug
         setPostId(result.id)
         newPostId = result.id
-        router.replace(`/writer/editor/${result.slug}`)
+        if (!skipNavigation) {
+          router.replace(`/writer/editor/${result.slug}`)
+        }
       }
 
       setStatus(publishStatus)
@@ -456,7 +464,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
         setSavingAs(null)
       }
     }
-  }, [postSlug, title, subtitle, slug, markdown, polyhedraShape, seoTitle, seoDescription, seoKeywords, noIndex, ogImage, tags, router])
+  }, [postSlug, postId, title, subtitle, slug, markdown, polyhedraShape, seoTitle, seoDescription, seoKeywords, noIndex, ogImage, tags, router, aiGenerating])
 
   // Autosave drafts after 3 seconds of inactivity (silent - no button spinner)
   useEffect(() => {
@@ -757,7 +765,8 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
     // Auto-save the post first if it hasn't been saved yet
     let effectivePostId = postId
     if (!effectivePostId) {
-      const newId = await handleSave('draft', { silent: true })
+      // Skip navigation to prevent component remount that would break editor reference
+      const newId = await handleSave('draft', { silent: true, skipNavigation: true })
       if (!newId) {
         // Save failed (e.g., no title yet)
         return
