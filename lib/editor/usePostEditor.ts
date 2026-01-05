@@ -341,21 +341,22 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
   }, [])
 
   // Save handler (silent mode skips button spinner for autosave, skipConfirm skips publish dialog)
-  const handleSave = useCallback(async (publishStatus: 'draft' | 'published', options?: { silent?: boolean; skipConfirm?: boolean }) => {
+  // Returns the post ID on success (for new posts), null otherwise
+  const handleSave = useCallback(async (publishStatus: 'draft' | 'published', options?: { silent?: boolean; skipConfirm?: boolean }): Promise<string | null> => {
     const silent = options?.silent ?? false
     const skipConfirm = options?.skipConfirm ?? false
 
     if (!title.trim()) {
       if (!silent) alert('Title is required')
-      return
+      return null
     }
     if (!slug.trim()) {
       if (!silent) alert('Slug is required')
-      return
+      return null
     }
 
     if (publishStatus === 'published' && !skipConfirm && !confirmPublish()) {
-      return
+      return null
     }
 
     // Only show spinner for non-silent saves
@@ -382,6 +383,8 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
         tagIds: tags.map(t => t.id),
       }
 
+      let newPostId: string | null = null
+      
       if (postSlug) {
         const res = await fetch(`/api/posts/by-slug/${urlSlugRef.current}`, {
           method: 'PATCH',
@@ -394,6 +397,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
           urlSlugRef.current = result.slug
           router.replace(`/writer/editor/${result.slug}`)
         }
+        newPostId = result.id
       } else {
         const res = await fetch('/api/posts', {
           method: 'POST',
@@ -405,6 +409,8 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
           throw new Error(result.error)
         }
         urlSlugRef.current = result.slug
+        setPostId(result.id)
+        newPostId = result.id
         router.replace(`/writer/editor/${result.slug}`)
       }
 
@@ -432,10 +438,13 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
           window.location.href = `/e/${slug.trim()}`
         }, 1000)
       }
+      
+      return newPostId
     } catch (err) {
       if (!silent) {
         alert(err instanceof Error ? err.message : 'Failed to save')
       }
+      return null
     } finally {
       if (!silent) {
         // Ensure spinner shows for at least 400ms to avoid flash
@@ -743,9 +752,20 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
 
   // Comment actions
   const createComment = useCallback(async (content: string) => {
-    if (!postId || !selectedText) return
+    if (!selectedText) return
     
-    const comment = await apiCreateComment(postId, {
+    // Auto-save the post first if it hasn't been saved yet
+    let effectivePostId = postId
+    if (!effectivePostId) {
+      const newId = await handleSave('draft', { silent: true })
+      if (!newId) {
+        // Save failed (e.g., no title yet)
+        return
+      }
+      effectivePostId = newId
+    }
+    
+    const comment = await apiCreateComment(effectivePostId, {
       quotedText: selectedText.text,
       content,
     })
@@ -758,7 +778,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
     // Add to list with empty replies array
     setComments(prev => [{ ...comment, replies: [] }, ...prev])
     setSelectedText(null)
-  }, [postId, selectedText, editor])
+  }, [postId, selectedText, editor, handleSave])
 
   const replyToComment = useCallback(async (parentId: string, content: string) => {
     if (!postId) return
