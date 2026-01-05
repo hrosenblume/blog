@@ -380,7 +380,7 @@ export default function Editor() {
           selectionHasComment={comments.selectedText?.hasExistingComment}
           onAddComment={() => setCommentsOpen(true)}
           commentsCount={comments.list.filter(c => !c.resolved).length}
-          onViewComments={post.slug ? () => setCommentsOpen(true) : undefined}
+          onViewComments={() => setCommentsOpen(true)}
         />
       )}
 
