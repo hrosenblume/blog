@@ -78,7 +78,7 @@ function AdminLayoutContent({
       />
       
       <main className="flex-1 overflow-auto">
-        <div className="max-w-5xl mx-auto px-6 py-8">
+        <div className="max-w-5xl mx-auto px-6 py-8 pb-16">
           {children}
         </div>
       </main>
