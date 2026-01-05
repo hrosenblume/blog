@@ -155,7 +155,12 @@ export function CommentThread({
         <div className="space-y-2">
           <Textarea
             value={editContent}
-            onChange={(e) => setEditContent(e.target.value)}
+            onChange={(e) => {
+              setEditContent(e.target.value)
+              // Auto-resize
+              e.target.style.height = 'auto'
+              e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`
+            }}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault()
@@ -168,7 +173,7 @@ export function CommentThread({
                 setEditContent(comment.content)
               }
             }}
-            className="min-h-[60px]"
+            className="min-h-[60px] max-h-[120px]"
             autoFocus
           />
           <div className="flex gap-2 justify-end">
@@ -218,7 +223,12 @@ export function CommentThread({
             <div className="space-y-2">
               <Textarea
                 value={replyContent}
-                onChange={(e) => setReplyContent(e.target.value)}
+                onChange={(e) => {
+                  setReplyContent(e.target.value)
+                  // Auto-resize
+                  e.target.style.height = 'auto'
+                  e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`
+                }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault()
@@ -232,7 +242,7 @@ export function CommentThread({
                   }
                 }}
                 placeholder="Write a reply..."
-                className="min-h-[60px]"
+                className="min-h-[60px] max-h-[120px]"
                 autoFocus
               />
               <div className="flex gap-2 justify-end">

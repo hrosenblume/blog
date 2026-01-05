@@ -95,6 +95,15 @@ export function CommentsPanel({
     }
   }, [selectedText, isOpen])
 
+  // Auto-resize textarea as content grows
+  useEffect(() => {
+    const textarea = textareaRef.current
+    if (textarea) {
+      textarea.style.height = 'auto'
+      textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`
+    }
+  }, [newComment])
+
   const handleCreateComment = useCallback(async () => {
     if (!newComment.trim() || !selectedText) return
     setCreating(true)
@@ -196,8 +205,8 @@ export function CommentsPanel({
                 onChange={(e) => setNewComment(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Add a comment..."
-                className="min-h-[40px] max-h-[120px] resize-none"
-                rows={1}
+                className="min-h-[60px] max-h-[120px] resize-none"
+                rows={2}
                 enterKeyHint="send"
               />
               <Button
