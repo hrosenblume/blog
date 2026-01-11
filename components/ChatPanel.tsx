@@ -62,6 +62,7 @@ export function ChatPanel() {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const prevMessageCountRef = useRef(0)
   const savedScrollPositionRef = useRef<number | null>(null)
+  const lastUserMessageRef = useRef<HTMLDivElement>(null)
   
   // Fetch models, use context for selection state
   const { models, currentModel } = useAIModels({
@@ -157,8 +158,8 @@ export function ChatPanel() {
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         if (currentCount > prevCount) {
-          // New messages added - scroll to bottom
-          // Use instant for initial history load, smooth for chat messages
+          // Scroll when new messages added (user sends message)
+          // Streaming doesn't change count, so this won't trigger during response
           const behavior = prevCount === 0 ? 'instant' : 'smooth'
           messagesEndRef.current?.scrollIntoView({ behavior })
         } else if (savedScrollPositionRef.current !== null) {
@@ -170,6 +171,26 @@ export function ChatPanel() {
       })
     })
   }, [messages.length, open, isVisible])
+
+  // During streaming, scroll until user's message reaches top of container
+  useEffect(() => {
+    if (!isStreaming) return
+    
+    const container = messagesContainerRef.current
+    const userMessage = lastUserMessageRef.current
+    if (!container || !userMessage) return
+    
+    // Get positions
+    const containerRect = container.getBoundingClientRect()
+    const messageRect = userMessage.getBoundingClientRect()
+    
+    // If user message is still below the top of container, scroll down
+    const distanceFromTop = messageRect.top - containerRect.top
+    if (distanceFromTop > 10) {
+      // Scroll by a portion of the distance, creates smooth catching up
+      container.scrollTop += Math.min(distanceFromTop * 0.3, 30)
+    }
+  }, [messages, isStreaming])
 
   // Auto-resize textarea
   useEffect(() => {
@@ -283,9 +304,15 @@ export function ChatPanel() {
             </div>
           ) : (
             <div className="px-4 py-4 space-y-4">
-              {messages.map((message, index) => (
+              {messages.map((message, index) => {
+                // Track last user message for scroll behavior
+                const isLastUserMessage = message.role === 'user' && 
+                  !messages.slice(index + 1).some(m => m.role === 'user')
+                
+                return (
                 <div
                   key={index}
+                  ref={isLastUserMessage ? lastUserMessageRef : undefined}
                   className={cn(
                     'flex gap-3 group',
                     message.role === 'user' ? 'justify-end' : 'justify-start'
@@ -356,7 +383,7 @@ export function ChatPanel() {
                     )}
                   </div>
                 </div>
-              ))}
+              )})}
               <div ref={messagesEndRef} />
             </div>
           )}
