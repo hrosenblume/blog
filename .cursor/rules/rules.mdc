@@ -52,6 +52,7 @@ Use CSS variables from `globals.css`:
 | Homepage content | `lib/homepage.ts` |
 | Admin nav items | `lib/admin-nav.ts` |
 | Keyboard shortcuts | `lib/keyboard/shortcuts.ts` |
+| Editor constants | `lib/editor/constants.ts` |
 | Post CRUD logic | `lib/posts.ts` |
 | SVG icons | `components/Icons.tsx` |
 | Integrations config | `lib/integrations/config.ts` |

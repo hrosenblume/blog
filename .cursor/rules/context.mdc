@@ -322,10 +322,19 @@ Defined in `lib/keyboard/shortcuts.ts`:
 `lib/editor/usePostEditor.ts` encapsulates all editor state:
 - Auto-save (3s debounce)
 - Revision history
-- Slug generation
+- Slug generation (auto-unique: appends -2, -3, etc. for duplicates)
 - Unsaved changes warning
 - AI generation with preview/accept/discard flow
 - Visual feedback during generation (editor disabled with opacity change)
+- Untitled draft support (posts save as "Untitled Draft" if no title)
+
+**Editor Constants** (`lib/editor/constants.ts`):
+- `DEFAULT_TITLE` — Default title for untitled drafts
+- `EDITOR_PLACEHOLDER` — Placeholder text for editor body
+
+**Editor UX Hooks**:
+- `useTypeToFocus` — Focus editor and insert character when typing with nothing focused
+- `TiptapEditor` `autoFocus` prop — Auto-focus body on new posts
 
 **Skeleton Loading Pattern:**
 - Navbar renders immediately (session available instantly)
