@@ -375,11 +375,33 @@ ${essay.markdown}`
 /**
  * Build a system prompt for plan mode - generates section headers with bullet points.
  * The AI only outputs structure, not prose. User can refine via conversation.
+ * When an essay is open, the AI can help restructure or plan revisions to it.
  */
-export function buildPlanPrompt(context: StyleContext): string {
+export function buildPlanPrompt(
+  context: StyleContext,
+  essay?: EssayContext | null
+): string {
   const template = context.planTemplate || DEFAULT_PLAN_TEMPLATE
   const styleValue = context.styleExamples || 'No published essays available. Write in a clear, personal essay style.'
-  return template.replace(/\{\{STYLE_EXAMPLES\}\}/g, styleValue)
+  const basePrompt = template.replace(/\{\{STYLE_EXAMPLES\}\}/g, styleValue)
+  
+  if (!essay?.markdown) return basePrompt
+  
+  const header = essay.subtitle 
+    ? `# ${essay.title}\n*${essay.subtitle}*` 
+    : `# ${essay.title}`
+    
+  return `${basePrompt}
+
+---
+
+## Current Essay Draft
+
+The user has an essay open. They may want you to create a revised plan for it, restructure it, or use it as reference for a new plan.
+
+${header}
+
+${essay.markdown}`
 }
 
 /**

@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
   if (body.mode === 'agent') {
     systemPrompt = buildAgentChatPrompt(context, body.essayContext, useWebSearch)
   } else if (body.mode === 'plan') {
-    systemPrompt = buildPlanPrompt(context)
+    systemPrompt = buildPlanPrompt(context, body.essayContext)
   } else {
     systemPrompt = buildChatPromptWithEssay(context, body.essayContext, useWebSearch)
   }

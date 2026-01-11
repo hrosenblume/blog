@@ -54,8 +54,13 @@ export default function Dashboard() {
   const [length, setLength] = useState<number>(500)
   const [webEnabled, setWebEnabled] = useState(false)
   
-  // Chat context - check if open to disable shortcuts
-  const { isOpen: chatOpen } = useChatContext()
+  // Chat context - check if open to disable shortcuts, clear essay context on dashboard
+  const { isOpen: chatOpen, setEssayContext } = useChatContext()
+
+  // Clear essay context when on dashboard (fresh slate for Plan mode)
+  useEffect(() => {
+    setEssayContext(null)
+  }, [setEssayContext])
 
   // N to create new essay (disabled when chat is open)
   useKeyboard([
