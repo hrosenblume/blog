@@ -42,7 +42,10 @@ export function ChatPanel() {
   const [mounted, setMounted] = useState(false)
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const prevMessageCountRef = useRef(0)
+  const savedScrollPositionRef = useRef<number | null>(null)
   
   // Fetch models, use context for selection state
   const { models, currentModel } = useAIModels({
@@ -99,12 +102,39 @@ export function ChatPanel() {
     }
   }, [open])
 
-  // Auto-scroll to bottom when messages change or panel opens
+  // Save scroll position when panel closes
   useEffect(() => {
-    if (open) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (!open && messagesContainerRef.current) {
+      savedScrollPositionRef.current = messagesContainerRef.current.scrollTop
     }
-  }, [messages, open])
+  }, [open])
+
+  // Restore scroll position or scroll to bottom for new messages
+  useEffect(() => {
+    if (!open || !isVisible) return
+    
+    const container = messagesContainerRef.current
+    if (!container) return
+    
+    const prevCount = prevMessageCountRef.current
+    const currentCount = messages.length
+    
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (currentCount > prevCount) {
+          // New messages added - scroll to bottom
+          // Use instant for initial history load, smooth for chat messages
+          const behavior = prevCount === 0 ? 'instant' : 'smooth'
+          messagesEndRef.current?.scrollIntoView({ behavior })
+        } else if (savedScrollPositionRef.current !== null) {
+          // Re-opening panel - restore scroll position
+          container.scrollTop = savedScrollPositionRef.current
+        }
+        
+        prevMessageCountRef.current = currentCount
+      })
+    })
+  }, [messages.length, open, isVisible])
 
   // Auto-resize textarea
   useEffect(() => {
@@ -197,7 +227,7 @@ export function ChatPanel() {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto">
+        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto">
           {messages.length === 0 ? (
             <div className="h-full flex items-center justify-center">
               <div className="text-center max-w-xs px-6">
