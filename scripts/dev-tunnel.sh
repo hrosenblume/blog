@@ -31,17 +31,23 @@ if [ -n "$NGROK_API_KEY" ]; then
   fi
 fi
 
-# Start Next.js in background
-AUTH_URL="https://$NGROK_DOMAIN" next dev &
+# Start Next.js in background (no browser - use tunnel URL)
+BROWSER=none AUTH_URL="https://$NGROK_DOMAIN" next dev &
+NEXT_PID=$!
 
-# Note: URL will be printed by ngrok - use Cursor's browser to navigate
-echo "Tunnel starting at: https://$NGROK_DOMAIN"
+# Wait for Next.js to be ready
+sleep 3
+
+# Print tunnel URL prominently
+echo ""
+echo "  ➜  Tunnel:  https://$NGROK_DOMAIN"
+echo ""
 
 # Start ngrok tunnel (with or without OAuth based on argument)
 if [ "$1" = "--open" ]; then
-  npx ngrok http 3000 --domain="$NGROK_DOMAIN"
+  npx ngrok http 3000 --domain="$NGROK_DOMAIN" --log=stdout --log-level=warn
 else
-  npx ngrok http 3000 --domain="$NGROK_DOMAIN" --oauth=google --oauth-allow-email="$NGROK_OAUTH_EMAIL" --oauth-allow-email="$WRITER_EMAIL"
+  npx ngrok http 3000 --domain="$NGROK_DOMAIN" --oauth=google --oauth-allow-email="$NGROK_OAUTH_EMAIL" --oauth-allow-email="$WRITER_EMAIL" --log=stdout --log-level=warn
 fi
 
 

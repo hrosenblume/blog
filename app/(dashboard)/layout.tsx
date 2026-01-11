@@ -44,11 +44,14 @@ function DashboardLayoutContent({
   // Compute back link for non-root pages
   const getBackLink = () => {
     if (isSettings) {
-      // /settings -> /writer, /settings/users -> /settings, etc.
       const segments = pathname?.split('/').filter(Boolean) || []
-      return segments.length > 1 
-        ? '/' + segments.slice(0, -1).join('/')
-        : '/writer'
+      if (segments.length <= 1) return '/writer'
+      
+      // These intermediate paths don't have pages - skip to /settings
+      const noPageRoutes = ['/settings/leads', '/settings/visitors']
+      const parentPath = '/' + segments.slice(0, -1).join('/')
+      
+      return noPageRoutes.includes(parentPath) ? '/settings' : parentPath
     }
     if (isWriterSubpage || isEditor) {
       return '/writer'
