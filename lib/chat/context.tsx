@@ -99,6 +99,39 @@ function parseEditBlocks(content: string): { edits: EssayEdit[], cleanContent: s
   return { edits, cleanContent }
 }
 
+/**
+ * Clean plan mode output by stripping any text after the last bullet point.
+ * The plan format is:
+ *   # Title
+ *   *Subtitle*
+ *   ## Section
+ *   - bullet
+ *   ## Section
+ *   - bullet
+ * 
+ * Any text after the last "- " line is conversational filler and should be removed.
+ */
+function cleanPlanOutput(content: string): string {
+  const lines = content.split('\n')
+  
+  // Find the index of the last bullet point line
+  let lastBulletIndex = -1
+  for (let i = lines.length - 1; i >= 0; i--) {
+    if (lines[i].trim().startsWith('- ')) {
+      lastBulletIndex = i
+      break
+    }
+  }
+  
+  // If no bullet found, return as-is (not a valid plan format)
+  if (lastBulletIndex === -1) {
+    return content.trim()
+  }
+  
+  // Keep everything up to and including the last bullet
+  return lines.slice(0, lastBulletIndex + 1).join('\n').trim()
+}
+
 export function ChatProvider({ children }: { children: ReactNode }) {
   const [messages, setMessages] = useState<Message[]>([])
   const [essayContext, setEssayContext] = useState<EssayContext | null>(null)
@@ -317,8 +350,25 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           // No edits, save the raw content
           saveMessage('assistant', assistantContent)
         }
+      } else if (mode === 'plan') {
+        // Plan mode: clean trailing conversational text
+        const cleanedContent = cleanPlanOutput(assistantContent)
+        
+        // Update the message with cleaned content
+        setMessages(prev => {
+          const updated = [...prev]
+          updated[updated.length - 1] = { 
+            role: 'assistant', 
+            content: cleanedContent,
+            mode,
+          }
+          return updated
+        })
+        
+        // Save the cleaned content to history
+        saveMessage('assistant', cleanedContent)
       } else {
-        // Not in agent mode, save the response as-is
+        // Other modes: save the response as-is
         saveMessage('assistant', assistantContent)
       }
     } catch (error) {

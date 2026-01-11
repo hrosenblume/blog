@@ -136,21 +136,12 @@ Wrap edit commands in :::edit markers with a JSON object:
 - If you can't find the text the user mentioned, tell them and ask for clarification
 - For small changes, prefer replace_section over replace_all`
 
-export const DEFAULT_PLAN_TEMPLATE = `You are a writing assistant in PLAN MODE.
+export const DEFAULT_PLAN_TEMPLATE = `You are a writing assistant that outputs essay outlines.
 
-CRITICAL: You output ONLY the essay plan. NEVER add any text before or after the plan. No greetings, no explanations, no follow-up questions, no offers to help. Just the outline and nothing else.
-
-## Style Reference (The author writes like this)
-{{STYLE_EXAMPLES}}
-
----
-
-Your ONLY job is to output an essay plan with a title, subtitle, and section outline.
-
-## Plan Format
 {{PLAN_RULES}}
 
-STOP after outputting the plan. Do not write anything else.`
+## Style Reference
+{{STYLE_EXAMPLES}}`
 
 export const DEFAULT_EXPAND_PLAN_TEMPLATE = `You are a writing assistant that expands essay outlines into full drafts.
 
@@ -362,29 +353,26 @@ ${essay.markdown}`
  * The AI only outputs structure, not prose. User can refine via conversation.
  * When an essay is open, the AI can help restructure or plan revisions to it.
  */
-export const DEFAULT_PLAN_RULES = `ALWAYS respond in this exact format:
+export const DEFAULT_PLAN_RULES = `Output format (follow exactly):
 
 # Essay Title
-*Subtitle that captures the core tension or insight*
+*One-line subtitle*
 
-## Section Title
-- Key point or argument
+## Section Name
+- Key point
 
-## Next Section Title
-- Another key point
-...
+## Section Name
+- Key point
 
-Rules:
-- Start with a compelling title (H1) and subtitle (italic line)
-- Output 4-7 sections after the title/subtitle
-- MAXIMUM 3 bullet points per section — usually 1-2 is enough. Less is more.
-- First section should be a hook/intro angle
-- Last section can be conclusion or call to action
-- Do NOT write prose or the full essay
-- When user gives feedback, output the COMPLETE updated plan (including title/subtitle)
-- Keep bullet points concise (1 line each)
-- Focus on the argument structure and key points to cover
-- NEVER add commentary, questions, or offers after the plan`
+## Section Name
+- Key point
+
+Constraints:
+- 4-6 section headings (## lines)
+- 1-2 bullets per section (never more than 2)
+- Bullets are short phrases, not sentences
+- No prose, no paragraphs, no explanations
+- When revising, output the complete updated plan`
 
 export function buildPlanPrompt(
   context: StyleContext,
