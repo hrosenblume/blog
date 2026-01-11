@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { Loader2, X, Copy, Check, ArrowUp, Pencil, Undo2, ChevronDown, MessageSquare, Globe } from 'lucide-react'
+import { Loader2, X, Copy, Check, ArrowUp, Pencil, Undo2, ChevronDown, MessageSquare, Globe, Brain, Square } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -26,12 +26,15 @@ export function ChatPanel() {
     isOpen: open, 
     setIsOpen,
     sendMessage: contextSendMessage,
+    stopStreaming,
     essayContext,
     mode,
     setMode,
     undoEdit,
     webSearchEnabled,
     setWebSearchEnabled,
+    thinkingEnabled,
+    setThinkingEnabled,
     selectedModel,
     setSelectedModel,
   } = useChatContext()
@@ -376,6 +379,16 @@ export function ChatPanel() {
               <Globe className="w-4 h-4" />
             </ControlButton>
             
+            {/* Thinking Mode Toggle */}
+            <ControlButton
+              onClick={() => setThinkingEnabled(!thinkingEnabled)}
+              active={thinkingEnabled}
+              title={thinkingEnabled ? "Thinking mode enabled" : "Enable thinking mode"}
+              tabIndex={-1}
+            >
+              <Brain className="w-4 h-4" />
+            </ControlButton>
+            
             {/* Model Dropdown */}
             <ModelSelector
               models={models}
@@ -404,14 +417,15 @@ export function ChatPanel() {
               autoFocus
             />
             <Button
-              type="submit"
-              disabled={!input.trim() || isStreaming}
+              type={isStreaming ? 'button' : 'submit'}
+              onClick={isStreaming ? stopStreaming : undefined}
+              disabled={!isStreaming && !input.trim()}
               size="icon"
               variant="secondary"
               className="rounded-full w-10 h-10 flex-shrink-0 border border-input touch-manipulation"
             >
               {isStreaming ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
+                <Square className="h-4 w-4 fill-current" />
               ) : (
                 <ArrowUp className="h-5 w-5" />
               )}

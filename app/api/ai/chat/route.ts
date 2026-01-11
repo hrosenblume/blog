@@ -12,6 +12,7 @@ interface ChatRequest {
   essayContext?: EssayContext | null
   mode?: ChatMode
   useWebSearch?: boolean // When true, enable web search (native for GPT, 2-call for Claude)
+  useThinking?: boolean // When true, enable extended thinking (Claude) or enhanced reasoning (GPT)
 }
 
 // POST /api/ai/chat - Streaming chat for brainstorming essays
@@ -74,8 +75,8 @@ export async function POST(request: NextRequest) {
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          // Pass web search flag to streaming function
-          for await (const chunk of generateChatStream(model.id, systemPrompt, body.messages, 4096, useWebSearch)) {
+          // Pass web search and thinking flags to streaming function
+          for await (const chunk of generateChatStream(model.id, systemPrompt, body.messages, 4096, useWebSearch, body.useThinking)) {
             controller.enqueue(encoder.encode(chunk))
           }
           controller.close()

@@ -216,13 +216,15 @@ export async function* generateStream(
  * @param modelId - Can be either a model ID from AI_MODELS (e.g., 'gpt-5.2') 
  *                  or a raw model name (e.g., 'gpt-5.2-search-preview')
  * @param useWebSearch - Enable web search tools (OpenAI only)
+ * @param useThinking - Enable extended thinking (Claude) or enhanced reasoning prompt (OpenAI)
  */
 export async function* generateChatStream(
   modelId: string,
   systemPrompt: string,
   messages: ChatMessage[],
   maxTokens: number = 4096,
-  useWebSearch: boolean = false
+  useWebSearch: boolean = false,
+  useThinking: boolean = false
 ): AsyncGenerator<string, void, unknown> {
   // First try to resolve from AI_MODELS
   const model = getModel(modelId)
@@ -230,17 +232,17 @@ export async function* generateChatStream(
   if (model) {
     // Known model from AI_MODELS
     if (model.provider === 'anthropic') {
-      yield* chatStreamWithAnthropic(model.model, systemPrompt, messages, maxTokens)
+      yield* chatStreamWithAnthropic(model.model, systemPrompt, messages, maxTokens, useThinking)
     } else {
-      yield* chatStreamWithOpenAI(model.model, systemPrompt, messages, maxTokens, useWebSearch)
+      yield* chatStreamWithOpenAI(model.model, systemPrompt, messages, maxTokens, useWebSearch, useThinking)
     }
   } else {
     // Raw model name - determine provider from name
     if (modelId.startsWith('claude') || modelId.startsWith('anthropic')) {
-      yield* chatStreamWithAnthropic(modelId, systemPrompt, messages, maxTokens)
+      yield* chatStreamWithAnthropic(modelId, systemPrompt, messages, maxTokens, useThinking)
     } else {
       // Assume OpenAI for gpt-*, o1-*, etc.
-      yield* chatStreamWithOpenAI(modelId, systemPrompt, messages, maxTokens, useWebSearch)
+      yield* chatStreamWithOpenAI(modelId, systemPrompt, messages, maxTokens, useWebSearch, useThinking)
     }
   }
 }
@@ -307,7 +309,8 @@ async function* chatStreamWithAnthropic(
   model: string,
   systemPrompt: string,
   messages: ChatMessage[],
-  maxTokens: number
+  maxTokens: number,
+  useThinking: boolean = false
 ): AsyncGenerator<string, void, unknown> {
   const apiKey = await getApiKey('anthropic')
   if (!apiKey) {
@@ -316,17 +319,34 @@ async function* chatStreamWithAnthropic(
 
   const client = new Anthropic({ apiKey })
 
-  const stream = client.messages.stream({
+  // Extended thinking requires max_tokens > budget_tokens
+  const thinkingBudget = 10000
+  const effectiveMaxTokens = useThinking ? thinkingBudget + maxTokens : maxTokens
+
+  // Build request options
+  const requestOptions: Anthropic.MessageStreamParams = {
     model,
-    max_tokens: maxTokens,
+    max_tokens: effectiveMaxTokens,
     system: systemPrompt,
     messages: messages.map(m => ({ role: m.role, content: m.content })),
-  })
+  }
+
+  // Add extended thinking when enabled
+  if (useThinking) {
+    requestOptions.thinking = {
+      type: 'enabled',
+      budget_tokens: thinkingBudget,
+    }
+  }
+
+  const stream = client.messages.stream(requestOptions)
 
   for await (const event of stream) {
+    // Only yield text deltas, not thinking deltas
     if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
       yield event.delta.text
     }
+    // Thinking blocks have delta.type === 'thinking_delta' - we skip those
   }
 }
 
@@ -335,16 +355,22 @@ async function* chatStreamWithOpenAI(
   systemPrompt: string,
   messages: ChatMessage[],
   maxTokens: number,
-  useWebSearch: boolean = false
+  useWebSearch: boolean = false,
+  useThinking: boolean = false
 ): AsyncGenerator<string, void, unknown> {
   const apiKey = await getApiKey('openai')
   if (!apiKey) {
     throw new Error('OpenAI API key is not configured. Add it at /settings/integrations')
   }
 
+  // Enhance system prompt with chain-of-thought when thinking is enabled
+  const enhancedPrompt = useThinking
+    ? `Think step-by-step before answering. Reason through the problem carefully, considering multiple angles and potential issues before providing your response.\n\n${systemPrompt}`
+    : systemPrompt
+
   // Use Responses API for web search, Chat Completions for normal requests
   if (useWebSearch) {
-    yield* chatStreamWithOpenAIResponses(apiKey, model, systemPrompt, messages, maxTokens)
+    yield* chatStreamWithOpenAIResponses(apiKey, model, enhancedPrompt, messages, maxTokens)
     return
   }
 
@@ -355,7 +381,7 @@ async function* chatStreamWithOpenAI(
     max_completion_tokens: maxTokens,
     stream: true,
     messages: [
-      { role: 'system', content: systemPrompt },
+      { role: 'system', content: enhancedPrompt },
       ...messages.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
     ],
   })

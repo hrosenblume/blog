@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, useRef, useEffect, ReactNode } from 'react'
 import { modelHasNativeSearch } from '@/lib/ai/models'
+import { extractUrls, fetchUrlContent } from '@/lib/chat/extract'
 
 export interface EssaySnapshot {
   title: string
@@ -48,16 +49,19 @@ interface ChatContextValue {
   isOpen: boolean
   mode: ChatMode
   webSearchEnabled: boolean
+  thinkingEnabled: boolean
   selectedModel: string
   
   // Actions
   setEssayContext: (context: EssayContext | null) => void
   sendMessage: (content: string) => Promise<void>
+  stopStreaming: () => void
   addMessage: (role: 'user' | 'assistant', content: string) => void
   clearMessages: () => void
   setIsOpen: (open: boolean) => void
   setMode: (mode: ChatMode) => void
   setWebSearchEnabled: (enabled: boolean) => void
+  setThinkingEnabled: (enabled: boolean) => void
   setSelectedModel: (modelId: string) => void
   registerEditHandler: (handler: EditHandler | null) => void
   undoEdit: (messageIndex: number) => void
@@ -97,15 +101,26 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false)
   const [mode, setMode] = useState<ChatMode>('ask')
   const [webSearchEnabled, setWebSearchEnabled] = useState(false)
+  const [thinkingEnabled, setThinkingEnabled] = useState(false)
   const [selectedModel, setSelectedModel] = useState('claude-sonnet')
   
   // Edit handler registered by the editor
   const editHandlerRef = useRef<EditHandler | null>(null)
   // Track if history has been loaded
   const historyLoadedRef = useRef(false)
+  // AbortController for cancelling streaming requests
+  const abortControllerRef = useRef<AbortController | null>(null)
   
   const registerEditHandler = useCallback((handler: EditHandler | null) => {
     editHandlerRef.current = handler
+  }, [])
+
+  const stopStreaming = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+      abortControllerRef.current = null
+    }
+    setIsStreaming(false)
   }, [])
 
   // Load history on first open
@@ -139,6 +154,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const sendMessage = useCallback(async (content: string) => {
     if (!content.trim() || isStreaming) return
 
+    // Create abort controller for this request
+    abortControllerRef.current = new AbortController()
+    const signal = abortControllerRef.current.signal
+
     const userMessage: Message = { role: 'user', content: content.trim() }
     const newMessages = [...messages, userMessage]
     setMessages(newMessages)
@@ -152,6 +171,20 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setMessages([...newMessages, assistantMessage])
 
     try {
+      // Extract and fetch content from any URLs in the message
+      const urls = extractUrls(content)
+      let enrichedContent = content.trim()
+      
+      if (urls.length > 0) {
+        const extracted = await fetchUrlContent(urls)
+        for (const item of extracted) {
+          if (item.content) {
+            const title = item.title ? `${item.title}\n` : ''
+            enrichedContent += `\n\n[Content from ${item.url}]:\n${title}${item.content}`
+          }
+        }
+      }
+      
       // Determine web search approach based on model
       const hasNativeSearch = modelHasNativeSearch(selectedModel)
       const useSearchFirstFlow = webSearchEnabled && !hasNativeSearch
@@ -164,11 +197,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            messages: [{ role: 'user', content: content.trim() }],
+            messages: [{ role: 'user', content: enrichedContent }],
             modelId: 'gpt-5.2',
             useWebSearch: true,
             mode: 'search',
           }),
+          signal,
         })
         
         if (searchResponse.ok) {
@@ -178,12 +212,16 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       }
       
       // Build the messages for the main call
+      // Use enrichedContent (which may include extracted URL content) in the last message
       const messagesForApi = searchContext
         ? [
             ...newMessages.slice(0, -1), // Previous messages without the current one
-            { role: 'user' as const, content: `[Web Search Results]\n${searchContext}\n\n[User Question]\n${content.trim()}` },
+            { role: 'user' as const, content: `[Web Search Results]\n${searchContext}\n\n[User Question]\n${enrichedContent}` },
           ]
-        : newMessages
+        : [
+            ...newMessages.slice(0, -1),
+            { role: 'user' as const, content: enrichedContent },
+          ]
       
       const response = await fetch('/api/ai/chat', {
         method: 'POST',
@@ -194,7 +232,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           mode: mode,
           modelId: selectedModel,
           useWebSearch: webSearchEnabled && hasNativeSearch, // Native search for GPT models
+          useThinking: thinkingEnabled,
         }),
+        signal,
       })
 
       if (!response.ok) {
@@ -270,6 +310,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         saveMessage('assistant', assistantContent)
       }
     } catch (error) {
+      // Don't show error for aborted requests - keep partial response
+      if (error instanceof Error && error.name === 'AbortError') {
+        // Request was cancelled, keep whatever was streamed
+        return
+      }
       console.error('Chat error:', error)
       const errorMessage = error instanceof Error ? error.message : 'Something went wrong'
       setMessages(prev => {
@@ -278,9 +323,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         return updated
       })
     } finally {
+      abortControllerRef.current = null
       setIsStreaming(false)
     }
-  }, [messages, isStreaming, essayContext, mode, webSearchEnabled, selectedModel, saveMessage])
+  }, [messages, isStreaming, essayContext, mode, webSearchEnabled, thinkingEnabled, selectedModel, saveMessage])
 
   const clearMessages = useCallback(() => {
     setMessages([])
@@ -330,14 +376,17 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         isOpen,
         mode,
         webSearchEnabled,
+        thinkingEnabled,
         selectedModel,
         setEssayContext,
         sendMessage,
+        stopStreaming,
         addMessage,
         clearMessages,
         setIsOpen,
         setMode,
         setWebSearchEnabled,
+        setThinkingEnabled,
         setSelectedModel,
         registerEditHandler,
         undoEdit,
