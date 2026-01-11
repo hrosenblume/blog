@@ -57,7 +57,9 @@ export default function Editor() {
   const lengthParam = searchParams.get('length')
   const webParam = searchParams.get('web')
   const commentParam = searchParams.get('comment')
+  const fromPlanParam = searchParams.get('fromPlan')
   const hasTriggeredGeneration = useRef(false)
+  const hasTriggeredPlanExpansion = useRef(false)
   const hasOpenedComment = useRef(false)
   
   const { data: session } = useSession()
@@ -109,7 +111,7 @@ export default function Editor() {
   const [showPublishDialog, setShowPublishDialog] = useState(false)
 
   // Chat context - sync essay content for AI awareness
-  const { setEssayContext, registerEditHandler, addMessage } = useChatContext()
+  const { setEssayContext, registerEditHandler, registerExpandPlanHandler, addMessage, setMode } = useChatContext()
 
   // Check for unsaved changes before navigating away (must be before conditional returns)
   const confirmLeave = useCallback(() => {
@@ -223,6 +225,30 @@ export default function Editor() {
     return () => registerEditHandler(null)
   }, [registerEditHandler, handleAgentEdit])
 
+  // Expand plan handler - generates full essay from plan outline
+  const handleExpandPlan = useCallback((plan: string, wordCount: number) => {
+    // Log to chat
+    addMessage('user', 'Draft essay from plan')
+    
+    // Generate the essay using expand_plan mode (uses the customizable expand plan template)
+    ai.generate(plan, wordCount, undefined, false, 'expand_plan')
+      .then((status) => {
+        if (status === 'complete') {
+          addMessage('assistant', 'Essay drafted from your plan.')
+        } else if (status === 'stopped') {
+          addMessage('assistant', 'Essay generation was stopped. Any content generated is on the canvas.')
+        } else {
+          addMessage('assistant', 'Essay generation failed. Any partial content is on the canvas.')
+        }
+      })
+  }, [ai, addMessage])
+
+  // Register the expand plan handler with chat context
+  useEffect(() => {
+    registerExpandPlanHandler(handleExpandPlan)
+    return () => registerExpandPlanHandler(null)
+  }, [registerExpandPlanHandler, handleExpandPlan])
+
   // Auto-generate from idea param (from dashboard input)
   useEffect(() => {
     if (ideaParam && !postSlug && !ui.loading && !hasTriggeredGeneration.current) {
@@ -250,6 +276,38 @@ export default function Editor() {
       router.replace('/writer/editor', { scroll: false })
     }
   }, [ideaParam, postSlug, ui.loading, ai, router, modelParam, lengthParam, webParam, addMessage])
+
+  // Auto-expand plan from sessionStorage (from dashboard Plan mode)
+  useEffect(() => {
+    if (fromPlanParam && !postSlug && !ui.loading && !hasTriggeredPlanExpansion.current) {
+      const plan = sessionStorage.getItem('pendingPlan')
+      if (plan) {
+        hasTriggeredPlanExpansion.current = true
+        sessionStorage.removeItem('pendingPlan')
+        
+        const wordCount = 800
+
+        addMessage('user', 'Draft essay from plan')
+        
+        // Use expand_plan mode which uses the customizable expand plan template
+        ai.generate(plan, wordCount, undefined, false, 'expand_plan')
+          .then((status) => {
+            if (status === 'complete') {
+              addMessage('assistant', 'Essay drafted from your plan.')
+            } else if (status === 'stopped') {
+              addMessage('assistant', 'Essay generation was stopped. Any content generated is on the canvas.')
+            } else {
+              addMessage('assistant', 'Essay generation failed. Any partial content is on the canvas.')
+            }
+            // Switch to agent mode for editing
+            setMode('agent')
+          })
+        
+        // Clear the URL param so refresh doesn't re-trigger
+        router.replace('/writer/editor', { scroll: false })
+      }
+    }
+  }, [fromPlanParam, postSlug, ui.loading, ai, router, addMessage, setMode])
 
   // Keyboard shortcuts
   useKeyboard([

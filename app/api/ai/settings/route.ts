@@ -7,6 +7,8 @@ import {
   DEFAULT_CHAT_TEMPLATE, 
   DEFAULT_REWRITE_TEMPLATE,
   DEFAULT_AUTO_DRAFT_TEMPLATE,
+  DEFAULT_PLAN_TEMPLATE,
+  DEFAULT_EXPAND_PLAN_TEMPLATE,
 } from '@/lib/ai/system-prompt'
 
 // GET /api/ai/settings - Get current AI settings
@@ -34,10 +36,14 @@ export const GET = withSession(async () => {
     chatTemplate: settings.chatTemplate,
     rewriteTemplate: settings.rewriteTemplate,
     autoDraftTemplate: settings.autoDraftTemplate,
+    planTemplate: settings.planTemplate,
+    expandPlanTemplate: settings.expandPlanTemplate,
     defaultGenerateTemplate: DEFAULT_GENERATE_TEMPLATE,
     defaultChatTemplate: DEFAULT_CHAT_TEMPLATE,
     defaultRewriteTemplate: DEFAULT_REWRITE_TEMPLATE,
     defaultAutoDraftTemplate: DEFAULT_AUTO_DRAFT_TEMPLATE,
+    defaultPlanTemplate: DEFAULT_PLAN_TEMPLATE,
+    defaultExpandPlanTemplate: DEFAULT_EXPAND_PLAN_TEMPLATE,
     availableModels: AI_MODELS.map(m => ({
       id: m.id,
       name: m.name,
@@ -62,6 +68,8 @@ export const PATCH = withSession(async (request: NextRequest) => {
     chatTemplate?: string | null
     rewriteTemplate?: string | null
     autoDraftTemplate?: string | null
+    planTemplate?: string | null
+    expandPlanTemplate?: string | null
   } = {}
 
   if (typeof body.rules === 'string') {
@@ -113,6 +121,14 @@ export const PATCH = withSession(async (request: NextRequest) => {
     updateData.autoDraftTemplate = body.autoDraftTemplate
   }
 
+  if (body.planTemplate !== undefined) {
+    updateData.planTemplate = body.planTemplate
+  }
+
+  if (body.expandPlanTemplate !== undefined) {
+    updateData.expandPlanTemplate = body.expandPlanTemplate
+  }
+
   const settings = await prisma.aISettings.upsert({
     where: { id: 'default' },
     update: updateData,
@@ -128,6 +144,8 @@ export const PATCH = withSession(async (request: NextRequest) => {
       chatTemplate: updateData.chatTemplate,
       rewriteTemplate: updateData.rewriteTemplate,
       autoDraftTemplate: updateData.autoDraftTemplate,
+      planTemplate: updateData.planTemplate,
+      expandPlanTemplate: updateData.expandPlanTemplate,
     },
   })
 
@@ -142,5 +160,7 @@ export const PATCH = withSession(async (request: NextRequest) => {
     chatTemplate: settings.chatTemplate,
     rewriteTemplate: settings.rewriteTemplate,
     autoDraftTemplate: settings.autoDraftTemplate,
+    planTemplate: settings.planTemplate,
+    expandPlanTemplate: settings.expandPlanTemplate,
   })
 })

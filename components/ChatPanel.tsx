@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { Loader2, X, Copy, Check, ArrowUp, Pencil, Undo2, ChevronDown, MessageSquare, Globe, Brain, Square } from 'lucide-react'
+import { useRouter, usePathname } from 'next/navigation'
+import { Loader2, X, Copy, Check, ArrowUp, Pencil, Undo2, ChevronDown, MessageSquare, Globe, Brain, Square, List } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -37,7 +38,12 @@ export function ChatPanel() {
     setThinkingEnabled,
     selectedModel,
     setSelectedModel,
+    expandPlan,
   } = useChatContext()
+  
+  const router = useRouter()
+  const pathname = usePathname()
+  const isOnEditor = pathname?.startsWith('/writer/editor')
   
   const [input, setInput] = useState('')
   const [isAnimating, setIsAnimating] = useState(false)
@@ -67,6 +73,25 @@ export function ChatPanel() {
     setCopiedIndex(index)
     setTimeout(() => setCopiedIndex(null), 2000)
   }, [])
+  
+  // Handle Draft Essay button - either expand in current editor or navigate to new editor
+  const handleDraftEssay = useCallback(() => {
+    // Find the last assistant message (the plan)
+    const lastAssistantMessage = [...messages].reverse().find(m => m.role === 'assistant')
+    if (!lastAssistantMessage?.content) return
+    
+    if (isOnEditor) {
+      // Already on editor page - use the registered handler and switch to agent mode
+      expandPlan()
+      setMode('agent')
+    } else {
+      // Not on editor - store plan in sessionStorage and navigate
+      // Mode will be set to agent after navigation in the editor
+      sessionStorage.setItem('pendingPlan', lastAssistantMessage.content)
+      setIsOpen(false)
+      router.push('/writer/editor?fromPlan=1')
+    }
+  }, [messages, isOnEditor, expandPlan, setIsOpen, setMode, router])
   
   // Client-side only for portal
   useEffect(() => {
@@ -167,20 +192,24 @@ export function ChatPanel() {
     }
   }
   
-  // Keyboard shortcut for toggling mode (Cmd/Ctrl + Shift + A)
+  // Keyboard shortcut for agent mode (Cmd/Ctrl + Shift + A)
+  // Opens chat in agent mode, or switches to agent mode if already open
   useEffect(() => {
-    if (!open) return
-    
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'a') {
         e.preventDefault()
-        toggleMode()
+        if (!open) {
+          // Chat is closed - open it and set to agent mode
+          setIsOpen(true)
+        }
+        // Always set to agent mode
+        setMode('agent')
       }
     }
     
     document.addEventListener('keydown', handleGlobalKeyDown)
     return () => document.removeEventListener('keydown', handleGlobalKeyDown)
-  }, [open, toggleMode])
+  }, [open, setIsOpen, setMode])
 
   if (!isVisible || !mounted) return null
 
@@ -235,9 +264,11 @@ export function ChatPanel() {
             <div className="h-full flex items-center justify-center">
               <div className="text-center max-w-xs px-6">
                 <p className="text-muted-foreground text-sm">
-                  {essayContext 
-                    ? "Chat about your essay — ask for feedback, discuss ideas, or get help with specific sections."
-                    : "Chat with AI to brainstorm ideas, get feedback, or explore topics."
+                  {mode === 'plan'
+                    ? "Describe your essay idea and I'll create a structured outline with section headers and key points."
+                    : essayContext 
+                      ? "Chat about your essay — ask for feedback, discuss ideas, or get help with specific sections."
+                      : "Chat with AI to brainstorm ideas, get feedback, or explore topics."
                   }
                 </p>
               </div>
@@ -262,7 +293,7 @@ export function ChatPanel() {
                   >
                     {message.role === 'assistant' ? (
                       <div 
-                        className={cn(PROSE_CLASSES, '[&>*:last-child]:mb-0')}
+                        className={cn(PROSE_CLASSES, '[&>*:first-child]:mt-0 [&>*:last-child]:mb-0')}
                         dangerouslySetInnerHTML={{ __html: markdownToHtml(message.content) }}
                       />
                     ) : (
@@ -290,19 +321,30 @@ export function ChatPanel() {
                         </button>
                       </div>
                     )}
-                    {/* Copy button for assistant messages */}
+                    {/* Action buttons for assistant messages */}
                     {message.role === 'assistant' && !isStreaming && (
-                      <button
-                        onClick={() => copyToClipboard(message.content, index)}
-                        className="absolute -bottom-6 left-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground p-1 rounded"
-                        aria-label="Copy message"
-                      >
-                        {copiedIndex === index ? (
-                          <Check className="w-3.5 h-3.5 text-green-500" />
-                        ) : (
-                          <Copy className="w-3.5 h-3.5" />
+                      <div className="absolute -bottom-6 left-0 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => copyToClipboard(message.content, index)}
+                          className="text-muted-foreground hover:text-foreground p-1 rounded"
+                          aria-label="Copy message"
+                        >
+                          {copiedIndex === index ? (
+                            <Check className="w-3.5 h-3.5 text-green-500" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                        {/* Draft Essay button for plan mode - appears on last assistant message generated in plan mode */}
+                        {message.mode === 'plan' && index === messages.length - 1 && message.content && (
+                          <button
+                            onClick={handleDraftEssay}
+                            className="text-xs text-muted-foreground hover:text-foreground px-1 rounded"
+                          >
+                            Draft Essay
+                          </button>
                         )}
-                      </button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -325,36 +367,21 @@ export function ChatPanel() {
                 <button
                   className={cn(
                     "inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full transition-colors",
-                    mode === 'ask'
-                      ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                      : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
+                    mode === 'ask' && "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+                    mode === 'agent' && "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
+                    mode === 'plan' && "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
                     "hover:opacity-80"
                   )}
                   title="Switch mode (⌘⇧A)"
                 >
-                  {mode === 'ask' ? (
-                    <MessageSquare className="w-3 h-3" />
-                  ) : (
-                    <Pencil className="w-3 h-3" />
-                  )}
-                  {mode === 'ask' ? 'Ask' : 'Agent'}
+                  {mode === 'ask' && <MessageSquare className="w-3 h-3" />}
+                  {mode === 'agent' && <Pencil className="w-3 h-3" />}
+                  {mode === 'plan' && <List className="w-3 h-3" />}
+                  {mode === 'ask' ? 'Ask' : mode === 'agent' ? 'Agent' : 'Plan'}
                   <ChevronDown className="w-3 h-3 opacity-60" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="min-w-[140px] z-[80]">
-                <DropdownMenuItem 
-                  onClick={() => setMode('ask')}
-                  className="flex items-center justify-between"
-                >
-                  <span className="flex items-center gap-2">
-                    <MessageSquare className="w-4 h-4" />
-                    Ask
-                  </span>
-                  <span className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">⌘⇧A</span>
-                    {mode === 'ask' && <Check className="w-4 h-4" />}
-                  </span>
-                </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => setMode('agent')}
                   disabled={!essayContext}
@@ -364,7 +391,30 @@ export function ChatPanel() {
                     <Pencil className="w-4 h-4" />
                     Agent
                   </span>
-                  {mode === 'agent' && <Check className="w-4 h-4" />}
+                  <span className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">⌘⇧A</span>
+                    {mode === 'agent' && <Check className="w-4 h-4" />}
+                  </span>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setMode('plan')}
+                  className="flex items-center justify-between"
+                >
+                  <span className="flex items-center gap-2">
+                    <List className="w-4 h-4" />
+                    Plan
+                  </span>
+                  {mode === 'plan' && <Check className="w-4 h-4" />}
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setMode('ask')}
+                  className="flex items-center justify-between"
+                >
+                  <span className="flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4" />
+                    Ask
+                  </span>
+                  {mode === 'ask' && <Check className="w-4 h-4" />}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -405,11 +455,13 @@ export function ChatPanel() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={
-                mode === 'agent' && essayContext
-                  ? "Ask me to edit your essay..."
-                  : essayContext 
-                    ? "Ask about your essay..." 
-                    : "Ask anything..."
+                mode === 'plan'
+                  ? "Describe your essay idea..."
+                  : mode === 'agent' && essayContext
+                    ? "Ask me to edit your essay..."
+                    : essayContext 
+                      ? "Ask about your essay..." 
+                      : "Ask anything..."
               }
               className="min-h-[40px] max-h-[120px] resize-none"
               rows={1}

@@ -2,7 +2,7 @@
 
 import { useSession } from 'next-auth/react'
 import { useRouter, usePathname } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { Loader2, Save } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ChatPanel } from '@/components/ChatPanel'
@@ -21,6 +21,12 @@ function DashboardLayoutContent({
   const pathname = usePathname()
   const { isOpen: chatOpen, setIsOpen: setChatOpen } = useChatContext()
   const { editorState } = useDashboardContext()
+  const mainRef = useRef<HTMLElement>(null)
+
+  // Scroll main container to top on navigation
+  useEffect(() => {
+    mainRef.current?.scrollTo(0, 0)
+  }, [pathname])
 
   // Route detection
   const isEditor = pathname?.startsWith('/writer/editor')
@@ -126,7 +132,7 @@ function DashboardLayoutContent({
         fixed={false}
       />
       
-      <main className="flex-1 overflow-auto">
+      <main ref={mainRef} className="flex-1 overflow-auto">
         {children}
       </main>
       

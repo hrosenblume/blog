@@ -31,10 +31,14 @@ export default function AISettingsPage() {
   const [chatTemplate, setChatTemplate] = useState<string | null>(null)
   const [rewriteTemplate, setRewriteTemplate] = useState<string | null>(null)
   const [autoDraftTemplate, setAutoDraftTemplate] = useState<string | null>(null)
+  const [planTemplate, setPlanTemplate] = useState<string | null>(null)
+  const [expandPlanTemplate, setExpandPlanTemplate] = useState<string | null>(null)
   const [defaultGenerateTemplate, setDefaultGenerateTemplate] = useState('')
   const [defaultChatTemplate, setDefaultChatTemplate] = useState('')
   const [defaultRewriteTemplate, setDefaultRewriteTemplate] = useState('')
   const [defaultAutoDraftTemplate, setDefaultAutoDraftTemplate] = useState('')
+  const [defaultPlanTemplate, setDefaultPlanTemplate] = useState('')
+  const [defaultExpandPlanTemplate, setDefaultExpandPlanTemplate] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -42,7 +46,10 @@ export default function AISettingsPage() {
   // Fetch current settings on mount
   useEffect(() => {
     fetch('/api/ai/settings')
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        return res.json()
+      })
       .then(data => {
         setRules(data.rules || '')
         setChatRules(data.chatRules || '')
@@ -55,10 +62,14 @@ export default function AISettingsPage() {
         setChatTemplate(data.chatTemplate)
         setRewriteTemplate(data.rewriteTemplate)
         setAutoDraftTemplate(data.autoDraftTemplate)
+        setPlanTemplate(data.planTemplate)
+        setExpandPlanTemplate(data.expandPlanTemplate)
         setDefaultGenerateTemplate(data.defaultGenerateTemplate || '')
         setDefaultChatTemplate(data.defaultChatTemplate || '')
         setDefaultRewriteTemplate(data.defaultRewriteTemplate || '')
         setDefaultAutoDraftTemplate(data.defaultAutoDraftTemplate || '')
+        setDefaultPlanTemplate(data.defaultPlanTemplate || '')
+        setDefaultExpandPlanTemplate(data.defaultExpandPlanTemplate || '')
       })
       .catch(console.error)
       .finally(() => setLoading(false))
@@ -82,6 +93,8 @@ export default function AISettingsPage() {
           chatTemplate,
           rewriteTemplate,
           autoDraftTemplate,
+          planTemplate,
+          expandPlanTemplate,
         }),
       })
       setSaved(true)
@@ -99,12 +112,16 @@ export default function AISettingsPage() {
   const effectiveChatTemplate = chatTemplate ?? defaultChatTemplate
   const effectiveRewriteTemplate = rewriteTemplate ?? defaultRewriteTemplate
   const effectiveAutoDraftTemplate = autoDraftTemplate ?? defaultAutoDraftTemplate
+  const effectivePlanTemplate = planTemplate ?? defaultPlanTemplate
+  const effectiveExpandPlanTemplate = expandPlanTemplate ?? defaultExpandPlanTemplate
 
   // Check if using custom template
   const isCustomGenerateTemplate = generateTemplate !== null
   const isCustomChatTemplate = chatTemplate !== null
   const isCustomRewriteTemplate = rewriteTemplate !== null
   const isCustomAutoDraftTemplate = autoDraftTemplate !== null
+  const isCustomPlanTemplate = planTemplate !== null
+  const isCustomExpandPlanTemplate = expandPlanTemplate !== null
 
   if (loading) {
     return (
@@ -356,6 +373,84 @@ export default function AISettingsPage() {
                   <Textarea
                     value={effectiveAutoDraftTemplate}
                     onChange={e => setAutoDraftTemplate(e.target.value)}
+                    className="min-h-[300px] font-mono text-xs resize-none"
+                    disabled={saving}
+                  />
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Plan Mode Template</Label>
+            <p className="text-sm text-muted-foreground">
+              Prompt template for Plan mode in chat. Controls how essay outlines are generated.
+            </p>
+            <Collapsible>
+              <CollapsibleTrigger className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground cursor-pointer">
+                <ChevronDown className="h-4 w-4 transition-transform [[data-state=open]>&]:rotate-180" />
+                {isCustomPlanTemplate ? 'Edit prompt template (customized)' : 'Edit prompt template'}
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="mt-2 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">
+                      Placeholders: <code className="bg-muted px-1 rounded">{'{{STYLE_EXAMPLES}}'}</code>
+                    </p>
+                    {isCustomPlanTemplate && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setPlanTemplate(null)}
+                        className="h-7 text-xs"
+                      >
+                        <RotateCcw className="h-3 w-3 mr-1" />
+                        Reset to default
+                      </Button>
+                    )}
+                  </div>
+                  <Textarea
+                    value={effectivePlanTemplate}
+                    onChange={e => setPlanTemplate(e.target.value)}
+                    className="min-h-[300px] font-mono text-xs resize-none"
+                    disabled={saving}
+                  />
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Expand Plan Template</Label>
+            <p className="text-sm text-muted-foreground">
+              Prompt template for expanding a plan outline into a full essay draft.
+            </p>
+            <Collapsible>
+              <CollapsibleTrigger className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground cursor-pointer">
+                <ChevronDown className="h-4 w-4 transition-transform [[data-state=open]>&]:rotate-180" />
+                {isCustomExpandPlanTemplate ? 'Edit prompt template (customized)' : 'Edit prompt template'}
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="mt-2 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">
+                      Placeholders: <code className="bg-muted px-1 rounded">{'{{RULES}}'}</code>, <code className="bg-muted px-1 rounded">{'{{STYLE_EXAMPLES}}'}</code>, <code className="bg-muted px-1 rounded">{'{{PLAN}}'}</code>
+                    </p>
+                    {isCustomExpandPlanTemplate && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setExpandPlanTemplate(null)}
+                        className="h-7 text-xs"
+                      >
+                        <RotateCcw className="h-3 w-3 mr-1" />
+                        Reset to default
+                      </Button>
+                    )}
+                  </div>
+                  <Textarea
+                    value={effectiveExpandPlanTemplate}
+                    onChange={e => setExpandPlanTemplate(e.target.value)}
                     className="min-h-[300px] font-mono text-xs resize-none"
                     disabled={saving}
                   />

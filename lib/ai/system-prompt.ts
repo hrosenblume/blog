@@ -136,6 +136,60 @@ Wrap edit commands in :::edit markers with a JSON object:
 - If you can't find the text the user mentioned, tell them and ask for clarification
 - For small changes, prefer replace_section over replace_all`
 
+export const DEFAULT_PLAN_TEMPLATE = `You are a writing assistant in PLAN MODE.
+
+## Style Reference (The author writes like this)
+{{STYLE_EXAMPLES}}
+
+---
+
+Your ONLY job is to output an essay plan with a title, subtitle, and section outline.
+
+ALWAYS respond in this exact format:
+
+# Essay Title
+*Subtitle that captures the core tension or insight*
+
+## Section Title
+- Key point or argument
+
+## Next Section Title
+- Another key point
+...
+
+Rules:
+- Start with a compelling title (H1) and subtitle (italic line)
+- Output 4-7 sections after the title/subtitle
+- MAXIMUM 3 bullet points per section — usually 1-2 is enough. Less is more.
+- First section should be a hook/intro angle
+- Last section can be conclusion or call to action
+- Do NOT write prose or the full essay
+- When user gives feedback, output the COMPLETE updated plan (including title/subtitle)
+- Keep bullet points concise (1 line each)
+- Focus on the argument structure and key points to cover
+
+IMPORTANT: Output ONLY the plan. No follow-up questions. No "Ready to expand?", "Want me to draft this?", "Let me know if..." or ANY other text after the plan. Just the outline, nothing else.`
+
+export const DEFAULT_EXPAND_PLAN_TEMPLATE = `You are a writing assistant that expands essay outlines into full drafts.
+
+## Writing Rules (Follow these exactly)
+{{RULES}}
+
+## Style Reference (Write in this voice)
+{{STYLE_EXAMPLES}}
+
+---
+
+Write an essay following this exact structure:
+
+{{PLAN}}
+
+Rules:
+- Use the section headers as H2 headings
+- Expand each section's bullet points into full paragraphs
+- Match the author's voice and style from the examples
+- Output ONLY markdown. No preamble, no "Here is...", no explanations. Just the essay content.`
+
 export interface StyleContext {
   customRules: string
   chatRules: string
@@ -147,6 +201,8 @@ export interface StyleContext {
   rewriteTemplate: string | null
   autoDraftTemplate: string | null
   autoDraftWordCount: number
+  planTemplate: string | null
+  expandPlanTemplate: string | null
 }
 
 /**
@@ -187,6 +243,8 @@ export async function getStyleContext(): Promise<StyleContext> {
   const rewriteTemplate = settings?.rewriteTemplate || null
   const autoDraftTemplate = settings?.autoDraftTemplate || null
   const autoDraftWordCount = settings?.autoDraftWordCount || 800
+  const planTemplate = settings?.planTemplate || null
+  const expandPlanTemplate = settings?.expandPlanTemplate || null
 
   // Fetch all published posts for style context
   const publishedPosts = await prisma.post.findMany({
@@ -214,6 +272,8 @@ export async function getStyleContext(): Promise<StyleContext> {
     rewriteTemplate,
     autoDraftTemplate,
     autoDraftWordCount,
+    planTemplate,
+    expandPlanTemplate,
   }
 }
 
@@ -310,6 +370,31 @@ This is the essay you can edit. When matching text for edits, use the EXACT text
 ${header}
 
 ${essay.markdown}`
+}
+
+/**
+ * Build a system prompt for plan mode - generates section headers with bullet points.
+ * The AI only outputs structure, not prose. User can refine via conversation.
+ */
+export function buildPlanPrompt(context: StyleContext): string {
+  const template = context.planTemplate || DEFAULT_PLAN_TEMPLATE
+  const styleValue = context.styleExamples || 'No published essays available. Write in a clear, personal essay style.'
+  return template.replace(/\{\{STYLE_EXAMPLES\}\}/g, styleValue)
+}
+
+/**
+ * Build a system prompt for expanding a plan into a full essay.
+ * Takes the plan content and injects it into the template.
+ */
+export function buildExpandPlanPrompt(context: StyleContext, plan: string): string {
+  const template = context.expandPlanTemplate || DEFAULT_EXPAND_PLAN_TEMPLATE
+  const rulesValue = context.customRules || 'Write clearly and concisely.'
+  const styleValue = context.styleExamples || 'No published essays available. Write in a clear, personal essay style.'
+  
+  return template
+    .replace(/\{\{RULES\}\}/g, rulesValue)
+    .replace(/\{\{STYLE_EXAMPLES\}\}/g, styleValue)
+    .replace(/\{\{PLAN\}\}/g, plan)
 }
 
 /**

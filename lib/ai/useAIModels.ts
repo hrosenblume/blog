@@ -35,7 +35,10 @@ export function useAIModels(options?: UseAIModelsOptions): UseAIModelsResult {
 
   useEffect(() => {
     fetch('/api/ai/settings')
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        return res.json()
+      })
       .then(data => {
         setModels(data.availableModels || [])
         if (data.defaultModel && !selectedModel) {

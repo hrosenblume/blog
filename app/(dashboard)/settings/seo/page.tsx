@@ -47,8 +47,14 @@ export default function SEOSettingsPage() {
   // Fetch current settings on mount
   useEffect(() => {
     Promise.all([
-      fetch('/api/seo/settings').then(res => res.json()),
-      fetch('/api/seo/pages').then(res => res.json()),
+      fetch('/api/seo/settings').then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        return res.json()
+      }),
+      fetch('/api/seo/pages').then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        return res.json()
+      }),
     ])
       .then(([siteData, pagesData]) => {
         setSiteTitle(siteData.siteTitle || '')

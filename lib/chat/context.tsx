@@ -13,6 +13,8 @@ export interface EssaySnapshot {
 export interface Message {
   role: 'user' | 'assistant'
   content: string
+  // Track which mode this message was generated in
+  mode?: ChatMode
   // Track if this message applied edits (for UI indicator)
   appliedEdits?: boolean
   // Store state before edits were applied (for undo)
@@ -25,7 +27,7 @@ export interface EssayContext {
   markdown: string
 }
 
-export type ChatMode = 'ask' | 'agent' | 'search'
+export type ChatMode = 'ask' | 'agent' | 'search' | 'plan'
 
 export interface EssayEdit {
   type: 'replace_all' | 'replace_section' | 'insert' | 'delete'
@@ -40,6 +42,7 @@ export interface EssayEdit {
 }
 
 export type EditHandler = (edit: EssayEdit) => boolean  // returns true if edit was applied
+export type ExpandPlanHandler = (plan: string, wordCount: number) => void  // triggers essay generation from plan
 
 interface ChatContextValue {
   // State
@@ -65,6 +68,8 @@ interface ChatContextValue {
   setSelectedModel: (modelId: string) => void
   registerEditHandler: (handler: EditHandler | null) => void
   undoEdit: (messageIndex: number) => void
+  registerExpandPlanHandler: (handler: ExpandPlanHandler | null) => void
+  expandPlan: (wordCount?: number) => void
 }
 
 const ChatContext = createContext<ChatContextValue | null>(null)
@@ -106,6 +111,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   
   // Edit handler registered by the editor
   const editHandlerRef = useRef<EditHandler | null>(null)
+  // Expand plan handler registered by the editor
+  const expandPlanHandlerRef = useRef<ExpandPlanHandler | null>(null)
   // Track if history has been loaded
   const historyLoadedRef = useRef(false)
   // AbortController for cancelling streaming requests
@@ -113,6 +120,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   
   const registerEditHandler = useCallback((handler: EditHandler | null) => {
     editHandlerRef.current = handler
+  }, [])
+
+  const registerExpandPlanHandler = useCallback((handler: ExpandPlanHandler | null) => {
+    expandPlanHandlerRef.current = handler
   }, [])
 
   const stopStreaming = useCallback(() => {
@@ -167,7 +178,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     saveMessage('user', content.trim())
 
     // Add empty assistant message that we'll stream into
-    const assistantMessage: Message = { role: 'assistant', content: '' }
+    const assistantMessage: Message = { role: 'assistant', content: '', mode }
     setMessages([...newMessages, assistantMessage])
 
     try {
@@ -265,7 +276,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         // Update the assistant message with streamed content
         setMessages(prev => {
           const updated = [...prev]
-          updated[updated.length - 1] = { role: 'assistant', content: assistantContent }
+          updated[updated.length - 1] = { role: 'assistant', content: assistantContent, mode }
           return updated
         })
       }
@@ -294,6 +305,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
             updated[updated.length - 1] = { 
               role: 'assistant', 
               content: finalContent,
+              mode,
               appliedEdits,
               previousState: appliedEdits ? previousState : undefined,
             }
@@ -367,6 +379,21 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     }
   }, [messages])
 
+  // Expand the current plan into a full essay
+  const expandPlan = useCallback((wordCount: number = 800) => {
+    if (!expandPlanHandlerRef.current) return
+    
+    // Find the last assistant message (the current plan)
+    const lastAssistantMessage = [...messages].reverse().find(m => m.role === 'assistant')
+    if (!lastAssistantMessage?.content) return
+    
+    // Call the handler with the plan content
+    expandPlanHandlerRef.current(lastAssistantMessage.content, wordCount)
+    
+    // Close the chat panel
+    setIsOpen(false)
+  }, [messages])
+
   return (
     <ChatContext.Provider
       value={{
@@ -390,6 +417,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         setSelectedModel,
         registerEditHandler,
         undoEdit,
+        registerExpandPlanHandler,
+        expandPlan,
       }}
     >
       {children}

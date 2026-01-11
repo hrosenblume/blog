@@ -145,7 +145,10 @@ export default function IntegrationsPage() {
   // Fetch current settings on mount
   useEffect(() => {
     fetch('/api/integrations/settings')
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        return res.json()
+      })
       .then(data => setSettings(data))
       .catch(console.error)
       .finally(() => setLoading(false))

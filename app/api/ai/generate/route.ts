@@ -4,7 +4,7 @@ import { prisma } from '@/lib/db'
 import { generate, generateStream } from '@/lib/ai/provider'
 import { resolveModel } from '@/lib/ai/models'
 import { parseGeneratedContent } from '@/lib/ai/parse'
-import { getStyleContext, buildGeneratePrompt, buildSearchOnlyPrompt } from '@/lib/ai/system-prompt'
+import { getStyleContext, buildGeneratePrompt, buildSearchOnlyPrompt, buildExpandPlanPrompt } from '@/lib/ai/system-prompt'
 import { wordCount } from '@/lib/markdown'
 
 interface GenerateRequest {
@@ -13,6 +13,7 @@ interface GenerateRequest {
   modelId?: string
   stream?: boolean
   useWebSearch?: boolean
+  mode?: 'generate' | 'expand_plan'  // expand_plan uses plan-specific system prompt
 }
 
 // POST /api/ai/generate - Generate essay content (supports streaming)
@@ -29,6 +30,7 @@ export async function POST(request: NextRequest) {
   const targetWords = body.wordCount || 500
   const shouldStream = body.stream === true
   const useWebSearch = body.useWebSearch === true
+  const mode = body.mode || 'generate'
 
   // Resolve model (provided or default from DB)
   let model
@@ -56,12 +58,22 @@ export async function POST(request: NextRequest) {
   }
 
   const context = await getStyleContext()
-  const systemPrompt = buildGeneratePrompt(context)
-
-  // Build user prompt with optional search context
-  let userPrompt = `Write an essay of approximately ${targetWords} words about:
+  
+  // Build system prompt based on mode
+  let systemPrompt: string
+  let userPrompt: string
+  
+  if (mode === 'expand_plan') {
+    // For expand_plan mode, the prompt IS the plan content
+    systemPrompt = buildExpandPlanPrompt(context, body.prompt.trim())
+    userPrompt = `Write an essay of approximately ${targetWords} words following the structure above.`
+  } else {
+    // Standard generation mode
+    systemPrompt = buildGeneratePrompt(context)
+    userPrompt = `Write an essay of approximately ${targetWords} words about:
 
 ${body.prompt.trim()}`
+  }
 
   if (searchContext) {
     userPrompt += `

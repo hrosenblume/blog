@@ -33,7 +33,10 @@ export default function RevisionDetailPage() {
 
   useEffect(() => {
     fetch(`/api/admin/revisions/${params.id}`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        return res.json()
+      })
       .then(data => {
         setRevision(data)
         setLoading(false)

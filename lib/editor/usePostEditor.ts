@@ -630,7 +630,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
 
   // Generate content with AI (streaming)
   // Returns: 'complete' | 'stopped' | 'error'
-  const generateWithAI = useCallback(async (prompt: string, wordCount: number, modelId?: string, useWebSearch?: boolean): Promise<'complete' | 'stopped' | 'error'> => {
+  const generateWithAI = useCallback(async (prompt: string, wordCount: number, modelId?: string, useWebSearch?: boolean, mode?: 'generate' | 'expand_plan'): Promise<'complete' | 'stopped' | 'error'> => {
     setAiGenerating(true)
     
     // Create new AbortController for this request
@@ -661,7 +661,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
       const res = await fetch('/api/ai/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, wordCount, modelId, stream: true, useWebSearch }),
+        body: JSON.stringify({ prompt, wordCount, modelId, stream: true, useWebSearch, mode }),
         signal,
       })
 
@@ -697,20 +697,23 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
         // Parse incrementally to extract title/subtitle as they appear
         const parsed = parseGeneratedContent(fullContent)
         
+        // Only start showing content once we've parsed the title
+        // This keeps all skeletons (title, subtitle, body) in sync
         if (parsed.title) {
           setTitle(parsed.title)
-        }
-        if (parsed.subtitle) {
-          setSubtitle(parsed.subtitle)
-        }
-        
-        // Update markdown body (content after title/subtitle)
-        setMarkdown(parsed.body)
-        
-        // Update editor content
-        if (editor && parsed.body) {
-          const html = markdownToHtml(parsed.body)
-          editor.commands.setContent(html, { emitUpdate: false })
+          
+          if (parsed.subtitle) {
+            setSubtitle(parsed.subtitle)
+          }
+          
+          // Update markdown body (content after title/subtitle)
+          setMarkdown(parsed.body)
+          
+          // Update editor content
+          if (editor && parsed.body) {
+            const html = markdownToHtml(parsed.body)
+            editor.commands.setContent(html, { emitUpdate: false })
+          }
         }
       }
 

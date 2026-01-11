@@ -32,7 +32,10 @@ export function UserFormPage({ userId }: { userId?: string }) {
   useEffect(() => {
     if (!userId) return
     fetch(`/api/admin/users/${userId}`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        return res.json()
+      })
       .then(data => { 
         setUser(data)
         setRole(data.role)

@@ -65,7 +65,10 @@ export default function Dashboard() {
   useEffect(() => {
     // Fetch posts
     fetch('/api/posts')
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        return res.json()
+      })
       .then(data => {
         setPosts(data.posts || [])
         setLoading(false)
@@ -74,14 +77,20 @@ export default function Dashboard() {
 
     // Fetch feature flag
     fetch('/api/integrations/settings')
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        return res.json()
+      })
       .then(data => {
         const enabled = !!data.autoDraftEnabled
         setAutoDraftEnabled(enabled)
         if (enabled) {
           // Fetch suggested posts
           fetch('/api/posts?status=suggested')
-            .then(res => res.json())
+            .then(res => {
+              if (!res.ok) throw new Error(`HTTP ${res.status}`)
+              return res.json()
+            })
             .then(data => setSuggestedPosts(data.posts || []))
             .catch(() => {})
         }

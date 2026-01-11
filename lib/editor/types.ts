@@ -32,6 +32,6 @@ export type GenerationStatus = 'complete' | 'stopped' | 'error'
 
 export interface AIState {
   generating: boolean
-  generate: (prompt: string, wordCount: number, modelId?: string, useWebSearch?: boolean) => Promise<GenerationStatus>
+  generate: (prompt: string, wordCount: number, modelId?: string, useWebSearch?: boolean, mode?: 'generate' | 'expand_plan') => Promise<GenerationStatus>
   stop: () => void
 }

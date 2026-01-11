@@ -35,7 +35,10 @@ export function TagsSection({
     if (isExpanded && availableTags.length === 0) {
       setLoading(true)
       fetch('/api/tags')
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`)
+          return res.json()
+        })
         .then(data => {
           setAvailableTags(data)
           setLoading(false)

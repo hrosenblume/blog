@@ -3,7 +3,7 @@ import { requireSession, unauthorized, badRequest } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { generateChatStream, generate, ChatMessage } from '@/lib/ai/provider'
 import { resolveModel, getSearchModel, modelHasNativeSearch } from '@/lib/ai/models'
-import { getStyleContext, buildChatPromptWithEssay, buildAgentChatPrompt, buildSearchOnlyPrompt } from '@/lib/ai/system-prompt'
+import { getStyleContext, buildChatPromptWithEssay, buildAgentChatPrompt, buildSearchOnlyPrompt, buildPlanPrompt } from '@/lib/ai/system-prompt'
 import type { ChatMode, EssayContext } from '@/lib/chat'
 
 interface ChatRequest {
@@ -65,9 +65,14 @@ export async function POST(request: NextRequest) {
 
   // Build system prompt with style context, essay context, and web search flag
   const context = await getStyleContext()
-  const systemPrompt = body.mode === 'agent'
-    ? buildAgentChatPrompt(context, body.essayContext, useWebSearch)
-    : buildChatPromptWithEssay(context, body.essayContext, useWebSearch)
+  let systemPrompt: string
+  if (body.mode === 'agent') {
+    systemPrompt = buildAgentChatPrompt(context, body.essayContext, useWebSearch)
+  } else if (body.mode === 'plan') {
+    systemPrompt = buildPlanPrompt(context)
+  } else {
+    systemPrompt = buildChatPromptWithEssay(context, body.essayContext, useWebSearch)
+  }
 
   try {
     const encoder = new TextEncoder()
