@@ -72,8 +72,9 @@ function DashboardLayoutContent({
       )
     }
     
-    // For other pages, simple back button
-    return <MagicBackButton backLink={getBackLink()} />
+    // For settings pages, force using computed link (prevents back loops)
+    // For other pages, allow browser history
+    return <MagicBackButton backLink={getBackLink()} forceLink={isSettings} />
   }
 
   // Compute right slot based on route

@@ -24,6 +24,7 @@ export default function AISettingsPage() {
   const [chatRules, setChatRules] = useState('')
   const [rewriteRules, setRewriteRules] = useState('')
   const [autoDraftRules, setAutoDraftRules] = useState('')
+  const [planRules, setPlanRules] = useState('')
   const [autoDraftWordCount, setAutoDraftWordCount] = useState(800)
   const [defaultModel, setDefaultModel] = useState('claude-sonnet')
   const [models, setModels] = useState<AIModelOption[]>([])
@@ -37,6 +38,7 @@ export default function AISettingsPage() {
   const [defaultChatTemplate, setDefaultChatTemplate] = useState('')
   const [defaultRewriteTemplate, setDefaultRewriteTemplate] = useState('')
   const [defaultAutoDraftTemplate, setDefaultAutoDraftTemplate] = useState('')
+  const [defaultPlanRules, setDefaultPlanRules] = useState('')
   const [defaultPlanTemplate, setDefaultPlanTemplate] = useState('')
   const [defaultExpandPlanTemplate, setDefaultExpandPlanTemplate] = useState('')
   const [loading, setLoading] = useState(true)
@@ -55,6 +57,7 @@ export default function AISettingsPage() {
         setChatRules(data.chatRules || '')
         setRewriteRules(data.rewriteRules || '')
         setAutoDraftRules(data.autoDraftRules || '')
+        setPlanRules(data.planRules || '')
         setAutoDraftWordCount(data.autoDraftWordCount ?? 800)
         setDefaultModel(data.defaultModel || 'claude-sonnet')
         setModels(data.availableModels || [])
@@ -68,6 +71,7 @@ export default function AISettingsPage() {
         setDefaultChatTemplate(data.defaultChatTemplate || '')
         setDefaultRewriteTemplate(data.defaultRewriteTemplate || '')
         setDefaultAutoDraftTemplate(data.defaultAutoDraftTemplate || '')
+        setDefaultPlanRules(data.defaultPlanRules || '')
         setDefaultPlanTemplate(data.defaultPlanTemplate || '')
         setDefaultExpandPlanTemplate(data.defaultExpandPlanTemplate || '')
       })
@@ -87,6 +91,7 @@ export default function AISettingsPage() {
           chatRules,
           rewriteRules,
           autoDraftRules,
+          planRules,
           autoDraftWordCount,
           defaultModel,
           generateTemplate,
@@ -382,9 +387,36 @@ export default function AISettingsPage() {
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="planRules">Plan Format Rules</Label>
+            <p className="text-sm text-muted-foreground">
+              Rules for essay plan structure and format. Controls how outlines are organized in Plan mode.
+            </p>
+            <div className="flex items-center justify-end">
+              {planRules && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setPlanRules('')}
+                  className="h-7 text-xs"
+                >
+                  <RotateCcw className="h-3 w-3 mr-1" />
+                  Reset to default
+                </Button>
+              )}
+            </div>
+            <Textarea
+              id="planRules"
+              value={planRules || defaultPlanRules}
+              onChange={e => setPlanRules(e.target.value)}
+              className="min-h-[250px] font-mono text-sm resize-none"
+              disabled={saving}
+            />
+          </div>
+
+          <div className="space-y-2">
             <Label>Plan Mode Template</Label>
             <p className="text-sm text-muted-foreground">
-              Prompt template for Plan mode in chat. Controls how essay outlines are generated.
+              Prompt template for Plan mode in chat. Controls the full system prompt.
             </p>
             <Collapsible>
               <CollapsibleTrigger className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground cursor-pointer">
@@ -395,7 +427,7 @@ export default function AISettingsPage() {
                 <div className="mt-2 space-y-2">
                   <div className="flex items-center justify-between">
                     <p className="text-xs text-muted-foreground">
-                      Placeholders: <code className="bg-muted px-1 rounded">{'{{STYLE_EXAMPLES}}'}</code>
+                      Placeholders: <code className="bg-muted px-1 rounded">{'{{PLAN_RULES}}'}</code>, <code className="bg-muted px-1 rounded">{'{{STYLE_EXAMPLES}}'}</code>
                     </p>
                     {isCustomPlanTemplate && (
                       <Button

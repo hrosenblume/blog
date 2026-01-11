@@ -8,6 +8,7 @@ import {
   DEFAULT_REWRITE_TEMPLATE,
   DEFAULT_AUTO_DRAFT_TEMPLATE,
   DEFAULT_PLAN_TEMPLATE,
+  DEFAULT_PLAN_RULES,
   DEFAULT_EXPAND_PLAN_TEMPLATE,
 } from '@/lib/ai/system-prompt'
 
@@ -30,6 +31,7 @@ export const GET = withSession(async () => {
     chatRules: settings.chatRules,
     rewriteRules: settings.rewriteRules,
     autoDraftRules: settings.autoDraftRules,
+    planRules: settings.planRules,
     autoDraftWordCount: settings.autoDraftWordCount ?? 800,
     defaultModel: settings.defaultModel,
     generateTemplate: settings.generateTemplate,
@@ -42,6 +44,7 @@ export const GET = withSession(async () => {
     defaultChatTemplate: DEFAULT_CHAT_TEMPLATE,
     defaultRewriteTemplate: DEFAULT_REWRITE_TEMPLATE,
     defaultAutoDraftTemplate: DEFAULT_AUTO_DRAFT_TEMPLATE,
+    defaultPlanRules: DEFAULT_PLAN_RULES,
     defaultPlanTemplate: DEFAULT_PLAN_TEMPLATE,
     defaultExpandPlanTemplate: DEFAULT_EXPAND_PLAN_TEMPLATE,
     availableModels: AI_MODELS.map(m => ({
@@ -62,6 +65,7 @@ export const PATCH = withSession(async (request: NextRequest) => {
     chatRules?: string
     rewriteRules?: string
     autoDraftRules?: string
+    planRules?: string
     autoDraftWordCount?: number
     defaultModel?: string
     generateTemplate?: string | null
@@ -86,6 +90,10 @@ export const PATCH = withSession(async (request: NextRequest) => {
 
   if (typeof body.autoDraftRules === 'string') {
     updateData.autoDraftRules = body.autoDraftRules
+  }
+
+  if (typeof body.planRules === 'string') {
+    updateData.planRules = body.planRules
   }
 
   if (typeof body.autoDraftWordCount === 'number') {
@@ -138,6 +146,7 @@ export const PATCH = withSession(async (request: NextRequest) => {
       chatRules: updateData.chatRules || '',
       rewriteRules: updateData.rewriteRules,
       autoDraftRules: updateData.autoDraftRules,
+      planRules: updateData.planRules,
       autoDraftWordCount: updateData.autoDraftWordCount,
       defaultModel: updateData.defaultModel || 'claude-sonnet',
       generateTemplate: updateData.generateTemplate,
@@ -154,6 +163,7 @@ export const PATCH = withSession(async (request: NextRequest) => {
     chatRules: settings.chatRules,
     rewriteRules: settings.rewriteRules,
     autoDraftRules: settings.autoDraftRules,
+    planRules: settings.planRules,
     autoDraftWordCount: settings.autoDraftWordCount ?? 800,
     defaultModel: settings.defaultModel,
     generateTemplate: settings.generateTemplate,

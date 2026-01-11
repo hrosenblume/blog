@@ -138,6 +138,8 @@ Wrap edit commands in :::edit markers with a JSON object:
 
 export const DEFAULT_PLAN_TEMPLATE = `You are a writing assistant in PLAN MODE.
 
+CRITICAL: You output ONLY the essay plan. NEVER add any text before or after the plan. No greetings, no explanations, no follow-up questions, no offers to help. Just the outline and nothing else.
+
 ## Style Reference (The author writes like this)
 {{STYLE_EXAMPLES}}
 
@@ -145,30 +147,10 @@ export const DEFAULT_PLAN_TEMPLATE = `You are a writing assistant in PLAN MODE.
 
 Your ONLY job is to output an essay plan with a title, subtitle, and section outline.
 
-ALWAYS respond in this exact format:
+## Plan Format
+{{PLAN_RULES}}
 
-# Essay Title
-*Subtitle that captures the core tension or insight*
-
-## Section Title
-- Key point or argument
-
-## Next Section Title
-- Another key point
-...
-
-Rules:
-- Start with a compelling title (H1) and subtitle (italic line)
-- Output 4-7 sections after the title/subtitle
-- MAXIMUM 3 bullet points per section — usually 1-2 is enough. Less is more.
-- First section should be a hook/intro angle
-- Last section can be conclusion or call to action
-- Do NOT write prose or the full essay
-- When user gives feedback, output the COMPLETE updated plan (including title/subtitle)
-- Keep bullet points concise (1 line each)
-- Focus on the argument structure and key points to cover
-
-IMPORTANT: Output ONLY the plan. No follow-up questions. No "Ready to expand?", "Want me to draft this?", "Let me know if..." or ANY other text after the plan. Just the outline, nothing else.`
+STOP after outputting the plan. Do not write anything else.`
 
 export const DEFAULT_EXPAND_PLAN_TEMPLATE = `You are a writing assistant that expands essay outlines into full drafts.
 
@@ -195,6 +177,7 @@ export interface StyleContext {
   chatRules: string
   rewriteRules: string
   autoDraftRules: string
+  planRules: string
   styleExamples: string
   generateTemplate: string | null
   chatTemplate: string | null
@@ -238,6 +221,7 @@ export async function getStyleContext(): Promise<StyleContext> {
   const chatRules = settings?.chatRules || ''
   const rewriteRules = settings?.rewriteRules || ''
   const autoDraftRules = settings?.autoDraftRules || ''
+  const planRules = settings?.planRules || ''
   const generateTemplate = settings?.generateTemplate || null
   const chatTemplate = settings?.chatTemplate || null
   const rewriteTemplate = settings?.rewriteTemplate || null
@@ -266,6 +250,7 @@ export async function getStyleContext(): Promise<StyleContext> {
     chatRules, 
     rewriteRules, 
     autoDraftRules,
+    planRules,
     styleExamples, 
     generateTemplate, 
     chatTemplate, 
@@ -377,13 +362,40 @@ ${essay.markdown}`
  * The AI only outputs structure, not prose. User can refine via conversation.
  * When an essay is open, the AI can help restructure or plan revisions to it.
  */
+export const DEFAULT_PLAN_RULES = `ALWAYS respond in this exact format:
+
+# Essay Title
+*Subtitle that captures the core tension or insight*
+
+## Section Title
+- Key point or argument
+
+## Next Section Title
+- Another key point
+...
+
+Rules:
+- Start with a compelling title (H1) and subtitle (italic line)
+- Output 4-7 sections after the title/subtitle
+- MAXIMUM 3 bullet points per section — usually 1-2 is enough. Less is more.
+- First section should be a hook/intro angle
+- Last section can be conclusion or call to action
+- Do NOT write prose or the full essay
+- When user gives feedback, output the COMPLETE updated plan (including title/subtitle)
+- Keep bullet points concise (1 line each)
+- Focus on the argument structure and key points to cover
+- NEVER add commentary, questions, or offers after the plan`
+
 export function buildPlanPrompt(
   context: StyleContext,
   essay?: EssayContext | null
 ): string {
   const template = context.planTemplate || DEFAULT_PLAN_TEMPLATE
   const styleValue = context.styleExamples || 'No published essays available. Write in a clear, personal essay style.'
-  const basePrompt = template.replace(/\{\{STYLE_EXAMPLES\}\}/g, styleValue)
+  const planRulesValue = context.planRules || DEFAULT_PLAN_RULES
+  const basePrompt = template
+    .replace(/\{\{STYLE_EXAMPLES\}\}/g, styleValue)
+    .replace(/\{\{PLAN_RULES\}\}/g, planRulesValue)
   
   if (!essay?.markdown) return basePrompt
   

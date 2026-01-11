@@ -108,6 +108,7 @@ model AISettings {
   autoDraftRules     String?   // Rules for news-based essay generation
   autoDraftTemplate  String?   // Custom prompt template for auto-draft
   autoDraftWordCount Int?      // Target word count (default: 800)
+  planRules          String?   // Rules for essay plan structure/format
   planTemplate       String?   // Custom prompt template for plan mode
   expandPlanTemplate String?   // Custom prompt template for expanding plan to essay
   updatedAt        DateTime @updatedAt

@@ -12,10 +12,12 @@ interface MagicBackButtonProps extends ButtonProps {
   showLabel?: boolean
   /** Called before navigation. Return false to prevent navigation. */
   onBeforeNavigate?: () => boolean
+  /** If true, always use backLink instead of browser history */
+  forceLink?: boolean
 }
 
 export const MagicBackButton = React.forwardRef<HTMLButtonElement, MagicBackButtonProps>(
-  ({ className, onClick, children, backLink = '/', showLabel = true, onBeforeNavigate, ...props }, ref) => {
+  ({ className, onClick, children, backLink = '/', showLabel = true, onBeforeNavigate, forceLink = false, ...props }, ref) => {
     const router = useRouter()
     const isFirstPage = usePageTrackerStore((state) => state.isFirstPage)
 
@@ -28,7 +30,8 @@ export const MagicBackButton = React.forwardRef<HTMLButtonElement, MagicBackButt
       // Blur to clear focus/active state (prevents sticky highlight on mobile)
       e.currentTarget.blur()
       
-      if (isFirstPage) {
+      // Use backLink if: first page, forced, or no browser history
+      if (isFirstPage || forceLink) {
         router.push(backLink)
       } else {
         router.back()
