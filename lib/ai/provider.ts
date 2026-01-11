@@ -371,23 +371,16 @@ async function* chatStreamWithOpenAI(
 
   const client = new OpenAI({ apiKey })
 
-  // Build request options
-  const requestOptions: Parameters<typeof client.chat.completions.create>[0] = {
+  const stream = await client.chat.completions.create({
     model,
     max_completion_tokens: maxTokens,
     stream: true,
+    reasoning_effort: useThinking ? 'high' : undefined,
     messages: [
       { role: 'system', content: systemPrompt },
       ...messages.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
     ],
-  }
-
-  // Add native reasoning for GPT-5.2+ when thinking is enabled
-  if (useThinking) {
-    requestOptions.reasoning_effort = 'high'
-  }
-
-  const stream = await client.chat.completions.create(requestOptions)
+  })
 
   for await (const chunk of stream) {
     const delta = chunk.choices[0]?.delta?.content
