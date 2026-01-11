@@ -46,16 +46,37 @@ export function ArticleHeader({
   onSubtitleChange,
   className,
 }: ArticleHeaderProps) {
+  const titleRef = useRef<HTMLTextAreaElement>(null)
   const subtitleRef = useRef<HTMLTextAreaElement>(null)
 
-  // Auto-resize subtitle textarea to fit content
+  // Auto-resize textareas to fit content
   useEffect(() => {
-    const textarea = subtitleRef.current
-    if (textarea) {
-      textarea.style.height = 'auto'
-      textarea.style.height = `${textarea.scrollHeight}px`
+    const resizeTextarea = (textarea: HTMLTextAreaElement | null) => {
+      if (textarea) {
+        textarea.style.height = 'auto'
+        textarea.style.height = `${textarea.scrollHeight}px`
+      }
     }
-  }, [subtitle])
+    
+    const resizeAll = () => {
+      resizeTextarea(titleRef.current)
+      resizeTextarea(subtitleRef.current)
+    }
+
+    // Resize on content change
+    resizeAll()
+    
+    // Also resize after a brief delay to handle initial render timing
+    const timeout = setTimeout(resizeAll, 0)
+    
+    // Resize on window resize (for responsive layouts)
+    window.addEventListener('resize', resizeAll)
+    
+    return () => {
+      clearTimeout(timeout)
+      window.removeEventListener('resize', resizeAll)
+    }
+  }, [title, subtitle])
 
   // Byline renders as link when href provided, otherwise plain text
   // Wrapped in div to control spacing independently from header spacing
@@ -85,13 +106,20 @@ export function ArticleHeader({
         {showTitleSkeleton ? (
           <Skeleton className="h-8 w-4/5" />
         ) : (
-          <input
-            type="text"
+          <textarea
+            ref={titleRef}
             value={title}
             onChange={(e) => onTitleChange?.(e.target.value)}
+            onKeyDown={(e) => {
+              // Prevent Enter from creating newlines - titles should be single paragraph
+              if (e.key === 'Enter') {
+                e.preventDefault()
+              }
+            }}
             placeholder="Title"
             disabled={disabled || generating}
-            className={cn(TITLE_CLASSES, INPUT_CLASSES, (disabled || generating) && 'cursor-not-allowed opacity-60')}
+            rows={1}
+            className={cn(TITLE_CLASSES, INPUT_CLASSES, 'resize-none overflow-hidden', (disabled || generating) && 'cursor-not-allowed opacity-60')}
           />
         )}
         {showSubtitleSkeleton ? (

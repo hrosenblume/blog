@@ -10,7 +10,7 @@ interface Props {
 
 export function RevisionPreviewBanner({ revision, onCancel, onRestore }: Props) {
   return (
-    <div className="border-b border-border px-4 py-2 flex items-center justify-between gap-4">
+    <div className="sticky top-0 z-10 bg-background border-b border-border px-4 py-2 flex items-center justify-between gap-4">
       <span className="text-sm text-muted-foreground">
         Viewing version from {formatRelativeTime(revision.createdAt)}
       </span>

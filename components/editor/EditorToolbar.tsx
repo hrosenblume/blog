@@ -54,7 +54,7 @@ export function EditorToolbar({
   // Skeleton state - each button group renders its own skeletons
   if (loading) {
     return (
-      <div className="flex items-center justify-start md:justify-center gap-0.5 px-4 py-2 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-black overflow-x-auto">
+      <div className="sticky top-0 z-10 flex items-center justify-start md:justify-center gap-0.5 px-4 py-2 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-black overflow-x-auto">
         <FormatButtons loading={true} />
         <Divider />
         <BlockButtons loading={true} />
@@ -71,7 +71,7 @@ export function EditorToolbar({
   }
 
   return (
-    <div className="flex items-center justify-start md:justify-center gap-0.5 px-4 py-2 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-black overflow-x-auto">
+    <div className="sticky top-0 z-10 flex items-center justify-start md:justify-center gap-0.5 px-4 py-2 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-black overflow-x-auto">
       <FormatButtons
         editor={editor}
         textareaRef={textareaRef}
