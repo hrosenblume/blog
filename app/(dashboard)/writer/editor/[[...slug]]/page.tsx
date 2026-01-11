@@ -58,6 +58,7 @@ export default function Editor() {
   const modelParam = searchParams.get('model')
   const lengthParam = searchParams.get('length')
   const webParam = searchParams.get('web')
+  const thinkingParam = searchParams.get('thinking')
   const commentParam = searchParams.get('comment')
   const fromPlanParam = searchParams.get('fromPlan')
   const hasTriggeredGeneration = useRef(false)
@@ -258,12 +259,13 @@ export default function Editor() {
       
       const wordCount = lengthParam ? parseInt(lengthParam) : 500
       const useWebSearch = webParam === '1'
+      const useThinking = thinkingParam === '1'
       
       // Log prompt to chat
       addMessage('user', `Generate essay: ${ideaParam}`)
       
       // Generate and log result based on outcome
-      ai.generate(ideaParam, wordCount, modelParam || undefined, useWebSearch)
+      ai.generate(ideaParam, wordCount, modelParam || undefined, useWebSearch, undefined, useThinking)
         .then((status) => {
           if (status === 'complete') {
             addMessage('assistant', 'Essay generation complete.')
@@ -277,7 +279,7 @@ export default function Editor() {
       // Clear the URL param so refresh doesn't re-trigger
       router.replace('/writer/editor', { scroll: false })
     }
-  }, [ideaParam, postSlug, ui.loading, ai, router, modelParam, lengthParam, webParam, addMessage])
+  }, [ideaParam, postSlug, ui.loading, ai, router, modelParam, lengthParam, webParam, thinkingParam, addMessage])
 
   // Auto-expand plan from sessionStorage (from dashboard Plan mode)
   useEffect(() => {

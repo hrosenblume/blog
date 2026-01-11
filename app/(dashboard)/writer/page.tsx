@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronDown, Check, X, ExternalLink, Search, ArrowUp, Globe } from 'lucide-react'
+import { ChevronDown, Check, X, ExternalLink, Search, ArrowUp, Globe, Brain } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { SkeletonPostList } from '@/components/writer/SkeletonPostList'
 import { Button } from '@/components/ui/button'
@@ -53,6 +53,7 @@ export default function Dashboard() {
   const { models, selectedModel: modelId, setSelectedModel: setModelId, currentModel } = useAIModels()
   const [length, setLength] = useState<number>(500)
   const [webEnabled, setWebEnabled] = useState(false)
+  const [thinkingEnabled, setThinkingEnabled] = useState(false)
   
   // Chat context - check if open to disable shortcuts, clear essay context on dashboard
   const { isOpen: chatOpen, setEssayContext } = useChatContext()
@@ -237,7 +238,8 @@ export default function Dashboard() {
                 idea,
                 model: modelId,
                 length: String(length),
-                ...(webEnabled && { web: '1' })
+                ...(webEnabled && { web: '1' }),
+                ...(thinkingEnabled && { thinking: '1' })
               })
               router.push(`/writer/editor?${params}`)
             }
@@ -300,6 +302,21 @@ export default function Dashboard() {
               tabIndex={-1}
             >
               <Globe className="w-4 h-4" />
+            </ControlButton>
+            
+            {/* Thinking Mode Toggle */}
+            <ControlButton
+              onClick={(e) => {
+                setThinkingEnabled(!thinkingEnabled)
+                // Return focus to textarea so Enter submits form
+                const textarea = e.currentTarget.closest('form')?.querySelector('textarea')
+                textarea?.focus()
+              }}
+              active={thinkingEnabled}
+              title={thinkingEnabled ? "Thinking mode enabled" : "Enable thinking mode"}
+              tabIndex={-1}
+            >
+              <Brain className="w-4 h-4" />
             </ControlButton>
             
             {/* Model Dropdown */}

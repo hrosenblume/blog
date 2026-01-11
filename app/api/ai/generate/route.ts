@@ -6,6 +6,7 @@ import { resolveModel } from '@/lib/ai/models'
 import { parseGeneratedContent } from '@/lib/ai/parse'
 import { getStyleContext, buildGeneratePrompt, buildSearchOnlyPrompt, buildExpandPlanPrompt } from '@/lib/ai/system-prompt'
 import { wordCount } from '@/lib/markdown'
+import { enrichTextWithUrls } from '@/lib/extract'
 
 interface GenerateRequest {
   prompt: string
@@ -13,6 +14,7 @@ interface GenerateRequest {
   modelId?: string
   stream?: boolean
   useWebSearch?: boolean
+  useThinking?: boolean  // Enable extended thinking (Claude) or enhanced reasoning (OpenAI)
   mode?: 'generate' | 'expand_plan'  // expand_plan uses plan-specific system prompt
 }
 
@@ -30,6 +32,7 @@ export async function POST(request: NextRequest) {
   const targetWords = body.wordCount || 500
   const shouldStream = body.stream === true
   const useWebSearch = body.useWebSearch === true
+  const useThinking = body.useThinking === true
   const mode = body.mode || 'generate'
 
   // Resolve model (provided or default from DB)
@@ -41,6 +44,16 @@ export async function POST(request: NextRequest) {
     })
   } catch (err) {
     return badRequest(err instanceof Error ? err.message : 'Invalid model')
+  }
+
+  // Extract and enrich prompt with content from any URLs
+  // This allows users to paste links and have the AI use their content
+  let enrichedPrompt = body.prompt.trim()
+  try {
+    enrichedPrompt = await enrichTextWithUrls(enrichedPrompt)
+  } catch (error) {
+    console.error('URL extraction error:', error)
+    // Continue with original prompt if extraction fails
   }
 
   // If web search is enabled, first gather facts about the topic
@@ -65,14 +78,14 @@ export async function POST(request: NextRequest) {
   
   if (mode === 'expand_plan') {
     // For expand_plan mode, the prompt IS the plan content
-    systemPrompt = buildExpandPlanPrompt(context, body.prompt.trim())
+    systemPrompt = buildExpandPlanPrompt(context, enrichedPrompt)
     userPrompt = `Write an essay of approximately ${targetWords} words following the structure above.`
   } else {
     // Standard generation mode
     systemPrompt = buildGeneratePrompt(context)
     userPrompt = `Write an essay of approximately ${targetWords} words about:
 
-${body.prompt.trim()}`
+${enrichedPrompt}`
   }
 
   if (searchContext) {
@@ -92,7 +105,7 @@ ${searchContext}
       const stream = new ReadableStream({
         async start(controller) {
           try {
-            for await (const chunk of generateStream(model.id, systemPrompt, userPrompt)) {
+            for await (const chunk of generateStream(model.id, systemPrompt, userPrompt, 4096, useThinking)) {
               controller.enqueue(encoder.encode(chunk))
             }
             controller.close()

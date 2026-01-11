@@ -631,7 +631,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
 
   // Generate content with AI (streaming)
   // Returns: 'complete' | 'stopped' | 'error'
-  const generateWithAI = useCallback(async (prompt: string, wordCount: number, modelId?: string, useWebSearch?: boolean, mode?: 'generate' | 'expand_plan'): Promise<'complete' | 'stopped' | 'error'> => {
+  const generateWithAI = useCallback(async (prompt: string, wordCount: number, modelId?: string, useWebSearch?: boolean, mode?: 'generate' | 'expand_plan', useThinking?: boolean): Promise<'complete' | 'stopped' | 'error'> => {
     setAiGenerating(true)
     
     // Create new AbortController for this request
@@ -662,7 +662,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
       const res = await fetch('/api/ai/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, wordCount, modelId, stream: true, useWebSearch, mode }),
+        body: JSON.stringify({ prompt, wordCount, modelId, stream: true, useWebSearch, useThinking, mode }),
         signal,
       })
 

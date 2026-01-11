@@ -1,5 +1,13 @@
+/**
+ * Client-side URL extraction utilities
+ * Calls /api/extract for server-side content fetching
+ * 
+ * NOTE: This file must NOT import from lib/extract.ts (server-only due to JSDOM)
+ */
+
 import type { ExtractedContent } from '@/app/api/extract/route'
 
+// Duplicate the regex here to avoid importing from server-only module
 const URL_REGEX = /https?:\/\/[^\s<>"']+/gi
 
 /**

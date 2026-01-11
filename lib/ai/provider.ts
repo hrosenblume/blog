@@ -190,12 +190,15 @@ async function generateWithOpenAIResponses(
 /**
  * Stream text generation using the specified model.
  * Yields text chunks as they arrive from the API.
+ * 
+ * @param useThinking - Enable extended thinking (Claude) or enhanced reasoning (OpenAI)
  */
 export async function* generateStream(
   modelId: string,
   systemPrompt: string,
   userPrompt: string,
-  maxTokens: number = 4096
+  maxTokens: number = 4096,
+  useThinking: boolean = false
 ): AsyncGenerator<string, void, unknown> {
   const model = getModel(modelId)
   if (!model) {
@@ -203,9 +206,9 @@ export async function* generateStream(
   }
 
   if (model.provider === 'anthropic') {
-    yield* streamWithAnthropic(model.model, systemPrompt, userPrompt, maxTokens)
+    yield* streamWithAnthropic(model.model, systemPrompt, userPrompt, maxTokens, useThinking)
   } else {
-    yield* streamWithOpenAI(model.model, systemPrompt, userPrompt, maxTokens)
+    yield* streamWithOpenAI(model.model, systemPrompt, userPrompt, maxTokens, useThinking)
   }
 }
 
@@ -251,7 +254,8 @@ async function* streamWithAnthropic(
   model: string,
   systemPrompt: string,
   userPrompt: string,
-  maxTokens: number
+  maxTokens: number,
+  useThinking: boolean = false
 ): AsyncGenerator<string, void, unknown> {
   const apiKey = await getApiKey('anthropic')
   if (!apiKey) {
@@ -260,12 +264,27 @@ async function* streamWithAnthropic(
 
   const client = new Anthropic({ apiKey })
 
-  const stream = client.messages.stream({
+  // Extended thinking requires max_tokens > budget_tokens
+  const thinkingBudget = 10000
+  const effectiveMaxTokens = useThinking ? thinkingBudget + maxTokens : maxTokens
+
+  // Build request options
+  const requestOptions: Anthropic.MessageStreamParams = {
     model,
-    max_tokens: maxTokens,
+    max_tokens: effectiveMaxTokens,
     system: systemPrompt,
     messages: [{ role: 'user', content: userPrompt }],
-  })
+  }
+
+  // Add extended thinking when enabled
+  if (useThinking) {
+    requestOptions.thinking = {
+      type: 'enabled',
+      budget_tokens: thinkingBudget,
+    }
+  }
+
+  const stream = client.messages.stream(requestOptions)
 
   for await (const event of stream) {
     if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
@@ -278,7 +297,8 @@ async function* streamWithOpenAI(
   model: string,
   systemPrompt: string,
   userPrompt: string,
-  maxTokens: number
+  maxTokens: number,
+  useThinking: boolean = false
 ): AsyncGenerator<string, void, unknown> {
   const apiKey = await getApiKey('openai')
   if (!apiKey) {
@@ -291,6 +311,7 @@ async function* streamWithOpenAI(
     model,
     max_completion_tokens: maxTokens,
     stream: true,
+    reasoning_effort: useThinking ? 'high' : undefined,
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt },
