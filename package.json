@@ -12,6 +12,7 @@
     "build:prod": "prisma generate --schema=prisma/schema.postgresql.prisma && next build",
     "start": "next start",
     "lint": "next lint",
+    "typecheck": "tsc --noEmit",
     "db:migrate": "export $(grep -v '^#' .env.local | xargs) && prisma migrate dev",
     "db:migrate:status": "export $(grep -v '^#' .env.local | xargs) && prisma migrate status",
     "db:push": "export $(grep -v '^#' .env.local | xargs) && prisma db push",
