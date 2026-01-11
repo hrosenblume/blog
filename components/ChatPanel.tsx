@@ -193,23 +193,24 @@ export function ChatPanel() {
   }
   
   // Keyboard shortcut for agent mode (Cmd/Ctrl + Shift + A)
-  // Opens chat in agent mode, or switches to agent mode if already open
+  // Opens chat in agent mode if on an essay, or just opens chat otherwise
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'a') {
         e.preventDefault()
         if (!open) {
-          // Chat is closed - open it and set to agent mode
           setIsOpen(true)
         }
-        // Always set to agent mode
-        setMode('agent')
+        // Only switch to agent mode if there's an essay context
+        if (essayContext) {
+          setMode('agent')
+        }
       }
     }
     
     document.addEventListener('keydown', handleGlobalKeyDown)
     return () => document.removeEventListener('keydown', handleGlobalKeyDown)
-  }, [open, setIsOpen, setMode])
+  }, [open, setIsOpen, setMode, essayContext])
 
   if (!isVisible || !mounted) return null
 
