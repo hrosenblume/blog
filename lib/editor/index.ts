@@ -1,8 +1,12 @@
 // Barrel exports for lib/editor/
 
+// Constants
+export { DEFAULT_TITLE, EDITOR_PLACEHOLDER } from './constants'
+
 // Hooks
 export { usePostEditor } from './usePostEditor'
 export { useContentStash } from './useContentStash'
+export { useTypeToFocus } from './useTypeToFocus'
 
 // Types from usePostEditor
 export type { 

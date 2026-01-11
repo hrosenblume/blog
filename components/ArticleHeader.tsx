@@ -135,7 +135,7 @@ export function ArticleHeader({
                 e.preventDefault()
               }
             }}
-            placeholder="Subtitle (shown on homepage)"
+            placeholder="Subtitle"
             disabled={disabled || generating}
             rows={1}
             className={cn(SUBTITLE_CLASSES, INPUT_CLASSES, 'resize-none overflow-hidden', (disabled || generating) && 'cursor-not-allowed opacity-60')}

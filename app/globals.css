@@ -211,7 +211,7 @@ a, button {
 
 .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
-  @apply text-muted-foreground;
+  @apply text-gray-300 dark:text-gray-700;
   pointer-events: none;
   float: left;
   height: 0;

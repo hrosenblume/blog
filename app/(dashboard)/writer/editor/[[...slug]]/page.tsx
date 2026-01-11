@@ -5,6 +5,8 @@ import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
 import { usePostEditor } from '@/lib/editor/usePostEditor'
+import { useTypeToFocus } from '@/lib/editor/useTypeToFocus'
+import { EDITOR_PLACEHOLDER } from '@/lib/editor/constants'
 import { useChatContext, EssayEdit } from '@/lib/chat'
 import { useDashboardContext } from '@/lib/dashboard'
 import { canPublish } from '@/lib/auth/helpers'
@@ -364,6 +366,9 @@ export default function Editor() {
     },
   ])
 
+  // Focus editor when typing with nothing focused
+  useTypeToFocus(editor, !ui.loading && !ai.generating && !revisions.previewing)
+
   // Handle publish - check for open comments first
   const handlePublish = useCallback(() => {
     if (comments.openCount > 0) {
@@ -485,7 +490,7 @@ export default function Editor() {
               ref={textareaRef}
               value={post.markdown}
               onChange={(e) => setMarkdown(e.target.value)}
-              placeholder="Write your story in Markdown..."
+              placeholder={EDITOR_PLACEHOLDER}
               readOnly={!!revisions.previewing || ai.generating}
               className={`w-full min-h-[500px] bg-transparent border-none outline-none resize-none placeholder-gray-400 leading-relaxed overflow-hidden font-mono text-base ${ai.generating ? 'opacity-60 cursor-not-allowed' : ''}`}
             />
@@ -494,7 +499,8 @@ export default function Editor() {
               <TiptapEditor
                 content={post.markdown}
                 onChange={setMarkdown}
-                placeholder="Write your story..."
+                placeholder={EDITOR_PLACEHOLDER}
+                autoFocus={!postSlug}
                 onEditorReady={setEditor}
                 onSelectionChange={(sel: SelectionState | null) => {
                   if (sel?.hasSelection) {

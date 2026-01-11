@@ -11,6 +11,7 @@ import { htmlToMarkdown } from '@/lib/turndown'
 import { EditorToolbar } from '@/components/editor/EditorToolbar'
 import { PROSE_CLASSES } from '@/components/ArticleBody'
 import { CommentMark } from '@/lib/editor/comment-mark'
+import { EDITOR_PLACEHOLDER } from '@/lib/editor/constants'
 
 export interface SelectionState {
   hasSelection: boolean
@@ -24,6 +25,7 @@ interface TiptapEditorProps {
   content: string // markdown
   onChange: (markdown: string) => void
   placeholder?: string
+  autoFocus?: boolean
   onEditorReady?: (editor: Editor) => void
   onSelectionChange?: (selection: SelectionState | null) => void
   onCommentClick?: (commentId: string) => void
@@ -32,7 +34,8 @@ interface TiptapEditorProps {
 export function TiptapEditor({ 
   content, 
   onChange, 
-  placeholder = 'Write your story...', 
+  placeholder = EDITOR_PLACEHOLDER,
+  autoFocus = false,
   onEditorReady,
   onSelectionChange,
   onCommentClick,
@@ -110,12 +113,18 @@ export function TiptapEditor({
     },
   })
 
-  // Notify parent when editor is ready
+  // Notify parent when editor is ready and auto-focus if requested
   useEffect(() => {
-    if (editor && onEditorReady) {
-      onEditorReady(editor)
+    if (editor) {
+      if (onEditorReady) {
+        onEditorReady(editor)
+      }
+      if (autoFocus) {
+        // Small delay to ensure DOM is ready
+        setTimeout(() => editor.commands.focus(), 0)
+      }
     }
-  }, [editor, onEditorReady])
+  }, [editor, onEditorReady, autoFocus])
 
   // Sync external content changes (e.g., loading saved post)
   useEffect(() => {

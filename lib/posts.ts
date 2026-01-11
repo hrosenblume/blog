@@ -2,7 +2,28 @@ import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
 import { getRandomShape } from '@/lib/polyhedra/shapes'
 import { canPublish } from '@/lib/auth/helpers'
+import { generateSlug } from '@/lib/markdown'
+import { DEFAULT_TITLE } from '@/lib/editor/constants'
 import { Post } from '@prisma/client'
+
+/**
+ * Generate a unique slug, appending -2, -3, etc. if the base slug exists.
+ * Works for any post, not just untitled drafts.
+ */
+async function generateUniqueSlug(baseSlug: string): Promise<string> {
+  // Check if base slug exists
+  const existing = await prisma.post.findUnique({ where: { slug: baseSlug } })
+  if (!existing) return baseSlug
+  
+  // Find next available number
+  let counter = 2
+  while (true) {
+    const numberedSlug = `${baseSlug}-${counter}`
+    const exists = await prisma.post.findUnique({ where: { slug: numberedSlug } })
+    if (!exists) return numberedSlug
+    counter++
+  }
+}
 
 // Shared types for post operations
 interface CreatePostData {
@@ -50,10 +71,9 @@ type PostResult =
 export async function updatePost(post: Post, data: UpdatePostData): Promise<PostResult> {
   const updates: Record<string, unknown> = {}
 
-  // Validate and set title
+  // Set title (allow empty for drafts - will display as default)
   if (data.title !== undefined) {
-    if (!data.title.trim()) return { success: false, error: 'Title is required' }
-    updates.title = data.title.trim()
+    updates.title = data.title.trim() || DEFAULT_TITLE
   }
 
   // Validate and set slug (check uniqueness if changed)
@@ -157,16 +177,11 @@ export async function updatePost(post: Post, data: UpdatePostData): Promise<Post
  * Used by POST /api/posts
  */
 export async function createPost(data: CreatePostData): Promise<PostResult> {
-  // Validate required fields
-  if (!data.title?.trim()) {
-    return { success: false, error: 'Title is required' }
-  }
-  if (!data.slug?.trim()) {
-    return { success: false, error: 'Slug is required' }
-  }
-
-  const title = data.title.trim()
-  const slug = data.slug.trim()
+  // Use defaults for untitled drafts
+  const title = data.title?.trim() || DEFAULT_TITLE
+  const baseSlug = data.slug?.trim() || generateSlug(title)
+  // Always ensure slug is unique by appending -2, -3, etc. if needed
+  const slug = await generateUniqueSlug(baseSlug)
   const subtitle = data.subtitle?.trim() || null
   const markdown = data.markdown ?? ''
   const polyhedraShape = data.polyhedraShape || null
@@ -176,12 +191,6 @@ export async function createPost(data: CreatePostData): Promise<PostResult> {
   const seoKeywords = data.seoKeywords || null
   const noIndex = data.noIndex ?? false
   const ogImage = data.ogImage || null
-
-  // Check slug uniqueness
-  const existing = await prisma.post.findUnique({ where: { slug } })
-  if (existing) {
-    return { success: false, error: `Slug "${slug}" already exists` }
-  }
 
   // Create post with initial revision
   const post = await prisma.post.create({

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Editor as EditorInstance } from '@tiptap/react'
 import { generateSlug } from '@/lib/markdown'
+import { DEFAULT_TITLE } from './constants'
 import { getRandomShape } from '@/lib/polyhedra/shapes'
 import { confirmPublish, confirmUnpublish } from '@/lib/utils/confirm'
 import { useContentStash } from './useContentStash'
@@ -356,14 +357,10 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
     // Skip navigation if explicitly requested OR if AI is generating (to prevent interrupting generation)
     const skipNavigation = options?.skipNavigation ?? aiGenerating
 
-    if (!title.trim()) {
-      if (!silent) alert('Title is required')
-      return null
-    }
-    if (!slug.trim()) {
-      if (!silent) alert('Slug is required')
-      return null
-    }
+    // Use default title for untitled drafts
+    const effectiveTitle = title.trim() || DEFAULT_TITLE
+    // Send the slug to server; it will auto-append -2, -3, etc. if needed for new posts
+    const effectiveSlug = slug.trim() || generateSlug(effectiveTitle)
 
     if (publishStatus === 'published' && !skipConfirm && !confirmPublish()) {
       return null
@@ -377,9 +374,9 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
 
     try {
       const data = {
-        title: title.trim(),
+        title: effectiveTitle,
         subtitle: subtitle.trim() || null,
-        slug: slug.trim(),
+        slug: effectiveSlug,
         markdown,
         polyhedraShape,
         status: publishStatus,
@@ -395,6 +392,8 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
 
       let newPostId: string | null = null
       
+      let savedSlug = effectiveSlug
+      
       // Use postId (state) to determine if we're updating or creating
       // This handles the case where we've saved but skipped navigation (e.g., during AI generation)
       if (postId || postSlug) {
@@ -405,6 +404,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
         })
         const result = await res.json()
 
+        savedSlug = result.slug
         if (result.slug !== urlSlugRef.current) {
           urlSlugRef.current = result.slug
           if (!skipNavigation) {
@@ -422,6 +422,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
         if (!res.ok) {
           throw new Error(result.error)
         }
+        savedSlug = result.slug
         urlSlugRef.current = result.slug
         setPostId(result.id)
         newPostId = result.id
@@ -433,9 +434,9 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
       setStatus(publishStatus)
       setLastSaved(new Date())
       lastSavedContent.current = {
-        title: title.trim(),
+        title: effectiveTitle,
         subtitle: subtitle.trim(),
-        slug: slug.trim(),
+        slug: savedSlug,
         markdown,
         polyhedraShape,
         seoTitle: seoTitle.trim(),
@@ -451,7 +452,7 @@ export function usePostEditor(postSlug: string | undefined): UsePostEditorReturn
       if (publishStatus === 'published') {
         setPublishSuccess(true)
         setTimeout(() => {
-          window.location.href = `/e/${slug.trim()}`
+          window.location.href = `/e/${savedSlug}`
         }, 1000)
       }
       
