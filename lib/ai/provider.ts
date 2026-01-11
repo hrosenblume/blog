@@ -384,7 +384,6 @@ async function* chatStreamWithOpenAI(
 
   // Add native reasoning for GPT-5.2+ when thinking is enabled
   if (useThinking) {
-    // @ts-expect-error - reasoning_effort parameter may not be in SDK types yet
     requestOptions.reasoning_effort = 'high'
   }
 
