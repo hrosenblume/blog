@@ -363,28 +363,32 @@ async function* chatStreamWithOpenAI(
     throw new Error('OpenAI API key is not configured. Add it at /settings/integrations')
   }
 
-  // Enhance system prompt with chain-of-thought when thinking is enabled
-  const enhancedPrompt = useThinking
-    ? `Think step-by-step before answering. Reason through the problem carefully, considering multiple angles and potential issues before providing your response.\n\n${systemPrompt}`
-    : systemPrompt
-
   // Use Responses API for web search, Chat Completions for normal requests
   if (useWebSearch) {
-    yield* chatStreamWithOpenAIResponses(apiKey, model, enhancedPrompt, messages, maxTokens)
+    yield* chatStreamWithOpenAIResponses(apiKey, model, systemPrompt, messages, maxTokens, useThinking)
     return
   }
 
   const client = new OpenAI({ apiKey })
 
-  const stream = await client.chat.completions.create({
+  // Build request options
+  const requestOptions: Parameters<typeof client.chat.completions.create>[0] = {
     model,
     max_completion_tokens: maxTokens,
     stream: true,
     messages: [
-      { role: 'system', content: enhancedPrompt },
+      { role: 'system', content: systemPrompt },
       ...messages.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
     ],
-  })
+  }
+
+  // Add native reasoning for GPT-5.2+ when thinking is enabled
+  if (useThinking) {
+    // @ts-expect-error - reasoning_effort parameter may not be in SDK types yet
+    requestOptions.reasoning_effort = 'high'
+  }
+
+  const stream = await client.chat.completions.create(requestOptions)
 
   for await (const chunk of stream) {
     const delta = chunk.choices[0]?.delta?.content
@@ -402,7 +406,8 @@ async function* chatStreamWithOpenAIResponses(
   model: string,
   systemPrompt: string,
   messages: ChatMessage[],
-  maxTokens: number
+  maxTokens: number,
+  useThinking: boolean = false
 ): AsyncGenerator<string, void, unknown> {
   // Convert messages to Responses API input format
   // The last user message is the main input, previous messages are context
@@ -419,20 +424,28 @@ async function* chatStreamWithOpenAIResponses(
     input = lastUserMessage.content
   }
 
+  // Build request body
+  const requestBody: Record<string, unknown> = {
+    model,
+    instructions: systemPrompt,
+    input,
+    max_output_tokens: maxTokens,
+    tools: [{ type: 'web_search' }],
+    stream: true,
+  }
+
+  // Add native reasoning when thinking is enabled
+  if (useThinking) {
+    requestBody.reasoning_effort = 'high'
+  }
+
   const response = await fetch('https://api.openai.com/v1/responses', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`,
     },
-    body: JSON.stringify({
-      model,
-      instructions: systemPrompt,
-      input,
-      max_output_tokens: maxTokens,
-      tools: [{ type: 'web_search' }],
-      stream: true,
-    }),
+    body: JSON.stringify(requestBody),
   })
 
   if (!response.ok) {
