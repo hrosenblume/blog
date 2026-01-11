@@ -112,9 +112,22 @@ function parseEditBlocks(content: string): { edits: EssayEdit[], cleanContent: s
  * Any text after the last "- " line is conversational filler and should be removed.
  */
 function cleanPlanOutput(content: string): string {
-  const lines = content.split('\n')
+  let cleaned = content
   
-  // Find the index of the last bullet point line
+  // Step 1: Extract content from <plan> tags if present
+  const planMatch = cleaned.match(/<plan>([\s\S]*?)<\/plan>/i)
+  if (planMatch) {
+    cleaned = planMatch[1]
+  } else {
+    // If no closing tag, try to get content after opening tag
+    const openTagMatch = cleaned.match(/<plan>([\s\S]*)/i)
+    if (openTagMatch) {
+      cleaned = openTagMatch[1]
+    }
+  }
+  
+  // Step 2: Strip any text after the last bullet point
+  const lines = cleaned.split('\n')
   let lastBulletIndex = -1
   for (let i = lines.length - 1; i >= 0; i--) {
     if (lines[i].trim().startsWith('- ')) {
@@ -125,7 +138,7 @@ function cleanPlanOutput(content: string): string {
   
   // If no bullet found, return as-is (not a valid plan format)
   if (lastBulletIndex === -1) {
-    return content.trim()
+    return cleaned.trim()
   }
   
   // Keep everything up to and including the last bullet
@@ -282,13 +295,24 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       })
 
       if (!response.ok) {
+        // Friendly messages for common HTTP errors
+        if (response.status === 503) {
+          throw new Error('AI service temporarily unavailable. Please try again in a moment.')
+        }
+        if (response.status === 429) {
+          throw new Error('Rate limit exceeded. Please wait a moment before trying again.')
+        }
+        if (response.status === 401 || response.status === 403) {
+          throw new Error('Authentication error. Check your API keys in Settings.')
+        }
+        
         // Safely handle non-JSON error responses (e.g., HTML error pages)
         const errorText = await response.text()
         try {
           const error = JSON.parse(errorText)
           throw new Error(error.error || 'Failed to send message')
         } catch {
-          throw new Error(`Server error (${response.status}): ${errorText.substring(0, 100)}`)
+          throw new Error(`Server error (${response.status}). Please try again.`)
         }
       }
 

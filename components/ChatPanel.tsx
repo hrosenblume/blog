@@ -20,6 +20,13 @@ import { useChatContext, ChatMode } from '@/lib/chat'
 import { useAIModels } from '@/lib/ai/useAIModels'
 import { ModelSelector } from '@/components/editor/ModelSelector'
 
+/** Strip <plan> tags for display during streaming */
+function stripPlanTags(content: string): string {
+  return content
+    .replace(/<plan>/gi, '')
+    .replace(/<\/plan>/gi, '')
+}
+
 export function ChatPanel() {
   const { 
     messages, 
@@ -295,7 +302,7 @@ export function ChatPanel() {
                     {message.role === 'assistant' ? (
                       <div 
                         className={cn(PROSE_CLASSES, '[&>*:first-child]:mt-0 [&>*:last-child]:mb-0')}
-                        dangerouslySetInnerHTML={{ __html: markdownToHtml(message.content) }}
+                        dangerouslySetInnerHTML={{ __html: markdownToHtml(stripPlanTags(message.content)) }}
                       />
                     ) : (
                       <div className="whitespace-pre-wrap break-words">
@@ -384,7 +391,7 @@ export function ChatPanel() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="min-w-[140px] z-[80]">
                 <DropdownMenuItem 
-                  onClick={() => setMode('agent')}
+                  onClick={() => { setMode('agent'); textareaRef.current?.focus() }}
                   disabled={!essayContext}
                   className="flex items-center justify-between"
                 >
@@ -398,7 +405,7 @@ export function ChatPanel() {
                   </span>
                 </DropdownMenuItem>
                 <DropdownMenuItem 
-                  onClick={() => setMode('plan')}
+                  onClick={() => { setMode('plan'); textareaRef.current?.focus() }}
                   className="flex items-center justify-between"
                 >
                   <span className="flex items-center gap-2">
@@ -408,7 +415,7 @@ export function ChatPanel() {
                   {mode === 'plan' && <Check className="w-4 h-4" />}
                 </DropdownMenuItem>
                 <DropdownMenuItem 
-                  onClick={() => setMode('ask')}
+                  onClick={() => { setMode('ask'); textareaRef.current?.focus() }}
                   className="flex items-center justify-between"
                 >
                   <span className="flex items-center gap-2">
@@ -422,7 +429,7 @@ export function ChatPanel() {
             
             {/* Web Search Toggle */}
             <ControlButton
-              onClick={() => setWebSearchEnabled(!webSearchEnabled)}
+              onClick={() => { setWebSearchEnabled(!webSearchEnabled); textareaRef.current?.focus() }}
               active={webSearchEnabled}
               title={webSearchEnabled ? "Web search enabled" : "Enable web search"}
               tabIndex={-1}
@@ -432,7 +439,7 @@ export function ChatPanel() {
             
             {/* Thinking Mode Toggle */}
             <ControlButton
-              onClick={() => setThinkingEnabled(!thinkingEnabled)}
+              onClick={() => { setThinkingEnabled(!thinkingEnabled); textareaRef.current?.focus() }}
               active={thinkingEnabled}
               title={thinkingEnabled ? "Thinking mode enabled" : "Enable thinking mode"}
               tabIndex={-1}
@@ -444,7 +451,7 @@ export function ChatPanel() {
             <ModelSelector
               models={models}
               selectedModel={selectedModel}
-              onModelChange={setSelectedModel}
+              onModelChange={(id) => { setSelectedModel(id); textareaRef.current?.focus() }}
               currentModel={currentModel}
               zIndex={80}
             />

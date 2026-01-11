@@ -138,6 +138,8 @@ Wrap edit commands in :::edit markers with a JSON object:
 
 export const DEFAULT_PLAN_TEMPLATE = `You are a writing assistant that outputs essay outlines.
 
+Wrap your entire response in <plan> tags. Output nothing outside the tags.
+
 {{PLAN_RULES}}
 
 ## Style Reference
@@ -353,8 +355,11 @@ ${essay.markdown}`
  * The AI only outputs structure, not prose. User can refine via conversation.
  * When an essay is open, the AI can help restructure or plan revisions to it.
  */
-export const DEFAULT_PLAN_RULES = `Output format (follow exactly):
+export const DEFAULT_PLAN_RULES = `STRICT LIMIT: Maximum 3 bullets per section. Most sections should have 1-2 bullets.
 
+Output format:
+
+<plan>
 # Essay Title
 *One-line subtitle*
 
@@ -363,13 +368,15 @@ export const DEFAULT_PLAN_RULES = `Output format (follow exactly):
 
 ## Section Name
 - Key point
+- Another point
 
 ## Section Name
 - Key point
+</plan>
 
 Constraints:
 - 4-6 section headings (## lines)
-- 1-2 bullets per section (never more than 2)
+- 1-3 bullets per section — NEVER 4 or more
 - Bullets are short phrases, not sentences
 - No prose, no paragraphs, no explanations
 - When revising, output the complete updated plan`
