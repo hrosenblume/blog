@@ -13,6 +13,8 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { ControlButton } from '@/components/ui/control-button'
 import { cn } from '@/lib/utils/cn'
+import { markdownToHtml } from '@/lib/markdown'
+import { PROSE_CLASSES } from '@/lib/article-layout'
 import { useChatContext, ChatMode } from '@/lib/chat'
 import { useAIModels } from '@/lib/ai/useAIModels'
 import { ModelSelector } from '@/components/editor/ModelSelector'
@@ -225,12 +227,19 @@ export function ChatPanel() {
                         : 'bg-muted'
                     )}
                   >
-                    <div className="whitespace-pre-wrap break-words">
-                      {message.content}
-                      {isStreaming && index === messages.length - 1 && message.role === 'assistant' && (
-                        <span className="inline-block w-1.5 h-3 bg-current ml-0.5 animate-pulse" />
-                      )}
-                    </div>
+                    {message.role === 'assistant' ? (
+                      <div 
+                        className={cn(PROSE_CLASSES, '[&>*:last-child]:mb-0')}
+                        dangerouslySetInnerHTML={{ __html: markdownToHtml(message.content) }}
+                      />
+                    ) : (
+                      <div className="whitespace-pre-wrap break-words">
+                        {message.content}
+                      </div>
+                    )}
+                    {isStreaming && index === messages.length - 1 && message.role === 'assistant' && (
+                      <span className="inline-block w-1.5 h-3 bg-current ml-0.5 animate-pulse" />
+                    )}
                     {/* Applied edit indicator with undo button */}
                     {message.appliedEdits && message.previousState && (
                       <div className="flex items-center gap-2 mt-1.5">
