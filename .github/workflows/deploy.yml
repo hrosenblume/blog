@@ -50,9 +50,21 @@ jobs:
             AFTER_LOCK=$(md5sum package-lock.json)
             
             echo "=== Installing dependencies ==="
-            # Delete autoblogger to force fresh install from GitHub (avoids stale cache)
+            # Delete autoblogger and clear npm cache to force completely fresh install
             rm -rf node_modules/autoblogger
+            rm -rf ~/.npm/_cacache/content-v2/sha512/*autoblogger* 2>/dev/null || true
+            npm cache clean --force
             npm ci
+            
+            # Verify autoblogger was installed correctly
+            echo "=== Verifying autoblogger install ==="
+            if [ -f "node_modules/autoblogger/dist/ui.js" ]; then
+              echo "autoblogger dist found"
+              grep -o "AUTOBLOGGER DEBUG" node_modules/autoblogger/dist/ui.js && echo "Debug logs present" || echo "WARNING: Debug logs NOT found in dist"
+            else
+              echo "ERROR: autoblogger dist not found!"
+              exit 1
+            fi
             
             echo "=== Loading environment ==="
             if [ ! -f ".env.local" ]; then
@@ -133,9 +145,21 @@ jobs:
             AFTER_LOCK=$(md5sum package-lock.json)
             
             echo "=== Installing dependencies ==="
-            # Delete autoblogger to force fresh install from GitHub (avoids stale cache)
+            # Delete autoblogger and clear npm cache to force completely fresh install
             rm -rf node_modules/autoblogger
+            rm -rf ~/.npm/_cacache/content-v2/sha512/*autoblogger* 2>/dev/null || true
+            npm cache clean --force
             npm ci
+            
+            # Verify autoblogger was installed correctly
+            echo "=== Verifying autoblogger install ==="
+            if [ -f "node_modules/autoblogger/dist/ui.js" ]; then
+              echo "autoblogger dist found"
+              grep -o "AUTOBLOGGER DEBUG" node_modules/autoblogger/dist/ui.js && echo "Debug logs present" || echo "WARNING: Debug logs NOT found in dist"
+            else
+              echo "ERROR: autoblogger dist not found!"
+              exit 1
+            fi
             
             echo "=== Loading environment ==="
             if [ ! -f ".env.local" ]; then
