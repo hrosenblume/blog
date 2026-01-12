@@ -22,7 +22,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
       - name: Security audit
         run: npm audit --audit-level=high
 
@@ -51,12 +51,13 @@ jobs:
             
             echo "=== Checking dependencies ==="
             # Run npm ci if package-lock changed OR node_modules is missing/incomplete
+            # Using --legacy-peer-deps for autoblogger's Prisma peer dependency
             if [ "$BEFORE_LOCK" != "$AFTER_LOCK" ]; then
               echo "package-lock.json changed, running npm ci..."
-              npm ci
+              npm ci --legacy-peer-deps
             elif [ ! -d "node_modules" ] || [ ! -d "node_modules/.prisma" ]; then
               echo "node_modules missing or incomplete, running npm ci..."
-              npm ci
+              npm ci --legacy-peer-deps
             else
               echo "Dependencies unchanged and present, skipping npm ci"
             fi
@@ -141,12 +142,13 @@ jobs:
             
             echo "=== Checking dependencies ==="
             # Run npm ci if package-lock changed OR node_modules is missing/incomplete
+            # Using --legacy-peer-deps for autoblogger's Prisma peer dependency
             if [ "$BEFORE_LOCK" != "$AFTER_LOCK" ]; then
               echo "package-lock.json changed, running npm ci..."
-              npm ci
+              npm ci --legacy-peer-deps
             elif [ ! -d "node_modules" ] || [ ! -d "node_modules/.prisma" ]; then
               echo "node_modules missing or incomplete, running npm ci..."
-              npm ci
+              npm ci --legacy-peer-deps
             else
               echo "Dependencies unchanged and present, skipping npm ci"
             fi
