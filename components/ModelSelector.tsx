@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { ControlButton } from '@/components/ui/control-button'
-import type { AIModelOption } from '@/lib/ai/models'
+import type { AIModelOption } from 'autoblogger/ui'
 
 interface ModelSelectorProps {
   models: AIModelOption[]

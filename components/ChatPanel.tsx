@@ -2,8 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { useRouter, usePathname } from 'next/navigation'
-import { Loader2, X, Copy, Check, ArrowUp, Pencil, Undo2, ChevronDown, MessageSquare, Globe, Brain, Square, List } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { X, Copy, Check, ArrowUp, Pencil, Undo2, ChevronDown, MessageSquare, Globe, Brain, Square, List } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -16,8 +16,7 @@ import { ControlButton } from '@/components/ui/control-button'
 import { cn } from '@/lib/utils/cn'
 import { markdownToHtml } from '@/lib/markdown'
 import { PROSE_CLASSES } from '@/lib/article-layout'
-import { useChatContext, ChatMode } from '@/lib/chat'
-import { useAIModels } from '@/lib/ai/useAIModels'
+import { useChatContext, useAIModels, type ChatMode } from 'autoblogger/ui'
 import { ModelSelector } from '@/components/ModelSelector'
 
 /** Strip <plan> tags for display during streaming */
@@ -49,7 +48,6 @@ export function ChatPanel() {
   } = useChatContext()
   
   const router = useRouter()
-  const pathname = usePathname()
   // Use essayContext presence to detect if we're editing (works with autoblogger)
   const isOnEditor = !!essayContext
   
@@ -69,13 +67,10 @@ export function ChatPanel() {
   const { models, currentModel } = useAIModels({
     externalSelectedModel: selectedModel,
     externalSetSelectedModel: setSelectedModel,
+    apiPath: '/api/ai/settings',
   })
   
   const onClose = useCallback(() => setIsOpen(false), [setIsOpen])
-  
-  const toggleMode = useCallback(() => {
-    setMode(mode === 'ask' ? 'agent' : 'ask')
-  }, [mode, setMode])
   
   const copyToClipboard = useCallback(async (text: string, index: number) => {
     await navigator.clipboard.writeText(text)
@@ -278,7 +273,7 @@ export function ChatPanel() {
           <div className="flex items-center gap-2">
             <h2 className="font-medium">Chat</h2>
             {essayContext && (
-              <span className="text-xs text-muted-foreground truncate max-w-[120px]">
+              <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 truncate max-w-[120px]">
                 {essayContext.title || 'Untitled'}
               </span>
             )}

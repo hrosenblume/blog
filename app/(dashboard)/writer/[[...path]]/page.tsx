@@ -4,12 +4,11 @@ import { useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
 import { useTheme } from 'next-themes'
-import { AutobloggerDashboard, type Session, type EditorState, type EditHandler } from 'autoblogger/ui'
+import { AutobloggerDashboard, type Session, type EditorState, type EditHandler, useChatContext, type EssayEdit } from 'autoblogger/ui'
 import { cmsStyles } from '@/lib/cms-styles'
 import { PolyhedraField } from '@/components/autoblogger/PolyhedraField'
 import { SeoField } from '@/components/autoblogger/SeoField'
 import { useDashboardContext, type EditorState as BlogEditorState } from '@/lib/dashboard'
-import { useChatContext, type EssayEdit } from '@/lib/chat'
 import { ChatIcon } from '@/components/Icons'
 
 export default function WriterPage() {

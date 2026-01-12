@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useRef } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ChatPanel } from '@/components/ChatPanel'
-import { ChatProvider } from '@/lib/chat'
+import { ChatProvider } from 'autoblogger/ui'
 import { DashboardProvider } from '@/lib/dashboard'
 
 function DashboardLayoutContent({
