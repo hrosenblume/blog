@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useRef } from 'react'
+import { useCallback, useRef, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
 import { useTheme } from 'next-themes'
@@ -42,17 +42,27 @@ export default function WriterPage() {
   // Track the autoblogger edit handler for bridging
   const autobloggerEditHandlerRef = useRef<EditHandler | null>(null)
   
-  // Map NextAuth session to autoblogger's Session type
-  const session: Session | null = nextAuthSession ? {
-    user: {
-      id: (nextAuthSession.user as { id?: string })?.id,
-      name: nextAuthSession.user?.name ?? undefined,
-      email: nextAuthSession.user?.email ?? undefined,
-      role: (nextAuthSession.user as { role?: string })?.role,
-    },
-  } : null
+  // Map NextAuth session to autoblogger's Session type (memoized to prevent re-renders)
+  const session: Session | null = useMemo(() => {
+    if (!nextAuthSession) return null
+    return {
+      user: {
+        id: (nextAuthSession.user as { id?: string })?.id,
+        name: nextAuthSession.user?.name ?? undefined,
+        email: nextAuthSession.user?.email ?? undefined,
+        role: (nextAuthSession.user as { role?: string })?.role,
+      },
+    }
+  }, [nextAuthSession])
+  
+  // Use refs for callbacks to ensure handleEditorStateChange is stable
+  const registerEditorRef = useRef(registerEditor)
+  const setEssayContextRef = useRef(setEssayContext)
+  useEffect(() => { registerEditorRef.current = registerEditor }, [registerEditor])
+  useEffect(() => { setEssayContextRef.current = setEssayContext }, [setEssayContext])
   
   // Handle editor state changes - sync to both dashboard context and chat context
+  // Uses refs to avoid re-creating callback when context values change
   const handleEditorStateChange = useCallback((state: EditorState | null) => {
     // Map autoblogger EditorState to blog's EditorState (they have the same shape)
     if (state) {
@@ -63,21 +73,21 @@ export default function WriterPage() {
         onSave: state.onSave,
         confirmLeave: state.confirmLeave,
       }
-      registerEditor(blogState)
+      registerEditorRef.current(blogState)
       
       // Sync content to chat context
       if (state.content) {
-        setEssayContext({
+        setEssayContextRef.current({
           title: state.content.title,
           subtitle: state.content.subtitle,
           markdown: state.content.markdown,
         })
       }
     } else {
-      registerEditor(null)
-      setEssayContext(null)
+      registerEditorRef.current(null)
+      setEssayContextRef.current(null)
     }
-  }, [registerEditor, setEssayContext])
+  }, []) // Empty deps - stable callback
   
   // Handle edit handler registration - bridge autoblogger's handler to chat context
   const handleRegisterEditHandler = useCallback((handler: EditHandler | null) => {
@@ -96,8 +106,8 @@ export default function WriterPage() {
     }
   }, [registerEditHandler])
   
-  // Chat toggle button for navbar
-  const chatToggleButton = (
+  // Chat toggle button for navbar (memoized to prevent re-renders)
+  const chatToggleButton = useMemo(() => (
     <button
       type="button"
       onClick={() => setChatOpen(!chatOpen)}
@@ -107,7 +117,22 @@ export default function WriterPage() {
     >
       <ChatIcon />
     </button>
-  )
+  ), [chatOpen, setChatOpen])
+
+  // Memoize fields to prevent re-renders
+  const fields = useMemo(() => [
+    {
+      name: 'polyhedraShape',
+      label: 'Shape',
+      component: PolyhedraField as any,
+      position: 'footer' as const,
+    },
+    {
+      name: 'seo',  // Compound field - uses onFieldChange for multiple properties
+      component: SeoField as any,
+      position: 'footer' as const,
+    },
+  ], [])
 
   return (
     <AutobloggerDashboard 
@@ -123,19 +148,7 @@ export default function WriterPage() {
       onThemeToggle={handleThemeToggle}
       theme={theme === 'dark' ? 'dark' : 'light'}
       navbarRightSlot={chatToggleButton}
-      fields={[
-        {
-          name: 'polyhedraShape',
-          label: 'Shape',
-          component: PolyhedraField as any,
-          position: 'footer',
-        },
-        {
-          name: 'seo',  // Compound field - uses onFieldChange for multiple properties
-          component: SeoField as any,
-          position: 'footer',
-        },
-      ]}
+      fields={fields}
     />
   )
 }

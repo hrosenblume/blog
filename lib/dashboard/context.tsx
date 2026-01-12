@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react'
 
 export interface EditorState {
   hasUnsavedChanges: boolean
@@ -25,8 +25,13 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     setEditorState(state)
   }, [])
 
+  const contextValue = useMemo(() => ({
+    editorState,
+    registerEditor,
+  }), [editorState, registerEditor])
+
   return (
-    <DashboardContext.Provider value={{ editorState, registerEditor }}>
+    <DashboardContext.Provider value={contextValue}>
       {children}
     </DashboardContext.Provider>
   )
