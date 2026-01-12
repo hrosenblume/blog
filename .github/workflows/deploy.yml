@@ -50,7 +50,8 @@ jobs:
             AFTER_LOCK=$(md5sum package-lock.json)
             
             echo "=== Installing dependencies ==="
-            # Always run npm ci to ensure latest autoblogger from GitHub
+            # Delete autoblogger to force fresh install from GitHub (avoids stale cache)
+            rm -rf node_modules/autoblogger
             npm ci
             
             echo "=== Loading environment ==="
@@ -132,7 +133,8 @@ jobs:
             AFTER_LOCK=$(md5sum package-lock.json)
             
             echo "=== Installing dependencies ==="
-            # Always run npm ci to ensure latest autoblogger from GitHub
+            # Delete autoblogger to force fresh install from GitHub (avoids stale cache)
+            rm -rf node_modules/autoblogger
             npm ci
             
             echo "=== Loading environment ==="

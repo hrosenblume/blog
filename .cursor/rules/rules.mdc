@@ -128,18 +128,19 @@ If on `dev` or another branch:
 4. Continue with steps below, then `git checkout dev` to return
 
 Steps:
-1. **Run `npm run typecheck`** — catches TypeScript errors before they fail in CI
-2. `git status -sb` — review untracked files (`??`), never auto-add `.env*`, `*.save`, `*.bak`
-3. `git add -u` (tracked files only) or selectively add, then `git diff --staged --stat`
-4. Read modified files for context
-5. Review chat history
-6. **Update `.cursor/rules/` if significant changes were made:**
+1. **Run `npm update autoblogger`** — pulls latest from GitHub, updates lock file
+2. **Run `npm run typecheck`** — catches TypeScript errors before they fail in CI
+3. `git status -sb` — review untracked files (`??`), never auto-add `.env*`, `*.save`, `*.bak`
+4. `git add -u` (tracked files only) or selectively add, then `git diff --staged --stat`
+5. Read modified files for context
+6. Review chat history
+7. **Update `.cursor/rules/` if significant changes were made:**
    - `rules.mdc` — New conventions, patterns, do's/don'ts
    - `context.mdc` — New systems, architecture, file structure
    - No sensitive data (URLs, emails, secrets) — use env var references
-7. Commit with comprehensive message
-8. `git push origin main` (triggers production deploy)
-9. If started on another branch: `git checkout dev && git stash pop`
+8. Commit with comprehensive message
+9. `git push origin main` (triggers production deploy)
+10. If started on another branch: `git checkout dev && git stash pop`
 
 ### When user types "m" (merge dev → prod)
 1. `git fetch origin && git log --oneline main..dev` to see what's being promoted
