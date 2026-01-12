@@ -32,6 +32,10 @@ function buildResponse(settings: Record<string, unknown> | null): Record<string,
       response[key] = dbValue || envValue || ''
     }
   }
+  
+  // Always include autoDraftEnabled (used by AI settings page)
+  response.autoDraftEnabled = (settings?.autoDraftEnabled as boolean) ?? false
+  
   return response
 }
 
@@ -64,6 +68,11 @@ export const PATCH = withAdmin(async (request: NextRequest) => {
       // Empty string means clear the value
       updateData[key] = body[key] || null
     }
+  }
+  
+  // Handle autoDraftEnabled toggle (managed from AI settings page)
+  if (typeof body.autoDraftEnabled === 'boolean') {
+    updateData.autoDraftEnabled = body.autoDraftEnabled
   }
 
   const settings = await prisma.integrationSettings.upsert({

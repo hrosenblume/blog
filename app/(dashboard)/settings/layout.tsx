@@ -1,7 +1,6 @@
 'use client'
 
 import { useSession } from 'next-auth/react'
-import { useEffect } from 'react'
 import Link from 'next/link'
 import { CenteredPage } from '@/components/CenteredPage'
 
@@ -11,16 +10,6 @@ export default function SettingsLayout({
   children: React.ReactNode
 }) {
   const { data: session, status } = useSession()
-
-  // Prevent body scroll for app-like feel
-  useEffect(() => {
-    document.documentElement.style.overflow = 'hidden'
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.documentElement.style.overflow = ''
-      document.body.style.overflow = ''
-    }
-  }, [])
 
   // Still loading - parent layout handles skeleton
   if (status === 'loading') {

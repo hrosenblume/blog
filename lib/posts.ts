@@ -3,8 +3,10 @@ import { prisma } from '@/lib/db'
 import { getRandomShape } from '@/lib/polyhedra/shapes'
 import { canPublish } from '@/lib/auth/helpers'
 import { generateSlug } from '@/lib/markdown'
-import { DEFAULT_TITLE } from '@/lib/editor/constants'
 import { Post } from '@prisma/client'
+
+/** Default title for untitled drafts */
+const DEFAULT_TITLE = 'Untitled Draft'
 
 /**
  * Generate a unique slug, appending -2, -3, etc. if the base slug exists.

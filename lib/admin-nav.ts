@@ -1,5 +1,5 @@
-// Shared admin navigation configuration
-// Adding items here will automatically show them in the navbar and dashboard
+// Site-specific settings navigation (blog-specific, not CMS)
+// CMS settings (users, posts, tags, AI, topics) are now in /writer/settings via autoblogger
 
 export type AdminNavItem = {
   label: string
@@ -8,30 +8,23 @@ export type AdminNavItem = {
   featureFlag?: 'autoDraftEnabled'  // only show when this feature is enabled
 }
 
+// Site-specific settings only - CMS stuff is in autoblogger (/writer/settings)
 export const adminNavItems: AdminNavItem[] = [
-  { label: 'Users', href: '/settings/users', countKey: 'users' },
-  { label: 'Posts', href: '/settings/posts', countKey: 'posts' },
-  { label: 'Tags', href: '/settings/tags', countKey: 'tags' },
-  { label: 'Comments', href: '/settings/comments', countKey: 'comments' },
-  { label: 'Revisions', href: '/settings/revisions', countKey: 'revisions' },
   { label: 'Visits', href: '/settings/leads/visits', countKey: 'visits' },
   { label: 'Companies', href: '/settings/visitors/companies', countKey: 'companies' },
   { label: 'Persons', href: '/settings/visitors/persons', countKey: 'persons' },
-  { label: 'Topics', href: '/settings/topics', countKey: 'topics', featureFlag: 'autoDraftEnabled' },
-  { label: 'AI', href: '/settings/ai' },
   { label: 'SEO', href: '/settings/seo' },
   { label: 'Integrations', href: '/settings/integrations' },
 ]
 
 // For navbar grouping - items listed here will appear in dropdowns
 export const adminNavGroups = [
-  { label: 'Content', items: ['Posts', 'Tags', 'Comments', 'Revisions', 'Topics'] },
   { label: 'Analytics', items: ['Visits', 'Companies', 'Persons'] },
-  { label: 'Settings', items: ['AI', 'SEO', 'Integrations'] },
+  { label: 'Settings', items: ['SEO', 'Integrations'] },
 ]
 
 // Items not in any group (shown as direct links in navbar)
-export const adminDirectLinks = ['Users']
+export const adminDirectLinks: string[] = []
 
 // Helper to get nav items for a group
 export function getGroupItems(groupLabel: string): AdminNavItem[] {

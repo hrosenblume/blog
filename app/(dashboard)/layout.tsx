@@ -3,13 +3,10 @@
 import { useSession } from 'next-auth/react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useRef } from 'react'
-import { Loader2, Save } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ChatPanel } from '@/components/ChatPanel'
-import { ChatProvider, useChatContext } from '@/lib/chat'
-import { DashboardProvider, useDashboardContext } from '@/lib/dashboard'
-import { WriterNavbar } from '@/components/writer/WriterNavbar'
-import { MagicBackButton } from '@/components/MagicBackButton'
+import { ChatProvider } from '@/lib/chat'
+import { DashboardProvider } from '@/lib/dashboard'
 
 function DashboardLayoutContent({
   children,
@@ -19,8 +16,6 @@ function DashboardLayoutContent({
   const { data: session, status } = useSession()
   const router = useRouter()
   const pathname = usePathname()
-  const { isOpen: chatOpen, setIsOpen: setChatOpen } = useChatContext()
-  const { editorState } = useDashboardContext()
   const mainRef = useRef<HTMLElement>(null)
 
   // Scroll main container to top on navigation
@@ -29,10 +24,8 @@ function DashboardLayoutContent({
   }, [pathname])
 
   // Route detection
-  const isEditor = pathname?.startsWith('/writer/editor')
-  const isWriterRoot = pathname === '/writer'
+  const isWriter = pathname?.startsWith('/writer')
   const isSettings = pathname?.startsWith('/settings')
-  const isWriterSubpage = pathname?.startsWith('/writer/') && !isEditor
 
   // Redirect unauthenticated users
   useEffect(() => {
@@ -40,69 +33,6 @@ function DashboardLayoutContent({
       router.push('/auth/signin')
     }
   }, [status, router])
-
-  // Compute back link for non-root pages
-  const getBackLink = () => {
-    if (isSettings) {
-      const segments = pathname?.split('/').filter(Boolean) || []
-      if (segments.length <= 1) return '/writer'
-      
-      // These intermediate paths don't have pages - skip to /settings
-      const noPageRoutes = ['/settings/leads', '/settings/visitors']
-      const parentPath = '/' + segments.slice(0, -1).join('/')
-      
-      return noPageRoutes.includes(parentPath) ? '/settings' : parentPath
-    }
-    if (isWriterSubpage || isEditor) {
-      return '/writer'
-    }
-    return '/writer'
-  }
-
-  // Compute left slot based on route
-  const getLeftSlot = () => {
-    if (isWriterRoot) {
-      return undefined // Default "Writer AI" link
-    }
-    
-    // For editor, use the confirmLeave from editor state
-    if (isEditor && editorState) {
-      return (
-        <MagicBackButton 
-          backLink="/writer" 
-          onBeforeNavigate={editorState.confirmLeave}
-        />
-      )
-    }
-    
-    // For settings pages, force using computed link (prevents back loops)
-    // For other pages, allow browser history
-    return <MagicBackButton backLink={getBackLink()} forceLink={isSettings} />
-  }
-
-  // Compute right slot based on route
-  const getRightSlot = () => {
-    // Only show save button for editor with drafts
-    if (isEditor && editorState && editorState.status === 'draft') {
-      return (
-        <button
-          type="button"
-          onClick={() => editorState.onSave('draft')}
-          disabled={!editorState.hasUnsavedChanges || editorState.savingAs !== null}
-          className="w-9 h-9 rounded-md border border-border hover:bg-accent text-muted-foreground flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
-          aria-label="Save draft"
-          title="Save draft"
-        >
-          {editorState.savingAs === 'draft' ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Save className="h-4 w-4" />
-          )}
-        </button>
-      )
-    }
-    return undefined
-  }
 
   if (status === 'loading') {
     return (
@@ -125,22 +55,23 @@ function DashboardLayoutContent({
     return null
   }
 
+  // /settings routes - simple layout, no navbar
+  if (isSettings) {
+    return (
+      <div className="min-h-screen">
+        {children}
+      </div>
+    )
+  }
+
+  // /writer routes - autoblogger provides its own navbar
   return (
-    <div className={isEditor ? 'h-dvh flex flex-col' : 'h-dvh flex flex-col overflow-hidden'}>
-      <WriterNavbar
-        session={session}
-        chatOpen={chatOpen}
-        onChatToggle={() => setChatOpen(!chatOpen)}
-        leftSlot={getLeftSlot()}
-        rightSlot={getRightSlot()}
-        fixed={false}
-      />
-      
+    <div className="h-dvh flex flex-col">
       <main ref={mainRef} className="flex-1 overflow-auto">
         {children}
       </main>
       
-      {/* Chat Panel - available across all dashboard routes */}
+      {/* Chat Panel - available on writer routes */}
       <ChatPanel />
     </div>
   )
@@ -159,4 +90,3 @@ export default function DashboardLayout({
     </DashboardProvider>
   )
 }
-

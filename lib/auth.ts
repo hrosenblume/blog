@@ -3,10 +3,11 @@ import Google from 'next-auth/providers/google'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from './db'
 
-// Extend the session type to include role
+// Extend the session type to include role and id
 declare module 'next-auth' {
   interface Session {
     user: {
+      id?: string
       email?: string | null
       name?: string | null
       image?: string | null
@@ -42,9 +43,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (session.user?.email) {
         const dbUser = await prisma.user.findUnique({
           where: { email: normalizeEmail(session.user.email) },
-          select: { role: true },
+          select: { id: true, role: true },
         })
-        session.user.role = dbUser?.role || 'writer'
+        if (dbUser) {
+          session.user.id = dbUser.id
+          session.user.role = dbUser.role || 'writer'
+        }
       }
       return session
     },

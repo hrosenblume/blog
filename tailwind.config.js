@@ -1,9 +1,11 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  presets: [require('autoblogger/styles/preset')],
   content: [
     './app/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
     './lib/**/*.{js,ts}',
+    './node_modules/autoblogger/dist/**/*.{js,mjs}',
   ],
   darkMode: 'class',
   theme: {

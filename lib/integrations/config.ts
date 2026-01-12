@@ -58,12 +58,7 @@ export const integrations: Integration[] = [
     inputType: 'password',
     envFallback: 'OPENAI_API_KEY',
   },
-  {
-    key: 'autoDraftEnabled',
-    label: 'Auto-Draft Essays',
-    description: 'Enable automatic essay drafting from RSS feeds. When off, Topics admin page and Inbox are hidden.',
-    inputType: 'toggle',
-  },
+  // autoDraftEnabled toggle moved to AI Settings page
 ]
 
 

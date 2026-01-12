@@ -18,7 +18,7 @@ import { markdownToHtml } from '@/lib/markdown'
 import { PROSE_CLASSES } from '@/lib/article-layout'
 import { useChatContext, ChatMode } from '@/lib/chat'
 import { useAIModels } from '@/lib/ai/useAIModels'
-import { ModelSelector } from '@/components/editor/ModelSelector'
+import { ModelSelector } from '@/components/ModelSelector'
 
 /** Strip <plan> tags for display during streaming */
 function stripPlanTags(content: string): string {
@@ -50,7 +50,8 @@ export function ChatPanel() {
   
   const router = useRouter()
   const pathname = usePathname()
-  const isOnEditor = pathname?.startsWith('/writer/editor')
+  // Use essayContext presence to detect if we're editing (works with autoblogger)
+  const isOnEditor = !!essayContext
   
   const [input, setInput] = useState('')
   const [isAnimating, setIsAnimating] = useState(false)
@@ -106,7 +107,7 @@ export function ChatPanel() {
     setMounted(true)
   }, [])
 
-  // Handle open/close animation and body scroll lock
+  // Handle open/close - just set visibility
   useEffect(() => {
     if (open) {
       setIsVisible(true)
@@ -115,12 +116,6 @@ export function ChatPanel() {
       document.body.style.position = 'fixed'
       document.body.style.width = '100%'
       document.body.style.top = `-${window.scrollY}px`
-      // Small delay to trigger animation
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setIsAnimating(true)
-        })
-      })
     } else {
       setIsAnimating(false)
       // Restore body scroll
@@ -137,6 +132,16 @@ export function ChatPanel() {
       return () => clearTimeout(timer)
     }
   }, [open])
+
+  // Start animation AFTER visibility is set (separate render cycle)
+  useEffect(() => {
+    if (isVisible && open && !isAnimating) {
+      // Element is now in DOM with translate-x-full, trigger transition
+      requestAnimationFrame(() => {
+        setIsAnimating(true)
+      })
+    }
+  }, [isVisible, open, isAnimating])
 
   // Save scroll position when panel closes
   useEffect(() => {

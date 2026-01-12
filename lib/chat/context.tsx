@@ -180,22 +180,22 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setIsStreaming(false)
   }, [])
 
-  // Load history on first open
+  // Preload history on mount (before panel opens) for instant display
   useEffect(() => {
-    if (isOpen && !historyLoadedRef.current) {
-      historyLoadedRef.current = true
-      fetch('/api/chat/history')
-        .then(res => res.ok ? res.json() : [])
-        .then((data: { role: 'user' | 'assistant'; content: string }[]) => {
-          if (data.length > 0) {
-            setMessages(data.map(m => ({ role: m.role, content: m.content })))
-          }
-        })
-        .catch(() => {
-          // Silently fail - history is not critical
-        })
-    }
-  }, [isOpen])
+    if (historyLoadedRef.current) return
+    historyLoadedRef.current = true
+    
+    fetch('/api/chat/history')
+      .then(res => res.ok ? res.json() : [])
+      .then((data: { role: 'user' | 'assistant'; content: string }[]) => {
+        if (data.length > 0) {
+          setMessages(data.map(m => ({ role: m.role, content: m.content })))
+        }
+      })
+      .catch(() => {
+        // Silently fail - history is not critical
+      })
+  }, [])
 
   // Helper to save a message to the database
   const saveMessage = useCallback((role: 'user' | 'assistant', content: string) => {

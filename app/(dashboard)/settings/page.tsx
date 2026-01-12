@@ -27,7 +27,7 @@ export default async function AdminDashboard() {
 
   return (
     <div className="mt-4">
-      <h2 className="text-section font-semibold pb-4 mb-6 border-b border-border">Settings</h2>
+      <h2 className="text-section font-semibold pb-4 mb-6 border-b border-border">Site Settings</h2>
       
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
         {visibleItems.map((item) => (
