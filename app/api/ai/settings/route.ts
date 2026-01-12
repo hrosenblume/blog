@@ -14,10 +14,6 @@ import {
 
 // GET /api/ai/settings - Get current AI settings
 export const GET = withSession(async () => {
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/6799878c-0e78-4c4f-a4fe-aa1599d04e47',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api/ai/settings/route.ts:GET',message:'Blog AI settings route called (not CMS)',data:{route:'/api/ai/settings'},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D'})}).catch(()=>{});
-  // #endregion
-  
   // Upsert to ensure settings always exist
   const settings = await prisma.aISettings.upsert({
     where: { id: 'default' },
