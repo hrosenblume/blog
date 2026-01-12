@@ -58,6 +58,9 @@ jobs:
             elif [ ! -d "node_modules" ] || [ ! -d "node_modules/.prisma" ]; then
               echo "node_modules missing or incomplete, running npm ci..."
               npm ci --legacy-peer-deps
+            elif [ ! -d "node_modules/autoblogger/dist" ]; then
+              echo "autoblogger not properly installed, running npm ci..."
+              npm ci --legacy-peer-deps
             else
               echo "Dependencies unchanged and present, skipping npm ci"
             fi
@@ -148,6 +151,9 @@ jobs:
               npm ci --legacy-peer-deps
             elif [ ! -d "node_modules" ] || [ ! -d "node_modules/.prisma" ]; then
               echo "node_modules missing or incomplete, running npm ci..."
+              npm ci --legacy-peer-deps
+            elif [ ! -d "node_modules/autoblogger/dist" ]; then
+              echo "autoblogger not properly installed, running npm ci..."
               npm ci --legacy-peer-deps
             else
               echo "Dependencies unchanged and present, skipping npm ci"
