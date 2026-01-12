@@ -28,7 +28,9 @@ async function instrumentedHandler(req: NextRequest) {
   if (isAISettings && req.method === 'GET') {
     const cloned = response.clone()
     const body = await cloned.json()
-    fetch('http://127.0.0.1:7242/ingest/6799878c-0e78-4c4f-a4fe-aa1599d04e47',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api/cms/route.ts:response',message:'CMS AI settings response',data:{hasDataWrapper:!!body.data,hasDefaultPlanRules:!!(body.data?.defaultPlanRules || body.defaultPlanRules),responseKeys:Object.keys(body).slice(0,10)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B'})}).catch(()=>{});
+    const dataKeys = body.data ? Object.keys(body.data) : []
+    const hasDefault = !!(body.data?.defaultPlanRules)
+    fetch('http://127.0.0.1:7242/ingest/6799878c-0e78-4c4f-a4fe-aa1599d04e47',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api/cms/route.ts:response',message:'CMS AI settings response',data:{hasDataWrapper:!!body.data,hasDefaultPlanRules:hasDefault,dataKeysCount:dataKeys.length,hasDefaultInKeys:dataKeys.includes('defaultPlanRules'),sampleKeys:dataKeys.slice(0,5)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B'})}).catch(()=>{});
   }
   
   return response
