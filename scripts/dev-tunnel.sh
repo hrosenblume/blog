@@ -6,6 +6,11 @@ set -a
 source .env.local
 set +a
 
+# Use local autoblogger (direct symlink, no build required)
+echo "Linking local autoblogger..."
+rm -rf node_modules/autoblogger
+ln -sf "$(cd ../autoblogger && pwd)" node_modules/autoblogger
+
 # Generate Prisma client
 prisma generate
 

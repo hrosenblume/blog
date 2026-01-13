@@ -105,6 +105,7 @@ Use CSS variables from `globals.css`:
 | `m` | Merge `dev` → `main` |
 | `p` | Pull current branch |
 | `pf` | Force reset to `origin/main` |
+| `rebuild app` | Fresh local autoblogger + restart dev:tunnel |
 
 > ⚠️ **NEVER push to `main` automatically.** Only push to main when the user EXPLICITLY types "g". After making changes or fixes, commit to `dev` only and WAIT for the user to type "g" before touching main.
 
@@ -166,6 +167,14 @@ Steps:
 3. `git reset --hard origin/main`
 
 Changes are preserved in stash (`git stash list` to see, `git stash pop` to restore)
+
+### When user types "rebuild app"
+Re-link local autoblogger and restart dev server:
+1. Kill any existing dev:tunnel processes
+2. Re-symlink local autoblogger: `rm -rf node_modules/autoblogger && ln -sf ../autoblogger node_modules/autoblogger`
+3. Run `npm run dev:tunnel` in background
+
+This uses the local `../autoblogger` directory (symlinked, so changes are instant — no reinstall needed).
 
 ## Planning Files
 

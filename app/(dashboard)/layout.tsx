@@ -2,11 +2,11 @@
 
 import { useSession } from 'next-auth/react'
 import { useRouter, usePathname } from 'next/navigation'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useCallback } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ChatPanel } from '@/components/ChatPanel'
-import { ChatProvider } from 'autoblogger/ui'
+import { ChatPanel, ChatProvider } from 'autoblogger/ui'
 import { DashboardProvider } from '@/lib/dashboard'
+import { PROSE_CLASSES } from '@/lib/article-layout'
 
 function DashboardLayoutContent({
   children,
@@ -22,6 +22,11 @@ function DashboardLayoutContent({
   useEffect(() => {
     mainRef.current?.scrollTo(0, 0)
   }, [pathname])
+
+  // Navigation callback for ChatPanel
+  const handleNavigate = useCallback((path: string) => {
+    router.push(path.startsWith('/') ? `/writer${path}` : path)
+  }, [router])
 
   // Route detection
   const isWriter = pathname?.startsWith('/writer')
@@ -72,7 +77,11 @@ function DashboardLayoutContent({
       </main>
       
       {/* Chat Panel - available on writer routes */}
-      <ChatPanel />
+      <ChatPanel 
+        proseClasses={PROSE_CLASSES}
+        onNavigate={handleNavigate}
+        modelsApiPath="/api/ai/settings"
+      />
     </div>
   )
 }
