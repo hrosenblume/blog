@@ -5,20 +5,5 @@ updates:
     schedule:
       interval: "daily"
     open-pull-requests-limit: 10
-    allow:
-      - dependency-name: "autoblogger"
     commit-message:
       prefix: "deps"
-
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
-    ignore:
-      - dependency-name: "autoblogger"
-    commit-message:
-      prefix: "security"
-
-
-
