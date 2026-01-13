@@ -31,15 +31,6 @@ export const cms = createAutoblogger({
     },
   },
 
-  // Custom styles to match the blog's article layout
-  styles: {
-    container: 'max-w-[680px] mx-auto px-6',
-    title: 'text-title font-bold',
-    subtitle: 'text-h2 text-muted-foreground',
-    byline: 'text-sm text-muted-foreground',
-    prose: 'prose dark:prose-invert max-w-none',
-  },
+  // Styles now come from autoblogger defaults (ARTICLE_CLASSES)
+  // To customize, pass a styles object here
 })
-
-// Export styles for client-side use
-export const cmsStyles = cms.config.styles

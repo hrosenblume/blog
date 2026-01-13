@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
 import { useTheme } from 'next-themes'
 import { AutobloggerDashboard, type Session, type EditorState, type EditHandler, useChatContext, type EssayEdit } from 'autoblogger/ui'
-import { cmsStyles } from '@/lib/cms-styles'
 import { PolyhedraField } from '@/components/autoblogger/PolyhedraField'
 import { SeoField } from '@/components/autoblogger/SeoField'
 import { useDashboardContext, type EditorState as BlogEditorState } from '@/lib/dashboard'
@@ -138,7 +137,7 @@ export default function WriterPage() {
     <AutobloggerDashboard 
       basePath="/writer"
       apiBasePath="/api/cms"
-      styles={cmsStyles}
+      
       session={session}
       onEditorStateChange={handleEditorStateChange}
       onRegisterEditHandler={handleRegisterEditHandler}
