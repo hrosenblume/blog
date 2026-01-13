@@ -57,7 +57,7 @@
     "dotenv": "^17.2.3",
     "jsdom": "^27.4.0",
     "lucide-react": "^0.555.0",
-    "marked": "^9.0.0",
+    "marked": "^17.0.1",
     "next": "^15.5.9",
     "next-auth": "^5.0.0-beta.25",
     "next-seo": "^7.0.1",
