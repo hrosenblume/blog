@@ -64,7 +64,7 @@
     "next-themes": "^0.4.6",
     "openai": "^6.10.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "react-dom": "^19.2.3",
     "react-page-tracker": "^0.5.0",
     "rss-parser": "^3.13.0",
     "sanitize-html": "^2.17.0",
