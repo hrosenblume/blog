@@ -167,9 +167,11 @@ export default async function EssayPage({ params }: Props) {
             />
           }
         >
-          <ArticleBody>
-            <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
-          </ArticleBody>
+          <div className="autoblogger">
+            <ArticleBody>
+              <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
+            </ArticleBody>
+          </div>
         </ArticleLayout>
 
         <EssayNav 
