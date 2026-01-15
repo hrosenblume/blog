@@ -2,7 +2,7 @@
 
 import { useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
+import { useKeyboard } from 'autoblogger/ui'
 
 const WRITER_PATH = '/writer'
 const TAP_COUNT = 3
@@ -17,7 +17,12 @@ export function SecretNav({ children }: { children: React.ReactNode }) {
 
   // Cmd+/ to navigate to writer
   useKeyboard([
-    { ...SHORTCUTS.TOGGLE_VIEW, handler: () => router.push(getWriterPath()) },
+    { 
+      key: '/', 
+      metaKey: true, 
+      allowInInput: true, 
+      action: () => router.push(getWriterPath()) 
+    },
   ])
 
   const handleTap = useCallback(() => {
@@ -35,4 +40,3 @@ export function SecretNav({ children }: { children: React.ReactNode }) {
     </span>
   )
 }
-

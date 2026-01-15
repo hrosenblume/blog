@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
+import { useKeyboard } from 'autoblogger/ui'
 
 interface Props {
   prevSlug: string | null
@@ -13,11 +13,21 @@ export function KeyboardNav({ prevSlug, nextSlug, slug }: Props) {
   const router = useRouter()
 
   useKeyboard([
-    { ...SHORTCUTS.TOGGLE_VIEW, handler: () => router.push(`/writer/editor/${slug}`) },
-    { ...SHORTCUTS.PREV, handler: () => { if (prevSlug) router.push(`/e/${prevSlug}`) } },
-    { ...SHORTCUTS.NEXT, handler: () => { if (nextSlug) router.push(`/e/${nextSlug}`) } },
+    { 
+      key: '/', 
+      metaKey: true, 
+      allowInInput: true, 
+      action: () => router.push(`/writer/editor/${slug}`) 
+    },
+    { 
+      key: 'ArrowLeft', 
+      action: () => { if (prevSlug) router.push(`/e/${prevSlug}`) } 
+    },
+    { 
+      key: 'ArrowRight', 
+      action: () => { if (nextSlug) router.push(`/e/${nextSlug}`) } 
+    },
   ])
 
   return null
 }
-

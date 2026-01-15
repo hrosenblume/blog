@@ -80,7 +80,6 @@ function DashboardLayoutContent({
       <ChatPanel 
         proseClasses={PROSE_CLASSES}
         onNavigate={handleNavigate}
-        modelsApiPath="/api/ai/settings"
       />
     </div>
   )
@@ -93,7 +92,11 @@ export default function DashboardLayout({
 }) {
   return (
     <DashboardProvider>
-      <ChatProvider>
+      <ChatProvider 
+        apiBasePath="/api/cms"
+        chatApiPath="/api/cms/ai/chat"
+        historyApiPath="/api/cms/chat/history"
+      >
         <DashboardLayoutContent>{children}</DashboardLayoutContent>
       </ChatProvider>
     </DashboardProvider>

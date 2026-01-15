@@ -3,6 +3,7 @@ import { auth } from './auth'
 import { prisma } from './db'
 import { uploadFile } from './storage'
 import { canPublish } from './auth/helpers'
+import { getRandomShape } from './polyhedra/shapes'
 
 // Create autoblogger CMS instance
 export const cms = createAutoblogger({
@@ -29,6 +30,13 @@ export const cms = createAutoblogger({
       const result = await uploadFile(buffer, file.name, file.type)
       return { url: result.url }
     },
+  },
+
+  hooks: {
+    // Add polyhedra shape to auto-drafted posts
+    onAutoDraftPostCreate: async () => ({
+      polyhedraShape: getRandomShape(),
+    }),
   },
 
   // Styles now come from autoblogger defaults (ARTICLE_CLASSES)

@@ -30,7 +30,7 @@ alwaysApply: true
 | Styling | Tailwind CSS |
 | Theme | next-themes (dark mode, class-based) |
 | Editor | Tiptap WYSIWYG (markdown via marked + turndown) |
-| AI Writing | Anthropic SDK + OpenAI SDK (Claude/GPT models) |
+| AI/Chat | **autoblogger** package (Claude/GPT models, chat, prompts) |
 | 3D Graphics | Canvas API (client-side polyhedra rendering) |
 | Image Storage | Local filesystem (dev) / DigitalOcean Spaces (prod) |
 
@@ -41,49 +41,72 @@ blog/
 ├── app/                        # Next.js App Router
 │   ├── api/                    # API routes
 │   │   ├── admin/              # Admin-only APIs (users, revisions)
-│   │   ├── ai/                 # AI generation + settings
+│   │   ├── cms/[...path]/      # Autoblogger CMS API handler
 │   │   ├── auth/[...nextauth]/ # NextAuth handler
 │   │   └── posts/              # Posts CRUD
-│   ├── settings/               # Settings dashboard
+│   ├── (dashboard)/            # Dashboard layout group
+│   │   ├── settings/           # Settings pages
+│   │   └── writer/             # Writer dashboard + editor
 │   ├── auth/                   # Auth pages
 │   ├── e/[slug]/               # Public essay pages
-│   ├── writer/                 # Writer dashboard
-│   │   └── editor/[[...slug]]/ # WYSIWYG editor
 │   ├── globals.css             # Typography variables
 │   └── layout.tsx              # Root layout
 ├── components/                 # Shared UI components
 │   ├── admin/                  # AdminTable, Pagination, Field
-│   ├── editor/                 # EditorToolbar, PostMetadataFooter
+│   ├── autoblogger/            # Custom fields for autoblogger
 │   └── ui/                     # shadcn/ui components
 ├── lib/                        # Utilities and configs
 │   ├── admin/                  # Admin utilities (pagination, constants)
 │   ├── admin-nav.ts            # ✏️ Admin nav config (DRY)
 │   ├── auth.ts                 # NextAuth config + route protection
-│   ├── chat/                   # Chat context (essay-aware AI chat)
-│   │   ├── context.tsx         # ChatProvider + useChatContext hook
-│   │   └── index.ts            # Clean exports
+│   ├── chat/                   # Re-exports from autoblogger
+│   ├── cms.ts                  # Autoblogger instance configuration
 │   ├── db.ts                   # Prisma client singleton
 │   ├── homepage.ts             # ✏️ Homepage content (DRY)
-│   ├── keyboard/               # Keyboard navigation
-│   ├── leads.ts                # Lead utilities (getLeadDisplayName)
-│   ├── ai/                     # AI writing system
-│   │   ├── models.ts           # Model definitions (Claude/GPT)
-│   │   ├── parse.ts            # Parse title/subtitle from generated content
-│   │   ├── provider.ts         # Unified SDK abstraction
-│   │   └── system-prompt.ts    # Shared prompt builders (generate/chat/rewrite)
+│   ├── auto-draft/             # RSS-based auto-drafting
+│   ├── markdown.ts             # Re-exports from autoblogger + sanitized render
 │   ├── polyhedra/              # 3D rendering system
 │   ├── posts.ts                # Post CRUD logic (DRY)
 │   └── storage.ts              # Image upload (local/Spaces)
 ├── prisma/
 │   ├── schema.prisma           # SQLite (dev)
-│   ├── schema.postgresql.prisma # PostgreSQL (prod)
-│   └── data/                   # Exported migration data
+│   └── schema.postgresql.prisma # PostgreSQL (prod)
 ├── plans/                      # Project planning
 │   └── Roadmap.md              # All planned work (Now/Soon/Later)
 ├── .cursor/rules/              # Cursor AI rules
 ├── .github/workflows/          # GitHub Actions CI/CD
 ├── ecosystem.config.js         # PM2 cluster mode configuration
 └── server.js                   # Custom server with ready signal for zero-downtime deploys
+```
+
+## Autoblogger Package
+
+AI writing, chat, and CMS features are provided by the **autoblogger** npm package:
+
+### What Autoblogger Provides
+- **AI Generation**: `generate()`, `buildGeneratePrompt()`, `buildAutoDraftPrompt()`
+- **Chat System**: `ChatProvider`, `useChatContext()`, `ChatPanel`, agent mode editing
+- **Keyboard**: `useKeyboard()` hook with `allowInInput` support
+- **Markdown**: `renderMarkdown()`, `markdownToHtml()`, `htmlToMarkdown()`, `wordCount()`, `generateSlug()`
+- **Content Parsing**: `parseGeneratedContent()` for title/subtitle/body extraction
+- **Models**: `AI_MODELS`, `resolveModel()`, `getDefaultModel()`
+- **CMS API**: `createAPIHandler()` for `/api/cms/[...path]` routes
+
+### Blog's Local Extensions
+- `lib/cms.ts` — Configures autoblogger with Prisma, auth, custom fields
+- `lib/markdown.ts` — Re-exports autoblogger + `renderMarkdownSanitized()` for essays
+- `lib/chat/index.ts` — Pure re-exports from `autoblogger/ui`
+- `lib/auto-draft/` — RSS parsing, keyword matching, AI essay generation
+- `app/providers.tsx` — Global keyboard shortcuts using autoblogger's hook
+
+### Import Patterns
+```typescript
+// AI and utilities from main package
+import { generate, resolveModel, buildAutoDraftPrompt, parseGeneratedContent } from 'autoblogger'
+import { wordCount, generateSlug, renderMarkdown } from 'autoblogger'
+
+// UI components and hooks from /ui subpath
+import { useKeyboard, ChatProvider, useChatContext, ChatPanel } from 'autoblogger/ui'
 ```
 
 ## Database Schema
@@ -136,76 +159,29 @@ model User {
   createdAt DateTime @default(now())
 }
 
-model Lead {
-  id         String      @id @default(uuid())
-  email      String?     @unique
-  firstName  String?
-  lastName   String?
-  linkedIn   String?
-  title      String?
-  company    String?
-  companyUrl String?
-  industry   String?
-  employees  String?
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-  visits     LeadVisit[]
-}
-
-model LeadVisit {
-  id         String   @id @default(uuid())
-  leadId     String
-  lead       Lead     @relation(...)
-  userAgent  String?
-  pageUrl    String?
-  referrer   String?
-  rawPayload String?
-  visitedAt  DateTime @default(now())
-}
-
 model AISettings {
   id               String   @id @default("default")
   rules            String   @default("")
   chatRules        String   @default("")
-  rewriteRules     String?  // Specific rules for rewrite tool
+  rewriteRules     String?
+  autoDraftRules   String?
   defaultModel     String   @default("claude-sonnet")
-  generateTemplate String?  // Custom generate prompt template
-  chatTemplate     String?  // Custom chat prompt template
-  rewriteTemplate  String?  // Custom rewrite prompt template
+  generateTemplate String?
+  chatTemplate     String?
+  rewriteTemplate  String?
   updatedAt        DateTime @updatedAt
-}
-
-model SiteSettings {
-  id                String   @id @default("default")
-  siteTitle         String   @default("")
-  siteTitleTemplate String   @default("%s | {name}")
-  siteDescription   String   @default("")
-  siteKeywords      String   @default("")
-  twitterHandle     String   @default("")
-  orgName           String   @default("")
-  orgLogo           String   @default("")
-  orgSameAs         String   @default("[]")  // JSON array of social URLs
-  updatedAt         DateTime @updatedAt
-}
-
-model IntegrationSettings {
-  id                  String   @id @default("default")
-  googleAnalyticsId   String?  // GA4 measurement ID (G-XXXXXXXXXX)
-  rb2bApiKey          String?  // RB2B tracking key
-  contactEmail        String?  // Public contact email
-  updatedAt           DateTime @updatedAt
 }
 
 model TopicSubscription {
   id               String     @id @default(uuid())
-  name             String                    // "School Lunch Policy"
-  keywords         String                    // JSON array: ["school lunch", "USDA"]
-  rssFeeds         String                    // JSON array of feed URLs
+  name             String
+  keywords         String     // JSON array
+  rssFeeds         String     // JSON array
   isActive         Boolean    @default(true)
   useKeywordFilter Boolean    @default(true)
   frequency        String     @default("daily")
   maxPerPeriod     Int        @default(3)
-  essayFocus       String?                   // Per-topic essay direction
+  essayFocus       String?
   lastRunAt        DateTime?
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
@@ -221,28 +197,10 @@ model NewsItem {
   title         String
   summary       String?
   publishedAt   DateTime?
-  status        String            @default("pending")  // "pending", "generated", "skipped"
+  status        String            @default("pending")
   postId        String?           @unique
   post          Post?             @relation(...)
   createdAt     DateTime          @default(now())
-}
-
-model Tag {
-  id        String    @id @default(uuid())
-  name      String    @unique
-  createdAt DateTime  @default(now())
-  posts     PostTag[]
-}
-
-model PostTag {
-  id        String   @id @default(uuid())
-  postId    String
-  tagId     String
-  post      Post     @relation(...)
-  tag       Tag      @relation(...)
-  createdAt DateTime @default(now())
-
-  @@unique([postId, tagId])
 }
 ```
 
@@ -258,50 +216,11 @@ Defined directly in `tailwind.config.js` with line heights:
 - `text-body` (16px) — Body text
 - `text-table` (14px) — Table cells, dense data
 
-### Article Layout System
-Shared layout config in `lib/article-layout.ts` ensures essay pages and editor look identical:
-- `CONTENT_WIDTH`, `CONTENT_PADDING` — Container constraints
-- `TITLE_CLASSES`, `SUBTITLE_CLASSES`, `BYLINE_CLASSES` — Header typography
-- `PROSE_CLASSES` — Body content styling
-
-Components:
-- `ArticleLayout` — Shared `<article>` wrapper with header/children/footer slots
-- `ArticleHeader` — Title/subtitle/byline (renders inputs when `editable={true}`)
-- `ArticleBody` — Prose wrapper for rendered markdown
-
-Change `lib/article-layout.ts` or `ArticleLayout` → both essay and editor update automatically.
-
-### Admin Pagination
-Uses standard shadcn pagination primitives (`components/ui/pagination.tsx`):
-- `Pagination`, `PaginationContent`, `PaginationItem`, `PaginationLink`
-- `PaginationPrevious`, `PaginationNext`, `PaginationEllipsis`
-
-Admin wrapper in `components/admin/Pagination.tsx`:
-- Accepts `currentPage`, `totalPages`, `baseUrl`, `position`
-- Smart page number display with ellipsis for many pages
-- Returns `null` when `totalPages <= 1`
-
-`AdminPageHeader` component for consistent page headers:
-- Props: `title`, `subtitle`, `action` (ReactNode)
-- Pagination goes in `action` slot (right-aligned, bottom-aligned)
-- All paginated admin pages use this pattern
-
-Shared utilities in `lib/admin/`:
-- `ITEMS_PER_PAGE` — Default pagination size (25)
-- `getPaginatedData()` — Async helper that handles params, fetching, counting
-- `parsePaginationParams()` — Simple params parser for complex queries
-
-### Homepage Configuration
-All content in `lib/homepage.ts`: name, bio, email, footer links.
-Used by: homepage, essay pages, writer dashboard, footer.
-
-### Admin Nav Configuration
-All admin navigation in `lib/admin-nav.ts`:
-- `adminNavItems` — All items with label, href, countKey
-- `adminNavGroups` — Which items appear in dropdown groups
-- `adminDirectLinks` — Items shown as direct links
-Used by: admin layout (navbar) and admin dashboard (cards).
-Adding an item to the config automatically shows it in both places.
+### Keyboard Navigation
+Uses autoblogger's `useKeyboard` hook from `autoblogger/ui`:
+- Shortcuts defined inline in components with `{ key, metaKey, shiftKey, altKey, action, allowInInput }`
+- Global shortcuts in `app/providers.tsx`: `Cmd + .` (theme), `Cmd + ;` (settings)
+- Essay navigation in `KeyboardNav.tsx`: `Cmd + /` (toggle view), arrows (prev/next)
 
 ### Polyhedra System
 50+ animated 3D wireframe shapes:
@@ -309,271 +228,28 @@ Adding an item to the config automatically shows it in both places.
 - Render: `components/PolyhedraCanvas.tsx`
 - Assignment: `scripts/assign-shapes.js`
 
-### Keyboard Navigation
-Defined in `lib/keyboard/shortcuts.ts`:
-- `Cmd + .` — Toggle theme
-- `Cmd + /` — Toggle view (essay↔editor)
-- `Cmd + '` — Toggle settings (from non-settings pages)
-- `←`/`→` — Prev/Next essay
-- `n` — New article
-- `Escape` — Back to dashboard
-
-### Editor System
-`lib/editor/usePostEditor.ts` encapsulates all editor state:
-- Auto-save (3s debounce)
-- Revision history
-- Slug generation (auto-unique: appends -2, -3, etc. for duplicates)
-- Unsaved changes warning
-- AI generation with preview/accept/discard flow
-- Visual feedback during generation (editor disabled with opacity change)
-- Untitled draft support (posts save as "Untitled Draft" if no title)
-
-**Editor Constants** (`lib/editor/constants.ts`):
-- `DEFAULT_TITLE` — Default title for untitled drafts
-- `EDITOR_PLACEHOLDER` — Placeholder text for editor body
-
-**Editor UX Hooks**:
-- `useTypeToFocus` — Focus editor and insert character when typing with nothing focused
-- `TiptapEditor` `autoFocus` prop — Auto-focus body on new posts
-
-**Skeleton Loading Pattern:**
-- Navbar renders immediately (session available instantly)
-- Toolbar button groups each handle their own skeleton via `loading` prop
-- `SkeletonButton` in `ToolbarButton.tsx` — matches button dimensions
-- `ContentSkeleton` — title/subtitle/body placeholders for inline loading
-- `EditorSkeleton` — full page skeleton for `loading.tsx` route transitions
-- Adding a toolbar button → add matching `SkeletonButton` in same component
-
-### AI Writing System
-Generate essays using Anthropic (Claude) or OpenAI (GPT-4):
-- **Models**: `lib/ai/models.ts` — Claude Sonnet 4, Opus 4, GPT-4o, GPT-4o Mini
-- **Provider**: `lib/ai/provider.ts` — Unified interface for both SDKs
-- **System prompts**: `lib/ai/system-prompt.ts` — Shared prompt builders for generate/chat/rewrite
-- **Settings**: `AISettings` Prisma model — essay rules, chat rules, rewrite rules, default model, prompt templates (persisted in DB)
-  - `rules` — Style/format rules applied during essay generation and rewriting
-  - `chatRules` — Behavior rules for brainstorming conversations (personality, interaction style)
-  - `rewriteRules` — Specific rules for the rewrite tool (cleanup behavior)
-  - `generateTemplate` — Custom system prompt template for essay generation (nullable, falls back to default)
-  - `chatTemplate` — Custom system prompt template for chat/brainstorming (nullable, falls back to default)
-  - `rewriteTemplate` — Custom system prompt template for rewriting (nullable, falls back to default)
-- **Prompt templates**: Editable via collapsible UI in admin, with placeholder substitution:
-  - `{{RULES}}` — Replaced with essay writing rules
-  - `{{CHAT_RULES}}` — Replaced with chat behavior rules
-  - `{{REWRITE_RULES}}` — Replaced with rewrite-specific rules
-  - `{{STYLE_EXAMPLES}}` — Replaced with all published essays as style reference
-- **API**: `/api/ai/generate` (generate content), `/api/ai/settings` (CRUD settings)
-- **Generation params**: `wordCount: number` (explicit word target), `useWebSearch: boolean` (research-enhanced generation)
-- **Web search**: When enabled, first gathers facts via `buildSearchOnlyPrompt()`, then injects research context into generation
-- **Settings UI**: `/settings/ai` — Configure essay writing rules, chat behavior rules, rewrite rules, default model, and editable prompt templates
-- **Flow**: Dashboard idea input → new editor → API call → streaming content
-- **Context injection**: System prompt includes custom rules first (override everything), then all published posts as style examples
-- **Env vars**: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` (at least one required)
-
-### Chat Context System
-Session-persistent AI chat that's aware of the currently open essay:
-- **Context**: `lib/chat/context.tsx` — `ChatProvider` wraps writer layout, `useChatContext()` hook
-- **State**: Messages persist across navigation within `/writer/*` routes (session-level, not DB)
-- **Essay awareness**: When editing an essay, the editor syncs `{ title, subtitle, markdown }` to chat context
-- **API**: `/api/ai/chat` accepts optional `essayContext` — AI can discuss, critique, and help improve the current draft
-- **Modes** (`ChatMode` type):
-  - `ask` — Discussion mode: AI provides feedback, suggestions, and answers questions
-  - `agent` — Editing mode: AI can directly edit the essay using structured commands
-  - `search` — Web search: Fact-finding with search-enabled models (non-streaming)
-- **Agent Mode Edit Commands** (parsed from AI response):
-  - `replace_section` — Find and replace specific text
-  - `replace_all` — Replace entire essay content (title, subtitle, markdown)
-  - `insert` — Add text before/after a match, or at start/end
-  - `delete` — Remove matched text
-- **Undo Support**: Each AI message with edits stores `previousState` for single-click revert
-- **Web Search Toggle**: Enable search-enhanced responses for fact-finding
-- **Model Selection**: Switch models directly from chat panel
-- **Flow**:
-  1. Open essay in editor → `setEssayContext()` called with post content
-  2. Open chat panel → AI has full essay in context
-  3. Toggle mode: Ask (discuss) ↔ Agent (edit directly)
-  4. In Agent mode: "Fix the intro" → AI outputs `:::edit` commands → applied automatically
-  5. Undo button appears on messages that applied edits
-- **Components**: `ChatPanel` (uses context), `ModelSelector` (reusable dropdown)
-
-### Tags System
-Categorize posts with tags for organization:
-- **Database**: `Tag` model (name, unique) + `PostTag` junction table
-- **Settings UI**: `/settings/tags` — CRUD for tags with post counts
-- **Editor UI**: `TagsSection` component in `PostMetadataFooter` — add/remove tags per post
-- **API**:
-  - `/api/tags` — GET all tags (public)
-  - `/api/admin/tags` — POST create tag (admin)
-  - `/api/admin/tags/[id]` — PATCH/DELETE tag (admin)
-- **Post relation**: `Post.tags` → `PostTag[]` with cascade delete
-
-### Image Storage System
-Hybrid storage in `lib/storage.ts` with automatic backend detection:
-- **Local (dev)**: Saves to `public/uploads/`, returns `/uploads/filename.jpg`
-- **Production**: Uploads to DigitalOcean Spaces, returns CDN URL
-- **Detection**: If `SPACES_KEY` env var is set → uses Spaces; otherwise → local filesystem
-- **API**: `/api/upload` accepts multipart form data, validates type/size, returns `{ url }`
-- **Supported types**: JPEG, PNG, GIF, WebP (max 4MB)
-
-### Google Analytics
-Page view tracking via Google Analytics 4:
-- **Script**: `components/GoogleAnalytics.tsx` — loads gtag.js (public pages only, excludes /settings, /writer, /auth)
-- **Env var**: `NEXT_PUBLIC_GA_MEASUREMENT_ID` — GA4 measurement ID (e.g., G-XXXXXXXXXX)
-
-### RB2B Lead Tracking
-Visitor identification via RB2B integration:
-- **Tracking script**: `components/RB2BScript.tsx` — loads RB2B client-side script (public pages only, excludes /settings, /writer, /auth)
-- **Webhook**: `/api/webhooks/rb2b` — receives identified visitor data (optionally secured with `RB2B_WEBHOOK_SECRET`)
-- **Settings pages**:
-  - `/settings/leads` — unique contacts
-  - `/settings/leads/visits` — all visits
-  - `/settings/visitors/companies` — aggregated by company
-  - `/settings/visitors/persons` — identified individuals
-- **Data flow**: RB2B script → RB2B servers identify visitor → webhook POST → Lead/LeadVisit created
-- **Env vars**: 
-  - `NEXT_PUBLIC_RB2B_API_KEY` — tracking key from RB2B dashboard
-  - `RB2B_WEBHOOK_SECRET` — (optional) secret for webhook authentication
-
-### SEO System
-Admin-managed SEO with database persistence using `next-seo` for JSON-LD structured data:
-- **Database models**:
-  - `Post` fields: `seoTitle`, `seoDescription`, `seoKeywords`, `noIndex` (optional overrides)
-  - `SiteSettings`: site-wide SEO config (title, description, keywords, org info)
-- **Utilities**: `lib/seo.ts` — `getSiteSettings()`, `getPostSeoValues()`, fallback helpers
-- **Settings UI**: `/settings/seo` — configure site title, description, keywords, organization info for JSON-LD
-- **Editor UI**: `components/editor/SeoSection.tsx` — per-post SEO overrides with SERP preview
-- **JSON-LD components** (via `next-seo`):
-  - `ArticleJsonLd` + `BreadcrumbJsonLd` on essay pages (`app/e/[slug]/page.tsx`)
-  - `OrganizationJsonLd` on homepage (`app/page.tsx`)
-- **Auto-generation**: SEO fields auto-generate from post content (title, subtitle, markdown truncation)
-- **Fallbacks**: Post SEO → auto-generated from content; Site SEO → `lib/metadata.ts` defaults
-- **API**: `/api/seo/settings` — GET/PATCH site settings
-
-### Integrations System
-Admin-managed third-party integrations with env var fallbacks:
-- **Config**: `lib/integrations/config.ts` — Client-safe config array (no Prisma)
-- **Server helper**: `lib/integrations/index.ts` — `getIntegrationSettings()` with Prisma
-- **Settings UI**: `/settings/integrations` — Data-driven from config array
-- **API**: `/api/integrations/settings` — GET/PATCH, handles any field dynamically
-- **Database**: `IntegrationSettings` model with nullable string fields
-- **Fallbacks**: DB values take precedence over env vars
-- **Adding new integrations**:
-  1. Add field to `IntegrationSettings` in both Prisma schemas
-  2. Add entry to `integrations` array in `lib/integrations/config.ts`
-  3. Run `npm run db:push` (dev) or `npm run db:push:prod` (prod)
-  4. UI and API handle it automatically
-- **Current integrations**: Google Analytics, RB2B, Contact Email
-
-### Topics & Auto-Draft System
-Topic idea generation from RSS feeds:
-- **Settings UI**: `/settings/topics` — Manage topic ideas with status (pending/approved/rejected/used)
-- **Database**: `TopicIdeaSource` model stores RSS source info (title, link, pubDate, feedUrl)
-- **Auto-draft library**: `lib/auto-draft/` — RSS parsing, keyword matching, slug generation
-- **Script**: `scripts/auto-draft.ts` — CLI to generate topic ideas from configured RSS feeds
-- **API**: `/api/admin/topics` — CRUD for topic ideas
-- **Flow**:
-  1. Run `npx tsx scripts/auto-draft.ts` with RSS feed URLs
-  2. System fetches feeds, matches keywords from `lib/auto-draft/keywords.ts`
-  3. Generates topic ideas with AI-suggested titles
-  4. Admin reviews/approves in `/settings/topics`
-  5. Approved topics appear in writer inbox
-
-### Writer Inbox
-Suggested posts queue for writers:
-- **Page**: `/writer/inbox` — View pending topic suggestions
-- **Preview modal**: Click to preview topic details before creating post
-- **Actions**: Create post from suggestion, dismiss, or mark as used
-- **Integration**: Links to editor with pre-filled topic data
+### Auto-Draft System
+RSS-based essay generation in `lib/auto-draft/`:
+- Fetches RSS feeds, filters by keywords
+- Uses autoblogger's `generate()` and `buildAutoDraftPrompt()`
+- Creates suggested posts for admin review
 
 ### Route Protection
 Auth checks happen in layout components (client-side):
-- `/writer/*` — `useSession()` hook redirects unauthenticated users to signin (all roles: admin, writer, drafter)
-- `/settings/*` — checks `session.user.role === 'admin'`, redirects non-admins to writer
-- **Publishing**: API routes check `canPublish(role)` before allowing `status: 'published'`; editor UI hides Publish button for drafters
-This approach avoids Edge runtime limitations with Prisma.
-
-## Authentication
-
-- **Google OAuth** via NextAuth.js
-- **Allowlist model**: Only users in `User` table can sign in
-- **Roles**:
-  - `admin` — Full access to /settings and /writer, can publish
-  - `writer` — Access to /writer, can publish
-  - `drafter` — Access to /writer, can save drafts but cannot publish
-- **Helper**: `canPublish(role)` in `lib/auth.ts` — returns true for admin/writer, false for drafter
-- **Setup**: Set `WRITER_EMAIL` in `.env.local`, run `npm run db:setup`
+- `/writer/*` — `useSession()` hook redirects unauthenticated users
+- `/settings/*` — checks `session.user.role === 'admin'`
 
 ## API Routes
 
 | Endpoint | Description |
 |----------|-------------|
+| `/api/cms/[...path]` | Autoblogger CMS API (AI, posts, settings) |
 | `/api/posts` | List/create posts |
 | `/api/posts/[id]` | CRUD single post |
-| `/api/tags` | List all tags |
 | `/api/admin/users` | User management (admin) |
-| `/api/admin/revisions` | Revision management (admin) |
 | `/api/admin/topics` | Topic subscriptions CRUD (admin) |
-| `/api/admin/tags` | Tag CRUD (admin) |
 | `/api/webhooks/rb2b` | RB2B webhook receiver |
 | `/api/upload` | Image upload |
-| `/api/ai/generate` | Generate essay content with AI |
-| `/api/ai/chat` | Streaming chat (supports ask/agent/search modes) |
-| `/api/ai/settings` | Get/update AI writing rules and default model |
-| `/api/seo/settings` | Get/update site SEO settings |
-| `/api/integrations/settings` | Get/update integration settings (GA, RB2B, email) |
-
-## Production Deployment
-
-### Architecture
-- **Production**: `/var/www/blog` — `main` branch → port 3000
-- **Staging**: `/var/www/blog-staging` — `dev` branch → port 3001
-- **Database**: DigitalOcean Managed PostgreSQL
-  - Production: `defaultdb`
-  - Staging: `staging`
-- **Reverse Proxy**: Nginx (port 80 → 3000)
-- **Process Manager**: PM2 cluster mode (2 instances) with zero-downtime deploys
-- **SSL**: Cloudflare (Flexible mode)
-- **Staging Protection**: Cloudflare Tunnel + Access (Google OAuth)
-
-### PM2 Zero-Downtime Deploys
-Uses `server.js` with PM2 cluster mode for zero-downtime deployments:
-1. Loads `.env.local` via dotenv
-2. Starts Next.js custom server
-3. Sends `process.send('ready')` when ready to accept traffic
-4. PM2 does rolling restarts (one instance at a time)
-5. Handles SIGTERM/SIGINT for graceful shutdown (10s timeout)
-
-Deploy script auto-detects first deploy vs subsequent deploys.
-
-### GitHub Actions
-Push to `main` → deploys production
-Push to `dev` → deploys staging
-
-Workflow steps:
-1. SSH into Droplet (10m timeout)
-2. `git reset --hard origin/<branch>`
-3. `npm ci` if `package-lock.json` changed or `node_modules` missing
-4. `prisma generate + db push`
-5. `npm run build:prod`
-6. Verify build (check `.next/prerender-manifest.json`)
-7. `pm2 reload` (zero-downtime)
-8. Health check (5 retries, 2s delay)
-
-Hardening features:
-- `set -e` — Exit immediately on any error
-- Build verification — Fail before PM2 if build artifacts missing
-- Health check — Verify app responds after restart
-- Connection pooling — Prisma uses `connection_limit=3` to prevent exhaustion
-
-### GitHub Secrets
-- `DO_HOST` — Droplet IP
-- `DO_USER` — SSH username
-- `DO_SSH_KEY` — Private key
-
-### Cloudflare Tunnel
-Staging protected via `cloudflared` service:
-- Exposes port 3001 to `$NEXT_PUBLIC_STAGING_URL`
-- Google OAuth required for access
-- Managed in Cloudflare Zero Trust dashboard
 
 ## Commands
 
@@ -584,46 +260,16 @@ Staging protected via `cloudflared` service:
 | `npm run build:prod` | Production build (PostgreSQL) |
 | `npm run db:push` | Push schema (SQLite) |
 | `npm run db:push:prod` | Push schema (PostgreSQL) |
-| `npm run db:studio` | Prisma Studio (SQLite) |
-| `npm run db:studio:prod` | Prisma Studio (PostgreSQL) |
-| `npm run db:export` | Export SQLite → JSON |
-| `npm run db:import:prod` | Import JSON → PostgreSQL |
+| `npm run typecheck` | TypeScript type checking |
 
 ## Environment Variables
 
 ```env
-DATABASE_URL="file:./dev.db"              # SQLite (dev)
-DATABASE_URL_PROD="postgresql://..."      # PostgreSQL (prod)
+DATABASE_URL="file:./dev.db"
+DATABASE_URL_PROD="postgresql://..."
 NEXTAUTH_SECRET="<random>"
-AUTH_TRUST_HOST=true
 GOOGLE_CLIENT_ID="<id>"
 GOOGLE_CLIENT_SECRET="<secret>"
-NEXT_PUBLIC_CONTACT_EMAIL="<email>"
-NEXT_PUBLIC_SITE_URL="<url>"              # Production URL
-NEXT_PUBLIC_STAGING_URL="<url>"           # Staging URL
-WRITER_EMAIL="<email>"                    # For db:seed
-WRITER_NAME="<name>"
-NGROK_DOMAIN="<domain>"                   # For dev:tunnel
-NEXT_PUBLIC_RB2B_API_KEY="<key>"         # RB2B tracking key
-RB2B_WEBHOOK_SECRET="<secret>"           # Optional: secure RB2B webhook
-NEXT_PUBLIC_GA_MEASUREMENT_ID="<id>"     # Google Analytics 4 measurement ID
-
-# DigitalOcean Spaces (production image storage)
-SPACES_REGION="sfo3"                     # Spaces region
-SPACES_BUCKET="<bucket>"                 # Spaces bucket name
-SPACES_ENDPOINT="https://..."            # Spaces API endpoint
-SPACES_CDN_ENDPOINT="https://..."        # Spaces CDN endpoint (for serving)
-SPACES_KEY="<key>"                       # Spaces access key
-SPACES_SECRET="<secret>"                 # Spaces secret key
-
-# AI Writing (at least one required)
-ANTHROPIC_API_KEY="sk-ant-..."           # Anthropic API key for Claude models
-OPENAI_API_KEY="sk-..."                  # OpenAI API key for GPT models
+ANTHROPIC_API_KEY="sk-ant-..."
+OPENAI_API_KEY="sk-..."
 ```
-
-## ngrok Tunnel (Mobile Testing)
-
-`npm run dev:tunnel` starts Next.js + ngrok with OAuth protection:
-- Two-layer auth: ngrok OAuth + app NextAuth
-- Add both callback URLs to Google Cloud Console
-- `trustHost: true` in auth config handles proxy headers

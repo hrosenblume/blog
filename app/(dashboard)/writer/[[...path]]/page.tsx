@@ -3,19 +3,16 @@
 import { useCallback, useRef, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
-import { useTheme } from 'next-themes'
 import { AutobloggerDashboard, type Session, type EditorState, type EditHandler, useChatContext, type EssayEdit } from 'autoblogger/ui'
 import { PolyhedraField } from '@/components/autoblogger/PolyhedraField'
 import { SeoField } from '@/components/autoblogger/SeoField'
 import { useDashboardContext, type EditorState as BlogEditorState } from '@/lib/dashboard'
-import { ChatIcon } from '@/components/Icons'
 
 export default function WriterPage() {
   const router = useRouter()
   const { data: nextAuthSession } = useSession()
-  const { theme, setTheme } = useTheme()
   const { registerEditor } = useDashboardContext()
-  const { isOpen: chatOpen, setIsOpen: setChatOpen, setEssayContext, registerEditHandler } = useChatContext()
+  const { setEssayContext, registerEditHandler } = useChatContext()
   
   // Handle Cmd+/ to toggle back to public site
   const handleToggleView = useCallback((currentPath: string, slug?: string) => {
@@ -27,11 +24,6 @@ export default function WriterPage() {
       router.push('/')
     }
   }, [router])
-  
-  // Theme toggle handler
-  const handleThemeToggle = useCallback(() => {
-    setTheme(theme === 'dark' ? 'light' : 'dark')
-  }, [theme, setTheme])
   
   // Sign out handler
   const handleSignOut = useCallback(() => {
@@ -104,19 +96,6 @@ export default function WriterPage() {
       registerEditHandler(null)
     }
   }, [registerEditHandler])
-  
-  // Chat toggle button for navbar (memoized to prevent re-renders)
-  const chatToggleButton = useMemo(() => (
-    <button
-      type="button"
-      onClick={() => setChatOpen(!chatOpen)}
-      className={`w-9 h-9 rounded-md border border-border hover:bg-accent text-muted-foreground flex items-center justify-center touch-manipulation ${chatOpen ? 'bg-accent' : ''}`}
-      aria-label="Chat with AI"
-      title="Chat with AI"
-    >
-      <ChatIcon />
-    </button>
-  ), [chatOpen, setChatOpen])
 
   // Memoize fields to prevent re-renders
   const fields = useMemo(() => [
@@ -137,17 +116,13 @@ export default function WriterPage() {
     <AutobloggerDashboard 
       basePath="/writer"
       apiBasePath="/api/cms"
-      
       session={session}
       onEditorStateChange={handleEditorStateChange}
       onRegisterEditHandler={handleRegisterEditHandler}
       onToggleView={handleToggleView}
-      // Navbar props
       onSignOut={handleSignOut}
-      onThemeToggle={handleThemeToggle}
-      theme={theme === 'dark' ? 'dark' : 'light'}
-      navbarRightSlot={chatToggleButton}
       fields={fields}
+      skipThemeProvider
     />
   )
 }

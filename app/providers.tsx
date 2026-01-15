@@ -4,7 +4,7 @@ import { useRef } from 'react'
 import { SessionProvider } from 'next-auth/react'
 import { ThemeProvider, useTheme } from 'next-themes'
 import { usePathname, useRouter } from 'next/navigation'
-import { useKeyboard, SHORTCUTS } from '@/lib/keyboard'
+import { useKeyboard } from 'autoblogger/ui'
 
 function GlobalShortcuts() {
   const { theme, setTheme } = useTheme()
@@ -13,10 +13,17 @@ function GlobalShortcuts() {
   const previousPathRef = useRef<string>('/')
 
   useKeyboard([
-    { ...SHORTCUTS.THEME_TOGGLE, handler: () => setTheme(theme === 'dark' ? 'light' : 'dark') },
+    { 
+      key: '.', 
+      metaKey: true, 
+      allowInInput: true, 
+      action: () => setTheme(theme === 'dark' ? 'light' : 'dark') 
+    },
     {
-      ...SHORTCUTS.SETTINGS,
-      handler: () => {
+      key: ';',
+      metaKey: true,
+      allowInInput: true,
+      action: () => {
         if (pathname?.startsWith('/settings')) {
           // Go back to previous page
           router.push(previousPathRef.current)

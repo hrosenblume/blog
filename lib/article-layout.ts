@@ -57,13 +57,6 @@ export const INPUT_CLASSES = 'w-full bg-transparent border-none outline-none pla
 
 /** 
  * Prose classes for article content.
- * Used by ArticleBody and TiptapEditor.
+ * Styling handled by autoblogger.css (imported in globals.css)
  */
-export const PROSE_CLASSES = [
-  'prose prose-gray dark:prose-invert',
-  'max-w-none',
-  'prose-headings:font-semibold prose-headings:mt-8 prose-headings:mb-4',
-  'prose-p:leading-relaxed',
-  'prose-a:underline',
-  'prose-blockquote:border-border',
-].join(' ')
+export const PROSE_CLASSES = 'prose'
