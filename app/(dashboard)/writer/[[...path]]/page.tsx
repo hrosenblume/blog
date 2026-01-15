@@ -1,39 +1,22 @@
 'use client'
 
-import { useCallback, useRef, useMemo, useEffect } from 'react'
+import { useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
-import { AutobloggerDashboard, type Session, type EditorState, type EditHandler, useChatContext, type EssayEdit } from 'autoblogger/ui'
+import { AutobloggerDashboard, type Session } from 'autoblogger/ui'
 import { PolyhedraField } from '@/components/autoblogger/PolyhedraField'
 import { SeoField } from '@/components/autoblogger/SeoField'
-import { useDashboardContext, type EditorState as BlogEditorState } from '@/lib/dashboard'
 
+/**
+ * Writer dashboard page.
+ * AutobloggerDashboard handles all internal state management including
+ * ChatProvider, DashboardProvider, editor state, and chat context.
+ */
 export default function WriterPage() {
   const router = useRouter()
   const { data: nextAuthSession } = useSession()
-  const { registerEditor } = useDashboardContext()
-  const { setEssayContext, registerEditHandler } = useChatContext()
   
-  // Handle Cmd+/ to toggle back to public site
-  const handleToggleView = useCallback((currentPath: string, slug?: string) => {
-    if (slug) {
-      // From editor → go to public essay page
-      router.push(`/e/${slug}`)
-    } else {
-      // From writer dashboard → go to homepage
-      router.push('/')
-    }
-  }, [router])
-  
-  // Sign out handler
-  const handleSignOut = useCallback(() => {
-    signOut({ callbackUrl: '/' })
-  }, [])
-  
-  // Track the autoblogger edit handler for bridging
-  const autobloggerEditHandlerRef = useRef<EditHandler | null>(null)
-  
-  // Map NextAuth session to autoblogger's Session type (memoized to prevent re-renders)
+  // Map NextAuth session to autoblogger's Session type
   const session: Session | null = useMemo(() => {
     if (!nextAuthSession) return null
     return {
@@ -46,58 +29,7 @@ export default function WriterPage() {
     }
   }, [nextAuthSession])
   
-  // Use refs for callbacks to ensure handleEditorStateChange is stable
-  const registerEditorRef = useRef(registerEditor)
-  const setEssayContextRef = useRef(setEssayContext)
-  useEffect(() => { registerEditorRef.current = registerEditor }, [registerEditor])
-  useEffect(() => { setEssayContextRef.current = setEssayContext }, [setEssayContext])
-  
-  // Handle editor state changes - sync to both dashboard context and chat context
-  // Uses refs to avoid re-creating callback when context values change
-  const handleEditorStateChange = useCallback((state: EditorState | null) => {
-    // Map autoblogger EditorState to blog's EditorState (they have the same shape)
-    if (state) {
-      const blogState: BlogEditorState = {
-        hasUnsavedChanges: state.hasUnsavedChanges,
-        status: state.status,
-        savingAs: state.savingAs,
-        onSave: state.onSave,
-        confirmLeave: state.confirmLeave,
-      }
-      registerEditorRef.current(blogState)
-      
-      // Sync content to chat context
-      if (state.content) {
-        setEssayContextRef.current({
-          title: state.content.title,
-          subtitle: state.content.subtitle,
-          markdown: state.content.markdown,
-        })
-      }
-    } else {
-      registerEditorRef.current(null)
-      setEssayContextRef.current(null)
-    }
-  }, []) // Empty deps - stable callback
-  
-  // Handle edit handler registration - bridge autoblogger's handler to chat context
-  const handleRegisterEditHandler = useCallback((handler: EditHandler | null) => {
-    autobloggerEditHandlerRef.current = handler
-    
-    if (handler) {
-      // Register a bridge handler with the chat context
-      const bridgeHandler = (edit: EssayEdit): boolean => {
-        if (!autobloggerEditHandlerRef.current) return false
-        // The types are compatible, so we can pass through directly
-        return autobloggerEditHandlerRef.current(edit)
-      }
-      registerEditHandler(bridgeHandler)
-    } else {
-      registerEditHandler(null)
-    }
-  }, [registerEditHandler])
-
-  // Memoize fields to prevent re-renders
+  // Custom fields for this blog
   const fields = useMemo(() => [
     {
       name: 'polyhedraShape',
@@ -106,7 +38,7 @@ export default function WriterPage() {
       position: 'footer' as const,
     },
     {
-      name: 'seo',  // Compound field - uses onFieldChange for multiple properties
+      name: 'seo',
       component: SeoField as any,
       position: 'footer' as const,
     },
@@ -117,10 +49,8 @@ export default function WriterPage() {
       basePath="/writer"
       apiBasePath="/api/cms"
       session={session}
-      onEditorStateChange={handleEditorStateChange}
-      onRegisterEditHandler={handleRegisterEditHandler}
-      onToggleView={handleToggleView}
-      onSignOut={handleSignOut}
+      onToggleView={(_, slug) => router.push(slug ? `/e/${slug}` : '/')}
+      onSignOut={() => signOut({ callbackUrl: '/' })}
       fields={fields}
       skipThemeProvider
     />

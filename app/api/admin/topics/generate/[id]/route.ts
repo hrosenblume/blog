@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withAdmin, notFound } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import { runAutoDraft } from '@/lib/auto-draft'
+import { cms } from '@/lib/cms'
 
 type RouteContext = { params: Promise<{ id: string }> }
 
@@ -15,7 +15,7 @@ export const POST = withAdmin(async (_request: NextRequest, context: RouteContex
 
   try {
     // Run auto-draft for this specific topic, skipping frequency check (manual trigger)
-    const results = await runAutoDraft(id, true)
+    const results = await cms.autoDraft.run(id, true)
 
     return NextResponse.json({
       success: true,

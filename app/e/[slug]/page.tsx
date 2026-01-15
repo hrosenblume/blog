@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { ArticleJsonLd, BreadcrumbJsonLd } from 'next-seo'
 import { prisma } from '@/lib/db'
-import { renderMarkdown } from '@/lib/markdown'
+import { renderMarkdown } from 'autoblogger'
 import { KeyboardNav } from './_components/KeyboardNav'
 import { EssayNav } from '@/components/EssayNav'
 import { HomepageFooter } from '@/components/HomepageFooter'

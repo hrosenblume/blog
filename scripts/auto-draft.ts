@@ -12,14 +12,14 @@
 import 'dotenv/config'
 
 // Import after dotenv so DATABASE_URL is available
-import { runAutoDraft } from '../lib/auto-draft'
+import { cms } from '../lib/cms'
 
 async function main() {
   const startTime = new Date()
   console.log(`[${startTime.toISOString()}] Starting auto-draft...`)
   
   try {
-    const results = await runAutoDraft()
+    const results = await cms.autoDraft.run()
     
     if (results.length === 0) {
       console.log('  No active topics to process.')
