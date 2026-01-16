@@ -3,9 +3,8 @@
 import { useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
-import { AutobloggerDashboard, type Session } from 'autoblogger/ui'
+import { AutobloggerDashboard, SeoSection, type Session } from 'autoblogger/ui'
 import { PolyhedraField } from '@/components/autoblogger/PolyhedraField'
-import { SeoField } from '@/components/autoblogger/SeoField'
 
 /**
  * Writer dashboard page.
@@ -39,8 +38,8 @@ export default function WriterPage() {
     },
     {
       name: 'seo',
-      component: SeoField as any,
       position: 'footer' as const,
+      component: SeoSection as any,
     },
   ], [])
 
@@ -52,7 +51,6 @@ export default function WriterPage() {
       onToggleView={(_, slug) => router.push(slug ? `/e/${slug}` : '/')}
       onSignOut={() => signOut({ callbackUrl: '/' })}
       fields={fields}
-      skipThemeProvider
     />
   )
 }
