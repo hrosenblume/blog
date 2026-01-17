@@ -172,12 +172,14 @@ Changes are preserved in stash (`git stash list` to see, `git stash pop` to rest
 ### When user types "rebuild app"
 Re-link local autoblogger via yalc and restart dev server:
 1. Kill any existing dev:tunnel processes
-2. In autoblogger repo: `cd ../autoblogger && yalc publish`
-3. In blog repo: `yalc add autoblogger`
+2. In autoblogger repo: `cd ../autoblogger && npm run build && yalc push`
+3. In blog repo: `yalc link autoblogger` (NOT `yalc add` — that corrupts package.json)
 4. Run `npm run dev:tunnel` in background
 
 After changes in autoblogger, run `yalc push` from autoblogger repo to update all linked projects.
 To revert to npm version: `yalc remove autoblogger && npm install`
+
+**IMPORTANT:** Never use `yalc add` — it writes `file:.yalc/...` into package.json, which breaks production builds on Vercel. Always use `yalc link` which creates symlinks without modifying package.json.
 
 ## Planning Files
 

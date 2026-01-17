@@ -66,8 +66,7 @@ blog/
 │   ├── auto-draft/             # RSS-based auto-drafting
 │   ├── markdown.ts             # Re-exports from autoblogger + sanitized render
 │   ├── polyhedra/              # 3D rendering system
-│   ├── posts.ts                # Post CRUD logic (DRY)
-│   └── storage.ts              # Image upload (local/Spaces)
+│   └── posts.ts                # Post CRUD logic (DRY)
 ├── prisma/
 │   ├── schema.prisma           # SQLite (dev)
 │   └── schema.postgresql.prisma # PostgreSQL (prod)
@@ -243,13 +242,12 @@ Auth checks happen in layout components (client-side):
 
 | Endpoint | Description |
 |----------|-------------|
-| `/api/cms/[...path]` | Autoblogger CMS API (AI, posts, settings) |
+| `/api/cms/[...path]` | Autoblogger CMS API (AI, posts, settings, upload) |
 | `/api/posts` | List/create posts |
 | `/api/posts/[id]` | CRUD single post |
 | `/api/admin/users` | User management (admin) |
 | `/api/admin/topics` | Topic subscriptions CRUD (admin) |
 | `/api/webhooks/rb2b` | RB2B webhook receiver |
-| `/api/upload` | Image upload |
 
 ## Commands
 

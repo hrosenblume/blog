@@ -1,7 +1,6 @@
-import { createAutoblogger } from 'autoblogger'
+import { createAutoblogger, createStorageHandler } from 'autoblogger'
 import { auth } from './auth'
 import { prisma } from './db'
-import { uploadFile } from './storage'
 import { canPublish } from './auth/helpers'
 import { getRandomShape } from './polyhedra/shapes'
 
@@ -25,11 +24,7 @@ export const cms = createAutoblogger({
   },
 
   storage: {
-    upload: async (file: File) => {
-      const buffer = Buffer.from(await file.arrayBuffer())
-      const result = await uploadFile(buffer, file.name, file.type)
-      return { url: result.url }
-    },
+    upload: createStorageHandler(),
   },
 
   hooks: {

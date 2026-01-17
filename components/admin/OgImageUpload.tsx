@@ -40,7 +40,7 @@ export function OgImageUpload({
       const formData = new FormData()
       formData.append('image', file)
 
-      const response = await fetch('/api/upload', {
+      const response = await fetch('/api/cms/upload', {
         method: 'POST',
         body: formData,
       })
@@ -50,8 +50,8 @@ export function OgImageUpload({
         throw new Error(error.error || 'Upload failed')
       }
 
-      const { url } = await response.json()
-      onChange(url)
+      const { data } = await response.json()
+      onChange(data.url)
     } catch (error) {
       console.error('Upload error:', error)
       toast.error(error instanceof Error ? error.message : 'Failed to upload image')
