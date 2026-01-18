@@ -57,6 +57,6 @@ export const INPUT_CLASSES = 'w-full bg-transparent border-none outline-none pla
 
 /** 
  * Prose classes for article content.
- * Styling handled by autoblogger.css (imported in globals.css)
+ * Styling defined in globals.css (blog-prose to avoid conflicts with autoblogger)
  */
-export const PROSE_CLASSES = 'prose'
+export const PROSE_CLASSES = 'blog-prose'
