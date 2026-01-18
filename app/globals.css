@@ -169,13 +169,3 @@ a, button {
 .blog-prose table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
 .blog-prose th, .blog-prose td { border: 1px solid hsl(var(--border)); padding: 0.5rem 0.75rem; text-align: left; }
 .blog-prose th { font-weight: 600; background-color: hsl(var(--muted)); }
-
-/* Mobile: slightly larger text for readability */
-@media (max-width: 767px) {
-  .blog-prose {
-    font-size: 17px;
-  }
-  .blog-prose h1 { font-size: 24px; }
-  .blog-prose h2 { font-size: 19px; }
-  .blog-prose h3 { font-size: 17px; }
-}
