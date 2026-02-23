@@ -24,7 +24,21 @@ export const cms = createAutoblogger({
   },
 
   storage: {
-    upload: createStorageHandler(),
+    upload: createStorageHandler(
+      process.env.SPACES_KEY && process.env.SPACES_SECRET
+        ? {
+            s3: {
+              accessKeyId: process.env.SPACES_KEY,
+              secretAccessKey: process.env.SPACES_SECRET,
+              bucket: process.env.SPACES_BUCKET || 'uploads',
+              region: process.env.SPACES_REGION || 'sfo3',
+              endpoint: process.env.SPACES_ENDPOINT,
+              cdnEndpoint: process.env.SPACES_CDN_ENDPOINT,
+              acl: 'public-read',
+            },
+          }
+        : undefined
+    ),
   },
 
   hooks: {
