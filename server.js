@@ -29,7 +29,7 @@ app.prepare().then(() => {
       process.exit(0);
     });
     
-    // Force exit after 10 seconds if graceful shutdown hangs
+    // Force exit after timeout if graceful shutdown hangs
     setTimeout(() => {
       console.error('Forcefully shutting down after timeout');
       process.exit(1);
