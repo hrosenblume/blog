@@ -26,7 +26,10 @@ jobs:
         run: bun audit --audit-level=high
 
   deploy:
-    # No 'needs' - runs in parallel with security-audit
+    needs: security-audit
+    # security-audit has continue-on-error: true, so this still runs even if
+    # the audit reports advisories — it just guarantees deploy doesn't kick
+    # off until audit completes.
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to Production
@@ -47,6 +50,11 @@ jobs:
             export PATH="$BUN_INSTALL/bin:$PATH"
             if ! command -v bun >/dev/null 2>&1; then
               echo "=== Installing bun ==="
+              # bun's installer needs unzip; install it first if missing.
+              if ! command -v unzip >/dev/null 2>&1; then
+                echo "=== Installing unzip (required by bun installer) ==="
+                sudo -n apt-get update -qq && sudo -n apt-get install -y unzip
+              fi
               curl -fsSL https://bun.sh/install | bash
             fi
 
@@ -137,6 +145,11 @@ jobs:
             export PATH="$BUN_INSTALL/bin:$PATH"
             if ! command -v bun >/dev/null 2>&1; then
               echo "=== Installing bun ==="
+              # bun's installer needs unzip; install it first if missing.
+              if ! command -v unzip >/dev/null 2>&1; then
+                echo "=== Installing unzip (required by bun installer) ==="
+                sudo -n apt-get update -qq && sudo -n apt-get install -y unzip
+              fi
               curl -fsSL https://bun.sh/install | bash
             fi
 
