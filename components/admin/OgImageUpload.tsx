@@ -30,8 +30,8 @@ export function OgImageUpload({
       return
     }
 
-    if (file.size > 4 * 1024 * 1024) {
-      toast.error('File too large. Maximum size is 4MB.')
+    if (file.size > 25 * 1024 * 1024) {
+      toast.error('File too large. Maximum size is 25MB.')
       return
     }
 
@@ -152,7 +152,7 @@ export function OgImageUpload({
                   Recommended: 1200 x 630px (1.91:1 ratio)
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  JPEG, PNG, GIF, WebP · Max 4MB
+                  JPEG, PNG, GIF, WebP · Max 25MB
                 </p>
               </div>
             </div>
