@@ -27,6 +27,9 @@ export function RB2BScript({ apiKey }: RB2BScriptProps) {
             var s = document.createElement("script");
             s.async = true;
             s.src = "https://ddwl4m2hdecbv.cloudfront.net/b/" + key + "/" + key + ".js.gz";
+            s.onerror = function () {
+              console.warn("[RB2B] tracker failed to load (key=" + key + "). The CDN script returned an error — the key has likely been rotated, disabled, or the account changed plan. Update the key in /settings/integrations.");
+            };
             document.getElementsByTagName("script")[0].parentNode.insertBefore(s, document.getElementsByTagName("script")[0]);
           }("${apiKey}");
         `,

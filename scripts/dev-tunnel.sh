@@ -6,10 +6,14 @@ set -a
 source .env.local
 set +a
 
-# Use local autoblogger (direct symlink, no build required)
-echo "Linking local autoblogger..."
-rm -rf node_modules/autoblogger
-ln -sf "$(cd ../autoblogger && pwd)" node_modules/autoblogger
+# Always use the bun-installed autoblogger (GitHub source per bun.lock).
+# If a previous run symlinked node_modules/autoblogger to ../autoblogger,
+# replace it with the proper install.
+if [ -L node_modules/autoblogger ]; then
+  echo "Detected autoblogger symlink — restoring GitHub-installed version..."
+  rm -rf node_modules/autoblogger
+  bun install
+fi
 
 # Generate Prisma client
 prisma generate
@@ -37,7 +41,9 @@ if [ -n "$NGROK_API_KEY" ]; then
 fi
 
 # Start Next.js in background (no browser - use tunnel URL)
-BROWSER=none AUTH_URL="https://$NGROK_DOMAIN" next dev &
+# --webpack: Next 16 defaults to Turbopack which has a known build-manifest.json
+# ENOENT bug with route groups + catch-all routes (the (dashboard)/writer/[[...path]] layout).
+BROWSER=none AUTH_URL="https://$NGROK_DOMAIN" next dev --webpack &
 NEXT_PID=$!
 
 # Wait for Next.js to be ready
