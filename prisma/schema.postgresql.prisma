@@ -21,19 +21,19 @@ model Post {
   revisions      Revision[]
   tags           PostTag[]
   comments       Comment[]
-  
+
   // SEO fields (optional overrides)
   seoTitle       String?
   seoDescription String?
   seoKeywords    String?
-  noIndex        Boolean    @default(false)
-  ogImage        String?    // Custom Open Graph image URL
-  
+  noIndex        Boolean @default(false)
+  ogImage        String? // Custom Open Graph image URL
+
   // Auto-draft fields (for suggested posts)
-  sourceUrl      String?    // Original article URL
-  topicId        String?    // TopicSubscription that generated this
-  topic          TopicSubscription? @relation(fields: [topicId], references: [id])
-  newsItem       NewsItem?  // Reverse relation to source news item
+  sourceUrl String? // Original article URL
+  topicId   String? // TopicSubscription that generated this
+  topic     TopicSubscription? @relation(fields: [topicId], references: [id])
+  newsItem  NewsItem? // Reverse relation to source news item
 }
 
 model Revision {
@@ -45,7 +45,7 @@ model Revision {
   polyhedraShape String?
   createdAt      DateTime @default(now())
   post           Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  
+
   // SEO fields
   seoTitle       String?
   seoDescription String?
@@ -59,6 +59,41 @@ model User {
   role      String    @default("writer")
   createdAt DateTime  @default(now())
   comments  Comment[]
+  apiKeys   ApiKey[]
+}
+
+model ApiKey {
+  id          String    @id @default(uuid())
+  name        String
+  prefix      String    @unique
+  hash        String    @unique
+  ownerUserId String?
+  owner       User?     @relation(fields: [ownerUserId], references: [id])
+  createdAt   DateTime  @default(now())
+  lastUsedAt  DateTime?
+  revokedAt   DateTime?
+
+  auditLogs ApiAuditLog[]
+
+  @@index([revokedAt])
+}
+
+model ApiAuditLog {
+  id         String   @id @default(uuid())
+  apiKeyId   String?
+  apiKey     ApiKey?  @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
+  apiKeyName String
+  method     String
+  path       String
+  postId     String?
+  status     Int
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([apiKeyId, createdAt])
+  @@index([postId, createdAt])
+  @@index([createdAt])
 }
 
 model Lead {
@@ -95,23 +130,23 @@ model LeadVisit {
 }
 
 model AISettings {
-  id               String   @id @default("default")
-  rules            String   @default("")
-  chatRules        String   @default("")
-  defaultModel     String   @default("claude-sonnet")
-  anthropicApiKey  String?
-  openaiApiKey     String?
-  generateTemplate String?  // Custom generate prompt template
-  chatTemplate     String?  // Custom chat prompt template
-  rewriteRules     String?  // Specific rules for magic pencil rewrites
-  rewriteTemplate  String?  // Custom rewrite prompt template
-  autoDraftRules     String?   // Rules for news-based essay generation
-  autoDraftTemplate  String?   // Custom prompt template for auto-draft
-  autoDraftWordCount Int?      // Target word count (default: 800)
-  planRules          String?   // Rules for essay plan structure/format
-  planTemplate       String?   // Custom prompt template for plan mode
-  expandPlanTemplate String?   // Custom prompt template for expanding plan to essay
-  updatedAt        DateTime @updatedAt
+  id                 String   @id @default("default")
+  rules              String   @default("")
+  chatRules          String   @default("")
+  defaultModel       String   @default("claude-sonnet")
+  anthropicApiKey    String?
+  openaiApiKey       String?
+  generateTemplate   String? // Custom generate prompt template
+  chatTemplate       String? // Custom chat prompt template
+  rewriteRules       String? // Specific rules for magic pencil rewrites
+  rewriteTemplate    String? // Custom rewrite prompt template
+  autoDraftRules     String? // Rules for news-based essay generation
+  autoDraftTemplate  String? // Custom prompt template for auto-draft
+  autoDraftWordCount Int? // Target word count (default: 800)
+  planRules          String? // Rules for essay plan structure/format
+  planTemplate       String? // Custom prompt template for plan mode
+  expandPlanTemplate String? // Custom prompt template for expanding plan to essay
+  updatedAt          DateTime @updatedAt
 }
 
 model SiteSettings {
@@ -124,63 +159,63 @@ model SiteSettings {
   orgName           String   @default("")
   orgLogo           String   @default("")
   orgSameAs         String   @default("[]")
-  defaultOgImage    String   @default("")  // Fallback OG image for all pages
+  defaultOgImage    String   @default("") // Fallback OG image for all pages
   updatedAt         DateTime @updatedAt
 }
 
 model PageSettings {
-  id          String   @id           // e.g., "home", "essays"
-  path        String   @unique       // e.g., "/", "/essays"
-  title       String?                // Custom page title
-  description String?                // Custom meta description
-  keywords    String?                // Comma-separated keywords
+  id          String   @id // e.g., "home", "essays"
+  path        String   @unique // e.g., "/", "/essays"
+  title       String? // Custom page title
+  description String? // Custom meta description
+  keywords    String? // Comma-separated keywords
   noIndex     Boolean  @default(false)
-  ogImage     String?                // Custom Open Graph image URL
+  ogImage     String? // Custom Open Graph image URL
   updatedAt   DateTime @updatedAt
 }
 
 model IntegrationSettings {
-  id                  String   @id @default("default")
-  googleAnalyticsId   String?  // GA4 measurement ID (G-XXXXXXXXXX)
-  rb2bApiKey          String?  // RB2B tracking key
-  contactEmail        String?  // Public contact email
-  anthropicApiKey     String?  // Anthropic API key for Claude models
-  openaiApiKey        String?  // OpenAI API key for GPT models
-  autoDraftEnabled    Boolean  @default(false)  // Master toggle for auto-draft feature
-  updatedAt           DateTime @updatedAt
+  id                String   @id @default("default")
+  googleAnalyticsId String? // GA4 measurement ID (G-XXXXXXXXXX)
+  rb2bApiKey        String? // RB2B tracking key
+  contactEmail      String? // Public contact email
+  anthropicApiKey   String? // Anthropic API key for Claude models
+  openaiApiKey      String? // OpenAI API key for GPT models
+  autoDraftEnabled  Boolean  @default(false) // Master toggle for auto-draft feature
+  updatedAt         DateTime @updatedAt
 }
 
 // Auto-draft topic subscriptions
 model TopicSubscription {
   id               String     @id @default(uuid())
-  name             String                              // "School Lunch Policy"
-  keywords         String                              // JSON array: ["school lunch", "USDA"]
-  rssFeeds         String                              // JSON array of feed URLs
+  name             String // "School Lunch Policy"
+  keywords         String // JSON array: ["school lunch", "USDA"]
+  rssFeeds         String // JSON array of feed URLs
   isActive         Boolean    @default(true)
-  useKeywordFilter Boolean    @default(true)           // Enable/disable keyword filtering
-  frequency        String     @default("daily")        // "daily", "weekly", "manual"
-  maxPerPeriod     Int        @default(3)              // Max essays per run
-  essayFocus       String?                             // Per-topic essay direction/angle
+  useKeywordFilter Boolean    @default(true) // Enable/disable keyword filtering
+  frequency        String     @default("daily") // "daily", "weekly", "manual"
+  maxPerPeriod     Int        @default(3) // Max essays per run
+  essayFocus       String? // Per-topic essay direction/angle
   lastRunAt        DateTime?
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
   newsItems        NewsItem[]
-  posts            Post[]                              // Posts generated from this topic
+  posts            Post[] // Posts generated from this topic
 }
 
 // News items fetched from RSS feeds
 model NewsItem {
-  id            String            @id @default(uuid())
-  topicId       String
-  topic         TopicSubscription @relation(fields: [topicId], references: [id], onDelete: Cascade)
-  url           String            @unique           // Dedup key
-  title         String
-  summary       String?                             // RSS description
-  publishedAt   DateTime?
-  status        String            @default("pending") // "pending", "generated", "skipped"
-  postId        String?           @unique           // Generated Post (1:1)
-  post          Post?             @relation(fields: [postId], references: [id])
-  createdAt     DateTime          @default(now())
+  id          String            @id @default(uuid())
+  topicId     String
+  topic       TopicSubscription @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  url         String            @unique // Dedup key
+  title       String
+  summary     String? // RSS description
+  publishedAt DateTime?
+  status      String            @default("pending") // "pending", "generated", "skipped"
+  postId      String?           @unique // Generated Post (1:1)
+  post        Post?             @relation(fields: [postId], references: [id])
+  createdAt   DateTime          @default(now())
 
   @@index([topicId])
   @@index([status])
@@ -210,7 +245,7 @@ model PostTag {
 // Chat history
 model ChatMessage {
   id        String   @id @default(uuid())
-  role      String   // "user" or "assistant"
+  role      String // "user" or "assistant"
   content   String
   createdAt DateTime @default(now())
 
@@ -222,20 +257,19 @@ model Comment {
   id         String    @id @default(uuid())
   postId     String
   userId     String
-  quotedText String    // Snapshot of highlighted text
+  quotedText String // Snapshot of highlighted text
   content    String
-  parentId   String?   // For single-level replies
+  parentId   String? // For single-level replies
   resolved   Boolean   @default(false)
   deletedAt  DateTime? // Soft delete timestamp
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
-  post       Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user       User      @relation(fields: [userId], references: [id])
-  parent     Comment?  @relation("Replies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies    Comment[] @relation("Replies")
+  post    Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user    User      @relation(fields: [userId], references: [id])
+  parent  Comment?  @relation("Replies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies Comment[] @relation("Replies")
 
   @@index([postId])
   @@index([parentId])
 }
-
