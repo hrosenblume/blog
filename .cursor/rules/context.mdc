@@ -80,7 +80,7 @@ blog/
 
 ## Autoblogger Package
 
-AI writing, chat, and CMS features are provided by the **autoblogger** npm package:
+AI writing, chat, and CMS features are provided by the **autoblogger** package (sourced from `github:hrosenblume/autoblogger`):
 
 ### What Autoblogger Provides
 - **AI Generation**: `generate()`, `buildGeneratePrompt()`, `buildAutoDraftPrompt()`
