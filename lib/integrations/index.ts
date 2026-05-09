@@ -11,6 +11,8 @@ export type IntegrationSettingsData = {
   googleAnalyticsId: string | null
   rb2bApiKey: string | null
   contactEmail: string | null
+  anthropicApiKey: string | null
+  openaiApiKey: string | null
 }
 
 /**
