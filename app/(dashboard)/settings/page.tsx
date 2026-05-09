@@ -3,7 +3,6 @@ import Link from 'next/link'
 import { adminNavItems, filterByFeatureFlags } from '@/lib/admin-nav'
 import { getAdminCounts } from '@/lib/admin'
 import { Card } from '@/components/ui/card'
-import { RB2BHealthBadge } from '@/components/admin/RB2BHealthBadge'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,10 +27,7 @@ export default async function AdminDashboard() {
 
   return (
     <div className="mt-4">
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-4 mb-6 border-b border-border">
-        <h2 className="text-section font-semibold">Site Settings</h2>
-        <RB2BHealthBadge />
-      </div>
+      <h2 className="text-section font-semibold pb-4 mb-6 border-b border-border">Site Settings</h2>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
         {visibleItems.map((item) => (
