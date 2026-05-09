@@ -5,6 +5,7 @@ import { Pagination } from '@/components/admin/Pagination'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminTable, AdminTableRow } from '@/components/admin/AdminTable'
 import { ViewPayloadButton } from '@/components/admin/ViewPayloadButton'
+import { RB2BHealthBadge } from '@/components/admin/RB2BHealthBadge'
 
 export const dynamic = 'force-dynamic'
 
@@ -60,7 +61,12 @@ export default async function LeadVisitsPage({ searchParams }: PageProps) {
     <div>
       <AdminPageHeader
         title="Visits"
-        subtitle={`${totalCount} total visit${totalCount !== 1 ? 's' : ''}`}
+        subtitle={
+          <>
+            <span>{totalCount} total visit{totalCount !== 1 ? 's' : ''}</span>
+            <RB2BHealthBadge />
+          </>
+        }
         action={<Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/settings/leads/visits" position="top" />}
       />
 
