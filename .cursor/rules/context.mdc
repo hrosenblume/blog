@@ -80,7 +80,7 @@ blog/
 
 ## Autoblogger Package
 
-AI writing, chat, and CMS features are provided by the **autoblogger** npm package:
+AI writing, chat, and CMS features are provided by the **autoblogger** package (sourced from `github:hrosenblume/autoblogger`):
 
 ### What Autoblogger Provides
 - **AI Generation**: `generate()`, `buildGeneratePrompt()`, `buildAutoDraftPrompt()`
@@ -253,12 +253,12 @@ Auth checks happen in layout components (client-side):
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Development server |
-| `npm run dev:tunnel` | Dev + ngrok tunnel (mobile testing) |
-| `npm run build:prod` | Production build (PostgreSQL) |
-| `npm run db:push` | Push schema (SQLite) |
-| `npm run db:push:prod` | Push schema (PostgreSQL) |
-| `npm run typecheck` | TypeScript type checking |
+| `bun run dev` | Development server |
+| `bun run dev:tunnel` | Dev + ngrok tunnel (mobile testing) |
+| `bun run build:prod` | Production build (PostgreSQL) |
+| `bun run db:push` | Push schema (SQLite) |
+| `bun run db:push:prod` | Push schema (PostgreSQL) |
+| `bun run typecheck` | TypeScript type checking |
 
 ## Environment Variables
 

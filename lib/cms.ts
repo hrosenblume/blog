@@ -3,6 +3,12 @@ import { auth } from './auth'
 import { prisma } from './db'
 import { canPublish } from './auth/helpers'
 import { getRandomShape } from './polyhedra/shapes'
+import { getIntegrationSettings } from './integrations'
+
+// Resolve API keys at startup: DB row in IntegrationSettings is source of
+// truth (set via /settings/integrations); env vars are the fallback.
+// Changes to keys via the UI require a server restart to take effect.
+const integrationSettings = await getIntegrationSettings()
 
 // Create autoblogger CMS instance
 export const cms = createAutoblogger({
@@ -19,8 +25,8 @@ export const cms = createAutoblogger({
   },
 
   ai: {
-    anthropicKey: process.env.ANTHROPIC_API_KEY,
-    openaiKey: process.env.OPENAI_API_KEY,
+    anthropicKey: integrationSettings.anthropicApiKey ?? undefined,
+    openaiKey: integrationSettings.openaiApiKey ?? undefined,
   },
 
   storage: {

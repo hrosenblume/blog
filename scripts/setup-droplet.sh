@@ -34,6 +34,18 @@ echo "Node.js version: $(node -v)"
 echo "npm version: $(npm -v)"
 
 # ============================================================
+# 2b. INSTALL BUN
+# ============================================================
+echo "📦 Installing Bun..."
+curl -fsSL https://bun.sh/install | bash
+# Make bun available in this shell and system-wide
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+ln -sf "$BUN_INSTALL/bin/bun" /usr/local/bin/bun
+ln -sf "$BUN_INSTALL/bin/bunx" /usr/local/bin/bunx
+echo "Bun version: $(bun --version)"
+
+# ============================================================
 # 3. INSTALL PM2
 # ============================================================
 echo "📦 Installing PM2..."
@@ -108,8 +120,8 @@ fi
 # ============================================================
 # 7. INSTALL DEPENDENCIES
 # ============================================================
-echo "📦 Installing npm dependencies..."
-npm ci
+echo "📦 Installing dependencies with bun..."
+bun install --frozen-lockfile
 
 # ============================================================
 # 8. ENVIRONMENT VARIABLES
@@ -151,7 +163,7 @@ cd /var/www/blog
 set -a
 source .env.local
 set +a
-exec npm start
+exec bun run start
 START_EOF
 
 chmod +x /var/www/blog/start.sh
@@ -186,8 +198,8 @@ PM2_EOF
 # ============================================================
 echo "🔨 Building application..."
 cd /var/www/blog
-npx prisma generate --schema=prisma/schema.postgresql.prisma
-npm run build:prod
+bunx prisma generate --schema=prisma/schema.postgresql.prisma
+bun run build:prod
 
 # ============================================================
 # 12. START WITH PM2

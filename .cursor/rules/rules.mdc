@@ -130,8 +130,8 @@ If on `dev` or another branch:
 
 Steps:
 1. **Clean up yalc if active:** `yalc remove autoblogger 2>/dev/null || true` — prevents committing local dev references
-2. **Run `npm update autoblogger`** — pulls latest from npm registry, updates lock file
-3. **Run `npm run typecheck`** — catches TypeScript errors before they fail in CI
+2. **Run `bun update autoblogger`** — pulls latest from GitHub source, updates `bun.lock`
+3. **Run `bun run typecheck`** — catches TypeScript errors before they fail in CI
 4. `git status -sb` — review untracked files (`??`), never auto-add `.env*`, `*.save`, `*.bak`
 5. `git add -u` (tracked files only) or selectively add, then `git diff --staged --stat`
 6. Read modified files for context
@@ -174,10 +174,10 @@ Re-link local autoblogger via yalc and restart dev server:
 1. Kill any existing dev:tunnel processes
 2. In autoblogger repo: `cd ../autoblogger && npm run build && yalc push`
 3. In blog repo: `yalc link autoblogger` (NOT `yalc add` — that corrupts package.json)
-4. Run `npm run dev:tunnel` in background
+4. Run `bun run dev:tunnel` in background
 
 After changes in autoblogger, run `yalc push` from autoblogger repo to update all linked projects.
-To revert to npm version: `yalc remove autoblogger && npm install`
+To revert to the GitHub version: `yalc remove autoblogger && bun install`
 
 **IMPORTANT:** Never use `yalc add` — it writes `file:.yalc/...` into package.json, which breaks production builds on Vercel. Always use `yalc link` which creates symlinks without modifying package.json.
 

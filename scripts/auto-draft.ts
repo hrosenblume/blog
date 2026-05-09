@@ -2,10 +2,10 @@
  * Auto-Draft Cron Script
  * 
  * Fetches RSS feeds for active topic subscriptions and generates essay drafts.
- * Run with: npx tsx --env-file=.env.local scripts/auto-draft.ts
- * 
+ * Run with: bun --env-file=.env.local scripts/auto-draft.ts
+ *
  * Schedule via cron:
- *   0 6 * * * cd /var/www/blog && npx tsx scripts/auto-draft.ts >> /var/log/blog/auto-draft.log 2>&1
+ *   0 6 * * * cd /var/www/blog && bun scripts/auto-draft.ts >> /var/log/blog/auto-draft.log 2>&1
  */
 
 // Load environment variables
