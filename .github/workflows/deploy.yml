@@ -40,7 +40,16 @@ jobs:
           script: |
             set -e  # Exit immediately on any error
             cd /var/www/blog
-            
+
+            # Non-interactive SSH doesn't source ~/.bashrc, so make sure bun is
+            # on PATH and bootstrap it on first deploy if missing.
+            export BUN_INSTALL="$HOME/.bun"
+            export PATH="$BUN_INSTALL/bin:$PATH"
+            if ! command -v bun >/dev/null 2>&1; then
+              echo "=== Installing bun ==="
+              curl -fsSL https://bun.sh/install | bash
+            fi
+
             echo "=== Fetching latest code ==="
             git remote prune origin
             BEFORE_LOCK=$(md5sum bun.lock 2>/dev/null || echo "none")
@@ -121,7 +130,16 @@ jobs:
           script: |
             set -e  # Exit immediately on any error
             cd /var/www/blog-staging
-            
+
+            # Non-interactive SSH doesn't source ~/.bashrc, so make sure bun is
+            # on PATH and bootstrap it on first deploy if missing.
+            export BUN_INSTALL="$HOME/.bun"
+            export PATH="$BUN_INSTALL/bin:$PATH"
+            if ! command -v bun >/dev/null 2>&1; then
+              echo "=== Installing bun ==="
+              curl -fsSL https://bun.sh/install | bash
+            fi
+
             echo "=== Fetching latest code ==="
             git remote prune origin
             BEFORE_LOCK=$(md5sum bun.lock 2>/dev/null || echo "none")
