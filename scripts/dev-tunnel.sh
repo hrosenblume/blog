@@ -50,9 +50,9 @@ echo ""
 
 # Start ngrok tunnel (with or without OAuth based on argument)
 if [ "$1" = "--open" ]; then
-  npx ngrok http 3000 --domain="$NGROK_DOMAIN" --log=stdout --log-level=warn
+  bunx ngrok http 3000 --domain="$NGROK_DOMAIN" --log=stdout --log-level=warn
 else
-  npx ngrok http 3000 --domain="$NGROK_DOMAIN" --oauth=google --oauth-allow-email="$NGROK_OAUTH_EMAIL" --oauth-allow-email="$WRITER_EMAIL" --log=stdout --log-level=warn
+  bunx ngrok http 3000 --domain="$NGROK_DOMAIN" --oauth=google --oauth-allow-email="$NGROK_OAUTH_EMAIL" --oauth-allow-email="$WRITER_EMAIL" --log=stdout --log-level=warn
 fi
 
 

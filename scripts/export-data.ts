@@ -1,7 +1,7 @@
 /**
  * Export data from SQLite database to JSON files
  * 
- * Usage: npm run db:export
+ * Usage: bun run db:export
  * 
  * This reads from the local SQLite database (prisma/dev.db) and exports
  * all data to prisma/data/*.json files for importing into PostgreSQL.
@@ -50,8 +50,8 @@ async function exportData() {
   console.log(`\n✅ Data exported to ${DATA_DIR}`)
   console.log('\nNext steps:')
   console.log('1. Set up your DATABASE_URL_PROD in .env.local')
-  console.log('2. Run: npm run db:push:prod')
-  console.log('3. Run: npm run db:import:prod')
+  console.log('2. Run: bun run db:push:prod')
+  console.log('3. Run: bun run db:import:prod')
 }
 
 exportData()

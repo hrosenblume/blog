@@ -1,7 +1,7 @@
 /**
  * Assign polyhedra shapes to all existing posts in the database
  * 
- * Usage: npx dotenv node scripts/assign-shapes.js
+ * Usage: bun --env-file=.env.local scripts/assign-shapes.js
  */
 
 const { PrismaClient } = require('@prisma/client');

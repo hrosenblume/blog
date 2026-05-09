@@ -4,7 +4,7 @@
 // ADDING NEW INTEGRATIONS:
 // 1. Add field to IntegrationSettings in both Prisma schemas
 // 2. Add config entry to the array below
-// 3. Run: npm run db:push
+// 3. Run: bun run db:push
 // UI and API handle it automatically!
 // ============================================
 

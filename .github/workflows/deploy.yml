@@ -17,14 +17,13 @@ jobs:
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: '20'
-          cache: 'npm'
+          bun-version: latest
       - name: Install dependencies
-        run: npm ci
+        run: bun install --frozen-lockfile
       - name: Security audit
-        run: npm audit --audit-level=high
+        run: bun audit --audit-level=high
 
   deploy:
     # No 'needs' - runs in parallel with security-audit
@@ -44,39 +43,39 @@ jobs:
             
             echo "=== Fetching latest code ==="
             git remote prune origin
-            BEFORE_LOCK=$(md5sum package-lock.json 2>/dev/null || echo "none")
+            BEFORE_LOCK=$(md5sum bun.lock 2>/dev/null || echo "none")
             git fetch origin main
             git reset --hard origin/main
-            AFTER_LOCK=$(md5sum package-lock.json)
-            
+            AFTER_LOCK=$(md5sum bun.lock)
+
             echo "=== Installing dependencies ==="
-            npm ci
-            
+            bun install --frozen-lockfile
+
             echo "=== Loading environment ==="
             if [ ! -f ".env.local" ]; then
               echo "ERROR: .env.local not found"
               exit 1
             fi
             export $(grep -v '^#' .env.local | xargs)
-            
+
             echo "=== Generating Prisma client ==="
-            npx prisma generate --schema=prisma/schema.postgresql.prisma
-            
+            bunx prisma generate --schema=prisma/schema.postgresql.prisma
+
             echo "=== Pushing database schema ==="
             # Note: Remove --accept-data-loss when schema is stable
             # For now, using it to allow schema changes without migration files
-            npx prisma db push --schema=prisma/schema.postgresql.prisma --skip-generate
-            
+            bunx prisma db push --schema=prisma/schema.postgresql.prisma --skip-generate
+
             echo "=== Building Next.js ==="
-            npm run build:prod
-            
+            bun run build:prod
+
             # Verify build succeeded
             if [ ! -f ".next/prerender-manifest.json" ]; then
               echo "ERROR: Build failed - .next/prerender-manifest.json not found"
               exit 1
             fi
             echo "=== Build verified ==="
-            
+
             echo "=== Restarting PM2 ==="
             PM2_INFO=$(pm2 jlist 2>/dev/null || echo "[]")
             if echo "$PM2_INFO" | grep -q '"name":"blog"'; then
@@ -125,31 +124,31 @@ jobs:
             
             echo "=== Fetching latest code ==="
             git remote prune origin
-            BEFORE_LOCK=$(md5sum package-lock.json 2>/dev/null || echo "none")
+            BEFORE_LOCK=$(md5sum bun.lock 2>/dev/null || echo "none")
             git fetch origin dev
             git reset --hard origin/dev
-            AFTER_LOCK=$(md5sum package-lock.json)
-            
+            AFTER_LOCK=$(md5sum bun.lock)
+
             echo "=== Installing dependencies ==="
-            npm ci
-            
+            bun install --frozen-lockfile
+
             echo "=== Loading environment ==="
             if [ ! -f ".env.local" ]; then
               echo "ERROR: .env.local not found"
               exit 1
             fi
             export $(grep -v '^#' .env.local | xargs)
-            
+
             echo "=== Generating Prisma client ==="
-            npx prisma generate --schema=prisma/schema.postgresql.prisma
-            
+            bunx prisma generate --schema=prisma/schema.postgresql.prisma
+
             echo "=== Pushing database schema ==="
             # Note: Remove --accept-data-loss when schema is stable
             # For now, using it to allow schema changes without migration files
-            npx prisma db push --schema=prisma/schema.postgresql.prisma --skip-generate
-            
+            bunx prisma db push --schema=prisma/schema.postgresql.prisma --skip-generate
+
             echo "=== Building Next.js ==="
-            npm run build:prod
+            bun run build:prod
             
             # Verify build succeeded
             if [ ! -f ".next/prerender-manifest.json" ]; then

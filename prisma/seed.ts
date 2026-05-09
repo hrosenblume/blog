@@ -1,7 +1,7 @@
 /**
  * Database seed script
  * 
- * Usage: npm run db:seed
+ * Usage: bun run db:seed
  * 
  * Creates the initial admin user and seeds published essays.
  */

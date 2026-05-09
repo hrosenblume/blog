@@ -35,41 +35,41 @@ jobs:
             echo "Current HEAD: $(git rev-parse --short HEAD)"
             
             echo "=== Rolling back ${{ github.event.inputs.commits_back }} commit(s) ==="
-            BEFORE_LOCK=$(md5sum package-lock.json 2>/dev/null || echo "none")
+            BEFORE_LOCK=$(md5sum bun.lock 2>/dev/null || echo "none")
             git reset --hard HEAD~${{ github.event.inputs.commits_back }}
-            AFTER_LOCK=$(md5sum package-lock.json)
+            AFTER_LOCK=$(md5sum bun.lock)
             echo "New HEAD: $(git rev-parse --short HEAD)"
-            
+
             echo "=== Checking dependencies ==="
             if [ "$BEFORE_LOCK" != "$AFTER_LOCK" ]; then
-              echo "package-lock.json changed, running npm ci..."
-              npm ci
+              echo "bun.lock changed, running bun install..."
+              bun install --frozen-lockfile
             elif [ ! -d "node_modules" ] || [ ! -d "node_modules/.prisma" ]; then
-              echo "node_modules missing or incomplete, running npm ci..."
-              npm ci
+              echo "node_modules missing or incomplete, running bun install..."
+              bun install --frozen-lockfile
             else
-              echo "Dependencies unchanged and present, skipping npm ci"
+              echo "Dependencies unchanged and present, skipping bun install"
             fi
-            
+
             echo "=== Loading environment ==="
             export $(grep -v '^#' .env.local | xargs)
-            
+
             echo "=== Generating Prisma client ==="
-            npx prisma generate --schema=prisma/schema.postgresql.prisma
-            
+            bunx prisma generate --schema=prisma/schema.postgresql.prisma
+
             echo "=== Building Next.js ==="
-            npm run build:prod
-            
+            bun run build:prod
+
             # Verify build succeeded
             if [ ! -f ".next/prerender-manifest.json" ]; then
               echo "ERROR: Build failed - .next/prerender-manifest.json not found"
               exit 1
             fi
             echo "=== Build verified ==="
-            
+
             echo "=== Restarting PM2 ==="
             pm2 reload blog
-            
+
             # Health check
             sleep 3
             if curl -sf http://localhost:3000 > /dev/null; then
@@ -96,38 +96,38 @@ jobs:
             echo "Current HEAD: $(git rev-parse --short HEAD)"
             
             echo "=== Rolling back ${{ github.event.inputs.commits_back }} commit(s) ==="
-            BEFORE_LOCK=$(md5sum package-lock.json 2>/dev/null || echo "none")
+            BEFORE_LOCK=$(md5sum bun.lock 2>/dev/null || echo "none")
             git reset --hard HEAD~${{ github.event.inputs.commits_back }}
-            AFTER_LOCK=$(md5sum package-lock.json)
+            AFTER_LOCK=$(md5sum bun.lock)
             echo "New HEAD: $(git rev-parse --short HEAD)"
-            
+
             echo "=== Checking dependencies ==="
             if [ "$BEFORE_LOCK" != "$AFTER_LOCK" ]; then
-              echo "package-lock.json changed, running npm ci..."
-              npm ci
+              echo "bun.lock changed, running bun install..."
+              bun install --frozen-lockfile
             elif [ ! -d "node_modules" ] || [ ! -d "node_modules/.prisma" ]; then
-              echo "node_modules missing or incomplete, running npm ci..."
-              npm ci
+              echo "node_modules missing or incomplete, running bun install..."
+              bun install --frozen-lockfile
             else
-              echo "Dependencies unchanged and present, skipping npm ci"
+              echo "Dependencies unchanged and present, skipping bun install"
             fi
-            
+
             echo "=== Loading environment ==="
             export $(grep -v '^#' .env.local | xargs)
-            
+
             echo "=== Generating Prisma client ==="
-            npx prisma generate --schema=prisma/schema.postgresql.prisma
-            
+            bunx prisma generate --schema=prisma/schema.postgresql.prisma
+
             echo "=== Building Next.js ==="
-            npm run build:prod
-            
+            bun run build:prod
+
             # Verify build succeeded
             if [ ! -f ".next/prerender-manifest.json" ]; then
               echo "ERROR: Build failed - .next/prerender-manifest.json not found"
               exit 1
             fi
             echo "=== Build verified ==="
-            
+
             echo "=== Restarting PM2 ==="
             pm2 reload blog-staging
             

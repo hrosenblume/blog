@@ -1,15 +1,15 @@
 /**
  * Import data from JSON files to PostgreSQL database
  * 
- * Usage: npm run db:import:prod
- * 
+ * Usage: bun run db:import:prod
+ *
  * This reads from prisma/data/*.json files (created by export-data.ts)
  * and imports into the PostgreSQL database specified by DATABASE_URL_PROD.
- * 
+ *
  * Prerequisites:
  * 1. DATABASE_URL_PROD must be set in .env.local
- * 2. Run npm run db:push:prod first to create the schema
- * 3. Run npm run db:export to create the JSON files
+ * 2. Run bun run db:push:prod first to create the schema
+ * 3. Run bun run db:export to create the JSON files
  */
 
 import { PrismaClient } from '@prisma/client'

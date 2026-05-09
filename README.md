@@ -38,7 +38,7 @@ A personal essay site with AI-powered writing, animated 3D polyhedra, and a full
 git clone https://github.com/hrosenblume/blog
 cd blog
 cp .env.example .env.local  # fill in your values
-npm install && npm run db:setup && npm run dev
+bun install && bun run db:setup && bun run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
@@ -108,7 +108,7 @@ Push to `main` triggers production deploy via GitHub Actions:
 
 1. SSH into DigitalOcean Droplet
 2. Pull latest code
-3. Install dependencies if `package-lock.json` changed or `node_modules` missing
+3. Install dependencies if `bun.lock` changed or `node_modules` missing
 4. Generate Prisma client and push schema
 5. Build with PostgreSQL schema
 6. Verify build succeeded (checks for `.next/prerender-manifest.json`)
@@ -128,12 +128,12 @@ Manual rollback via GitHub Actions workflow dispatch:
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Development server |
-| `npm run dev:tunnel` | Dev + ngrok tunnel (mobile testing) |
-| `npm run build:prod` | Production build (PostgreSQL) |
-| `npm run db:push` | Push schema (SQLite) |
-| `npm run db:push:prod` | Push schema (PostgreSQL) |
-| `npm run db:studio` | Prisma Studio |
+| `bun run dev` | Development server |
+| `bun run dev:tunnel` | Dev + ngrok tunnel (mobile testing) |
+| `bun run build:prod` | Production build (PostgreSQL) |
+| `bun run db:push` | Push schema (SQLite) |
+| `bun run db:push:prod` | Push schema (PostgreSQL) |
+| `bun run db:studio` | Prisma Studio |
 
 ---
 
