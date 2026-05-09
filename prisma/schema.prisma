@@ -34,6 +34,10 @@ model Post {
   topicId   String? // TopicSubscription that generated this
   topic     TopicSubscription? @relation(fields: [topicId], references: [id])
   newsItem  NewsItem? // Reverse relation to source news item
+
+  // Preview links (used by /v1/posts/:id/preview-link)
+  previewToken  String?   @unique
+  previewExpiry DateTime?
 }
 
 model Revision {

@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "postinstall": "prisma generate",
-    "dev": "prisma generate && rm -rf .next && next dev",
+    "dev": "node scripts/ensure-autoblogger.mjs && prisma generate && rm -rf .next && next dev --turbopack",
     "dev:tunnel": "bash scripts/dev-tunnel.sh",
     "dev:tunnel:open": "bash scripts/dev-tunnel.sh --open",
     "dev:mobile": "bun run dev:tunnel",
